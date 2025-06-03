@@ -2,18 +2,27 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { 
-  Play, 
-  Wrench, 
-  GitBranch, 
-  Square, 
   Download, 
   Upload, 
   File, 
-  Code,
-  Menu
+  Code
 } from 'lucide-react';
+import NodePalette from '../components/NodePalette';
+import Canvas from '../components/Canvas';
+import PropertiesPanel from '../components/PropertiesPanel';
+import { useNodes } from '../hooks/useNodes';
 
 const Index = () => {
+  const { 
+    nodes, 
+    selectedNode, 
+    selectedNodeId, 
+    addNode, 
+    updateNodePosition, 
+    deleteNode, 
+    selectNode 
+  } = useNodes();
+
   const handleNewProject = () => {
     console.log("New project - not implemented yet");
   };
@@ -59,7 +68,7 @@ const Index = () => {
             size="sm" 
             onClick={handleExport}
             className="text-gray-600 hover:text-gray-800"
-            disabled
+            disabled={nodes.length === 0}
           >
             <Download className="w-4 h-4 mr-1" />
             Export
@@ -72,7 +81,7 @@ const Index = () => {
             size="sm" 
             onClick={handleCodePreview}
             className="text-gray-600 hover:text-gray-800"
-            disabled
+            disabled={nodes.length === 0}
             title="Show generated code (read-only)"
           >
             <Code className="w-4 h-4 mr-1" />
@@ -85,70 +94,19 @@ const Index = () => {
       <div className="flex-1 flex overflow-hidden">
         {/* Left Sidebar - Node Palette */}
         <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
-          <div className="p-4 border-b border-gray-100">
-            <h2 className="text-sm font-medium text-gray-700 mb-3">Nodes</h2>
-            <div className="space-y-2">
-              <div 
-                className="flex items-center p-3 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors"
-                draggable="true"
-                title="Drag to canvas to add a start node"
-              >
-                <Play className="w-5 h-5 text-green-600 mr-3" />
-                <span className="text-sm font-medium text-gray-700">Start</span>
-              </div>
-              
-              <div 
-                className="flex items-center p-3 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors"
-                draggable="true"
-                title="Drag to canvas to add a tool node"
-              >
-                <Wrench className="w-5 h-5 text-blue-600 mr-3" />
-                <span className="text-sm font-medium text-gray-700">Tool</span>
-              </div>
-              
-              <div 
-                className="flex items-center p-3 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors"
-                draggable="true"
-                title="Drag to canvas to add a condition node"
-              >
-                <GitBranch className="w-5 h-5 text-orange-600 mr-3" />
-                <span className="text-sm font-medium text-gray-700">Condition</span>
-              </div>
-              
-              <div 
-                className="flex items-center p-3 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors"
-                draggable="true"
-                title="Drag to canvas to add an end node"
-              >
-                <Square className="w-5 h-5 text-red-600 mr-3" />
-                <span className="text-sm font-medium text-gray-700">End</span>
-              </div>
-            </div>
-          </div>
+          <NodePalette />
         </aside>
 
         {/* Main Canvas Area */}
         <main className="flex-1 relative overflow-auto">
-          <div 
-            id="canvas" 
-            className="w-full h-full bg-gradient-to-br from-gray-50 to-gray-100 relative"
-            style={{
-              backgroundImage: `
-                radial-gradient(circle, #e5e7eb 1px, transparent 1px)
-              `,
-              backgroundSize: '20px 20px'
-            }}
-          >
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-center text-gray-400">
-                <div className="mb-2">
-                  <Menu className="w-12 h-12 mx-auto mb-4 opacity-30" />
-                </div>
-                <p className="text-lg font-medium mb-1">Welcome to LangCanvas</p>
-                <p className="text-sm">Drag nodes from the palette to start building your graph</p>
-              </div>
-            </div>
-          </div>
+          <Canvas
+            nodes={nodes}
+            selectedNodeId={selectedNodeId}
+            onAddNode={addNode}
+            onSelectNode={selectNode}
+            onMoveNode={updateNodePosition}
+            onDeleteNode={deleteNode}
+          />
         </main>
 
         {/* Right Sidebar - Properties Panel */}
@@ -156,16 +114,10 @@ const Index = () => {
           <div className="p-4 border-b border-gray-100">
             <h2 className="text-sm font-medium text-gray-700">Properties</h2>
           </div>
-          <div id="properties" className="flex-1 p-4">
-            <div className="flex items-center justify-center h-full text-center text-gray-400">
-              <div>
-                <div className="mb-2">
-                  <Code className="w-8 h-8 mx-auto mb-3 opacity-30" />
-                </div>
-                <p className="text-sm">Select a node to edit its properties</p>
-              </div>
-            </div>
-          </div>
+          <PropertiesPanel 
+            selectedNode={selectedNode} 
+            onDeleteNode={deleteNode}
+          />
         </aside>
       </div>
     </div>
