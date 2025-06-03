@@ -9,7 +9,7 @@ import EdgeCreationHandler from './canvas/EdgeCreationHandler';
 import CanvasBackground from './canvas/CanvasBackground';
 import EdgePreview from './canvas/EdgePreview';
 import KeyboardHandler from './canvas/KeyboardHandler';
-import EnhancedNodeComponent from './EnhancedNodeComponent';
+import NodeComponent from './Node';
 import EdgeRenderer from './EdgeRenderer';
 
 interface CanvasProps {
@@ -167,7 +167,7 @@ const Canvas: React.FC<CanvasProps> = ({
                     isMobile ? 'touch-manipulation' : ''
                   }`}
                 >
-                  <EnhancedNodeComponent
+                  <NodeComponent
                     node={node}
                     isSelected={selectedNodeId === node.id}
                     canCreateEdge={canCreateEdge(node)}
