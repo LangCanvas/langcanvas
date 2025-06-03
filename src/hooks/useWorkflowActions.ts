@@ -1,5 +1,6 @@
 
 import { useToast } from '@/hooks/use-toast';
+import { ValidationResult } from '../utils/graphValidation';
 
 interface UseWorkflowActionsProps {
   nodes: any[];
@@ -7,6 +8,7 @@ interface UseWorkflowActionsProps {
   importWorkflow: (jsonString: string) => { success: boolean; errors: string[] };
   validateWorkflow: (jsonString: string) => { valid: boolean; errors: string[] };
   clearWorkflow: () => void;
+  validationResult?: ValidationResult;
 }
 
 export const useWorkflowActions = ({
@@ -14,7 +16,8 @@ export const useWorkflowActions = ({
   exportWorkflowAsString,
   importWorkflow,
   validateWorkflow,
-  clearWorkflow
+  clearWorkflow,
+  validationResult
 }: UseWorkflowActionsProps) => {
   const { toast } = useToast();
 
@@ -117,8 +120,43 @@ export const useWorkflowActions = ({
 
   const handleExport = () => {
     console.log("🔵 REAL handleExport called - UPDATED VERSION");
+    console.log("🔵 Current validation result:", validationResult);
     
     try {
+      // Check for validation errors before export
+      if (validationResult && validationResult.errorCount > 0) {
+        const errorMessages = validationResult.issues
+          .filter(issue => issue.severity === 'error')
+          .map(issue => `• ${issue.message}`)
+          .join('\n');
+          
+        const proceed = confirm(
+          `The workflow has ${validationResult.errorCount} error(s):\n\n${errorMessages}\n\nIt's recommended to fix these errors before exporting. Continue with export anyway?`
+        );
+        
+        if (!proceed) {
+          toast({
+            title: "Export Cancelled",
+            description: "Please fix the errors and try again.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+      
+      // Show warnings if any
+      if (validationResult && validationResult.warningCount > 0) {
+        const warningMessages = validationResult.issues
+          .filter(issue => issue.severity === 'warning')
+          .map(issue => issue.message)
+          .join(', ');
+          
+        toast({
+          title: "Export with Warnings",
+          description: `Note: ${warningMessages}`,
+        });
+      }
+      
       const workflowJson = exportWorkflowAsString();
       
       const blob = new Blob([workflowJson], { type: 'application/json' });
@@ -153,6 +191,23 @@ export const useWorkflowActions = ({
 
   const handleCodePreview = () => {
     console.log("🟣 REAL handleCodePreview called - UPDATED VERSION");
+    console.log("🟣 Current validation result:", validationResult);
+    
+    // Check for validation errors before preview
+    if (validationResult && validationResult.errorCount > 0) {
+      const errorMessages = validationResult.issues
+        .filter(issue => issue.severity === 'error')
+        .map(issue => issue.message)
+        .join('\n• ');
+        
+      toast({
+        title: "Cannot Preview Code",
+        description: `Please fix these errors first:\n• ${errorMessages}`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
     toast({
       title: "Code Preview",
       description: "Code preview feature coming soon!",

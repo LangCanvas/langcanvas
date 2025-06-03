@@ -25,6 +25,10 @@ interface CanvasProps {
   onDeleteEdge: (id: string) => void;
   onAddEdge: (sourceNode: NodeData, targetNode: NodeData) => { success: boolean; error?: string };
   canCreateEdge: (sourceNode: NodeData) => boolean;
+  getNodeValidationClass?: (nodeId: string) => string;
+  getEdgeValidationClass?: (edgeId: string) => string;
+  getNodeTooltip?: (nodeId: string) => string;
+  getEdgeTooltip?: (edgeId: string) => string;
 }
 
 const Canvas: React.FC<CanvasProps> = ({ 
@@ -40,7 +44,11 @@ const Canvas: React.FC<CanvasProps> = ({
   onDeleteNode,
   onDeleteEdge,
   onAddEdge,
-  canCreateEdge
+  canCreateEdge,
+  getNodeValidationClass,
+  getEdgeValidationClass,
+  getNodeTooltip,
+  getEdgeTooltip
 }) => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const isMobile = useMobileDetection();
@@ -114,6 +122,8 @@ const Canvas: React.FC<CanvasProps> = ({
                 nodes={nodes}
                 selectedEdgeId={selectedEdgeId}
                 onSelectEdge={onSelectEdge}
+                getEdgeValidationClass={getEdgeValidationClass}
+                getEdgeTooltip={getEdgeTooltip}
               />
 
               {/* Edge Preview while creating */}
@@ -147,6 +157,8 @@ const Canvas: React.FC<CanvasProps> = ({
                     onSelect={onSelectNode}
                     onMove={onMoveNode}
                     onStartConnection={handleStartConnection}
+                    validationClass={getNodeValidationClass?.(node.id) || ''}
+                    validationTooltip={getNodeTooltip?.(node.id) || ''}
                   />
                 </div>
               ))}

@@ -11,6 +11,8 @@ interface NodeComponentProps {
   onSelect: (id: string) => void;
   onMove: (id: string, x: number, y: number) => void;
   onStartConnection: (sourceNode: NodeType, startX: number, startY: number) => void;
+  validationClass?: string;
+  validationTooltip?: string;
 }
 
 const NodeComponent: React.FC<NodeComponentProps> = ({ 
@@ -19,7 +21,9 @@ const NodeComponent: React.FC<NodeComponentProps> = ({
   canCreateEdge, 
   onSelect, 
   onMove, 
-  onStartConnection 
+  onStartConnection,
+  validationClass = '',
+  validationTooltip = ''
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -129,15 +133,19 @@ const NodeComponent: React.FC<NodeComponentProps> = ({
     }
   };
 
+  // Combine validation tooltip with any existing title
+  const tooltipText = validationTooltip || undefined;
+
   return (
     <div
       ref={nodeRef}
       style={getNodeStyle()}
       onMouseDown={handlePointerDown}
       onTouchStart={handlePointerDown}
-      className={`node ${node.type}-node ${isSelected ? 'selected' : ''}`}
+      className={`node ${node.type}-node ${isSelected ? 'selected' : ''} ${validationClass}`}
       data-node-id={node.id}
       data-node-type={node.type}
+      title={tooltipText}
     >
       <span style={{ transform: node.type === 'condition' ? 'rotate(-45deg)' : 'none' }}>
         {node.name}

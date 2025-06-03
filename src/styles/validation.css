@@ -1,0 +1,54 @@
+
+/* Validation highlighting styles */
+.validation-error {
+  border-color: #dc2626 !important;
+  border-width: 2px !important;
+  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.2) !important;
+}
+
+.validation-warning {
+  border-color: #d97706 !important;
+  border-width: 2px !important;
+  box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.2) !important;
+}
+
+/* Edge validation styles */
+.edge-validation-error {
+  stroke: #dc2626 !important;
+  stroke-width: 3px !important;
+  filter: drop-shadow(0 0 4px rgba(220, 38, 38, 0.3));
+}
+
+.edge-validation-warning {
+  stroke: #d97706 !important;
+  stroke-width: 3px !important;
+  filter: drop-shadow(0 0 4px rgba(217, 119, 6, 0.3));
+}
+
+/* Validation indicator in toolbar */
+.validation-indicator {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.validation-indicator.error {
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.validation-indicator.warning {
+  background-color: #fffbeb;
+  color: #d97706;
+  border: 1px solid #fed7aa;
+}
+
+.validation-indicator.success {
+  background-color: #f0fdf4;
+  color: #059669;
+  border: 1px solid #bbf7d0;
+}

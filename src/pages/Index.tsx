@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import NodePalette from '../components/NodePalette';
 import Canvas from '../components/Canvas';
 import PropertiesPanel from '../components/PropertiesPanel';
+import ValidationPanel from '../components/ValidationPanel';
 import Toolbar from '../components/layout/Toolbar';
 import MobileMenu from '../components/layout/MobileMenu';
 import MobileBottomNav from '../components/layout/MobileBottomNav';
@@ -11,10 +12,11 @@ import { useNodes } from '../hooks/useNodes';
 import { useEdges } from '../hooks/useEdges';
 import { useWorkflowSerializer } from '../hooks/useWorkflowSerializer';
 import { useWorkflowActions } from '../hooks/useWorkflowActions';
+import { useValidation } from '../hooks/useValidation';
 
 const Index = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [activePanel, setActivePanel] = useState<'palette' | 'properties' | null>(null);
+  const [activePanel, setActivePanel] = useState<'palette' | 'properties' | 'validation' | null>(null);
   
   const { 
     nodes, 
@@ -59,12 +61,17 @@ const Index = () => {
     selectEdge
   });
 
+  // Add validation hook
+  const {
+    validationResult,
+    getNodeTooltip,
+    getEdgeTooltip,
+    getNodeErrorClass,
+    getEdgeErrorClass
+  } = useValidation({ nodes, edges });
+
   console.log("📍 Index component rendering");
-  console.log("📍 nodes:", nodes);
-  console.log("📍 exportWorkflowAsString:", exportWorkflowAsString);
-  console.log("📍 importWorkflow:", importWorkflow);
-  console.log("📍 validateWorkflow:", validateWorkflow);
-  console.log("📍 clearWorkflow:", clearWorkflow);
+  console.log("📍 Validation result:", validationResult);
 
   const {
     handleNewProject,
@@ -76,14 +83,9 @@ const Index = () => {
     exportWorkflowAsString,
     importWorkflow,
     validateWorkflow,
-    clearWorkflow
+    clearWorkflow,
+    validationResult
   });
-
-  console.log("📍 Workflow actions from hook:");
-  console.log("📍 handleNewProject:", handleNewProject);
-  console.log("📍 handleImport:", handleImport);
-  console.log("📍 handleExport:", handleExport);
-  console.log("📍 handleCodePreview:", handleCodePreview);
 
   const handleDeleteNode = (nodeId: string) => {
     deleteEdgesForNode(nodeId);
@@ -100,7 +102,7 @@ const Index = () => {
     setActivePanel(null);
   };
 
-  const handlePanelToggle = (panel: 'palette' | 'properties') => {
+  const handlePanelToggle = (panel: 'palette' | 'properties' | 'validation') => {
     console.log(`Panel toggle clicked: ${panel}`);
     if (activePanel === panel) {
       setActivePanel(null);
@@ -127,6 +129,7 @@ const Index = () => {
         onExport={handleExport}
         onCodePreview={handleCodePreview}
         hasNodes={nodes.length > 0}
+        validationResult={validationResult}
       />
 
       <MobileMenu
@@ -158,6 +161,7 @@ const Index = () => {
           onUpdateEdgeProperties={updateEdgeProperties}
           allNodes={nodes}
           nodeOutgoingEdges={nodeOutgoingEdges}
+          validationResult={validationResult}
         />
 
         {/* Main Canvas Area */}
@@ -175,24 +179,44 @@ const Index = () => {
             onDeleteEdge={deleteEdge}
             onAddEdge={handleAddEdge}
             canCreateEdge={canCreateEdge}
+            getNodeValidationClass={getNodeErrorClass}
+            getEdgeValidationClass={getEdgeErrorClass}
+            getNodeTooltip={getNodeTooltip}
+            getEdgeTooltip={getEdgeTooltip}
           />
         </main>
 
         {/* Desktop Right Sidebar - Properties Panel */}
         <aside className="hidden lg:flex w-80 bg-white border-l border-gray-200 flex-col">
-          <div className="p-4 border-b border-gray-100">
+          <div className="p-4 border-b border-gray-100 flex items-center justify-between">
             <h2 className="text-sm font-medium text-gray-700">Properties</h2>
+            {validationResult.issues.length > 0 && (
+              <button
+                onClick={() => handlePanelToggle('validation')}
+                className="text-xs px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 transition-colors"
+              >
+                <ValidationPanel validationResult={validationResult} compact />
+              </button>
+            )}
           </div>
-          <PropertiesPanel 
-            selectedNode={selectedNode}
-            selectedEdge={selectedEdge}
-            onDeleteNode={handleDeleteNode}
-            onDeleteEdge={deleteEdge}
-            onUpdateNodeProperties={updateNodeProperties}
-            onUpdateEdgeProperties={updateEdgeProperties}
-            allNodes={nodes}
-            nodeOutgoingEdges={nodeOutgoingEdges}
-          />
+          
+          {activePanel === 'validation' ? (
+            <ValidationPanel 
+              validationResult={validationResult} 
+              onClose={() => setActivePanel(null)}
+            />
+          ) : (
+            <PropertiesPanel 
+              selectedNode={selectedNode}
+              selectedEdge={selectedEdge}
+              onDeleteNode={handleDeleteNode}
+              onDeleteEdge={deleteEdge}
+              onUpdateNodeProperties={updateNodeProperties}
+              onUpdateEdgeProperties={updateEdgeProperties}
+              allNodes={nodes}
+              nodeOutgoingEdges={nodeOutgoingEdges}
+            />
+          )}
         </aside>
       </div>
 
@@ -200,6 +224,7 @@ const Index = () => {
         onPanelToggle={handlePanelToggle}
         onCodePreview={handleCodePreview}
         hasNodes={nodes.length > 0}
+        validationResult={validationResult}
       />
     </div>
   );

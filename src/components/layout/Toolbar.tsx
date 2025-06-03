@@ -7,8 +7,11 @@ import {
   File, 
   Code,
   Menu,
-  X
+  X,
+  AlertTriangle,
+  CheckCircle
 } from 'lucide-react';
+import { ValidationResult } from '../../utils/graphValidation';
 
 interface ToolbarProps {
   isMobileMenuOpen: boolean;
@@ -18,6 +21,7 @@ interface ToolbarProps {
   onExport: () => void;
   onCodePreview: () => void;
   hasNodes: boolean;
+  validationResult?: ValidationResult;
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({
@@ -27,7 +31,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
   onImport,
   onExport,
   onCodePreview,
-  hasNodes
+  hasNodes,
+  validationResult
 }) => {
   const handleNewClick = () => {
     console.log("🔴 New button clicked in Toolbar");
@@ -78,6 +83,28 @@ const Toolbar: React.FC<ToolbarProps> = ({
         
         <h1 className="text-base sm:text-lg font-semibold text-gray-800 mr-2 sm:mr-4">LangCanvas</h1>
         
+        {/* Validation Status Indicator */}
+        {validationResult && hasNodes && (
+          <div className="hidden sm:flex items-center">
+            {validationResult.errorCount > 0 ? (
+              <div className="flex items-center text-red-600 text-sm">
+                <AlertTriangle className="w-4 h-4 mr-1" />
+                <span>{validationResult.errorCount} error{validationResult.errorCount !== 1 ? 's' : ''}</span>
+              </div>
+            ) : validationResult.warningCount > 0 ? (
+              <div className="flex items-center text-orange-600 text-sm">
+                <AlertTriangle className="w-4 h-4 mr-1" />
+                <span>{validationResult.warningCount} warning{validationResult.warningCount !== 1 ? 's' : ''}</span>
+              </div>
+            ) : (
+              <div className="flex items-center text-green-600 text-sm">
+                <CheckCircle className="w-4 h-4 mr-1" />
+                <span>Valid</span>
+              </div>
+            )}
+          </div>
+        )}
+        
         <div className="hidden sm:flex items-center space-x-1">
           <Button 
             variant="ghost" 
@@ -117,9 +144,11 @@ const Toolbar: React.FC<ToolbarProps> = ({
           variant="ghost" 
           size="sm" 
           onClick={onCodePreview}
-          className="text-gray-600 hover:text-gray-800 touch-manipulation"
-          disabled={!hasNodes}
-          title="Show generated code (read-only)"
+          className={`text-gray-600 hover:text-gray-800 touch-manipulation ${
+            validationResult?.errorCount ? 'opacity-50' : ''
+          }`}
+          disabled={!hasNodes || (validationResult?.errorCount ?? 0) > 0}
+          title={validationResult?.errorCount ? "Fix errors before previewing code" : "Show generated code (read-only)"}
           style={{ minHeight: '44px' }}
         >
           <Code className="w-4 h-4 mr-1" />
