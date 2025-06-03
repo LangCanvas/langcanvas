@@ -1,6 +1,6 @@
 
 import { useState, useCallback } from 'react';
-import { Node } from './useNodes';
+import { EnhancedNode } from '../types/nodeTypes';
 
 export interface Edge {
   id: string;
@@ -33,15 +33,15 @@ export const useEdges = () => {
     return false;
   }, []);
 
-  const validateConnection = useCallback((sourceNode: Node, targetNode: Node, existingEdges: Edge[]): { valid: boolean; error?: string } => {
+  const validateConnection = useCallback((sourceNode: EnhancedNode, targetNode: EnhancedNode, existingEdges: Edge[]): { valid: boolean; error?: string } => {
     // Cannot connect to self
     if (sourceNode.id === targetNode.id) {
       return { valid: false, error: "Cannot connect a node to itself" };
     }
 
-    // Start node cannot be a target
-    if (targetNode.type === 'start') {
-      return { valid: false, error: "Start node cannot have incoming connections" };
+    // Agent node cannot be a target
+    if (targetNode.type === 'agent') {
+      return { valid: false, error: "Agent node cannot have incoming connections" };
     }
 
     // End node cannot be a source
@@ -57,14 +57,14 @@ export const useEdges = () => {
       return { valid: false, error: "This connection already exists" };
     }
 
-    // Start and Tool nodes can only have one outgoing edge
-    if (sourceNode.type === 'start' || sourceNode.type === 'tool') {
+    // Agent and Tool nodes can only have one outgoing edge
+    if (sourceNode.type === 'agent' || sourceNode.type === 'tool') {
       const existingOutgoing = existingEdges.filter(edge => edge.source === sourceNode.id);
       if (existingOutgoing.length > 0) {
-        const nodeTypeName = sourceNode.type === 'start' ? 'Start' : 'Tool';
+        const nodeTypeName = sourceNode.type === 'agent' ? 'Agent' : 'Tool';
         return { 
           valid: false, 
-          error: `${nodeTypeName} nodes can only have one outgoing connection${sourceNode.type === 'tool' ? '; use a Condition for branching' : ''}` 
+          error: `${nodeTypeName} nodes can only have one outgoing connection${sourceNode.type === 'tool' ? '; use a Conditional for branching' : ''}` 
         };
       }
     }
@@ -78,14 +78,14 @@ export const useEdges = () => {
   }, [findPath]);
 
   const generateBranchLabel = useCallback((sourceNodeType: string, existingEdges: Edge[], sourceNodeId: string): string => {
-    if (sourceNodeType === 'condition') {
+    if (sourceNodeType === 'conditional') {
       const outgoingEdges = existingEdges.filter(edge => edge.source === sourceNodeId);
       return `Branch${outgoingEdges.length + 1}`;
     }
     return '';
   }, []);
 
-  const addEdge = useCallback((sourceNode: Node, targetNode: Node) => {
+  const addEdge = useCallback((sourceNode: EnhancedNode, targetNode: EnhancedNode) => {
     const validation = validateConnection(sourceNode, targetNode, edges);
     
     if (!validation.valid) {
@@ -138,12 +138,12 @@ export const useEdges = () => {
 
   const selectedEdge = selectedEdgeId ? edges.find(edge => edge.id === selectedEdgeId) : null;
 
-  const canCreateEdge = useCallback((sourceNode: Node) => {
+  const canCreateEdge = useCallback((sourceNode: EnhancedNode) => {
     if (sourceNode.type === 'end') return false;
-    if (sourceNode.type === 'start' || sourceNode.type === 'tool') {
+    if (sourceNode.type === 'agent' || sourceNode.type === 'tool') {
       return !edges.some(edge => edge.source === sourceNode.id);
     }
-    return true; // Condition nodes can have multiple outgoing edges
+    return true; // Conditional nodes can have multiple outgoing edges
   }, [edges]);
 
   const getNodeOutgoingEdges = useCallback((nodeId: string) => {
