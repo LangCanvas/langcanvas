@@ -77,8 +77,7 @@ const Index = () => {
   const {
     handleNewProject,
     handleImport,
-    handleExport,
-    handleCodePreview
+    handleExport
   } = useWorkflowActions({
     nodes,
     exportWorkflowAsString,
@@ -129,7 +128,6 @@ const Index = () => {
         onNewProject={handleNewProject}
         onImport={handleImport}
         onExport={handleExport}
-        onCodePreview={handleCodePreview}
         hasNodes={nodes.length > 0}
         validationResult={validationResult}
       />
@@ -224,7 +222,6 @@ const Index = () => {
 
       <MobileBottomNav
         onPanelToggle={handlePanelToggle}
-        onCodePreview={handleCodePreview}
         hasNodes={nodes.length > 0}
         validationResult={validationResult}
       />

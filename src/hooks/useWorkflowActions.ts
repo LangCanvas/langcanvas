@@ -164,7 +164,7 @@ export const useWorkflowActions = ({
       
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'workflow.json';
+      link.download = 'langcanvas-workflow.json';
       link.style.display = 'none';
       
       document.body.appendChild(link);
@@ -177,7 +177,7 @@ export const useWorkflowActions = ({
       
       toast({
         title: "Export Successful",
-        description: "Workflow exported as workflow.json",
+        description: "Workflow exported as langcanvas-workflow.json",
       });
     } catch (error) {
       console.error("🔵 Export error:", error);
@@ -189,35 +189,9 @@ export const useWorkflowActions = ({
     }
   };
 
-  const handleCodePreview = () => {
-    console.log("🟣 REAL handleCodePreview called - UPDATED VERSION");
-    console.log("🟣 Current validation result:", validationResult);
-    
-    // Check for validation errors before preview
-    if (validationResult && validationResult.errorCount > 0) {
-      const errorMessages = validationResult.issues
-        .filter(issue => issue.severity === 'error')
-        .map(issue => issue.message)
-        .join('\n• ');
-        
-      toast({
-        title: "Cannot Preview Code",
-        description: `Please fix these errors first:\n• ${errorMessages}`,
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    toast({
-      title: "Code Preview",
-      description: "Code preview feature coming soon!",
-    });
-  };
-
   return {
     handleNewProject,
     handleImport,
-    handleExport,
-    handleCodePreview
+    handleExport
   };
 };

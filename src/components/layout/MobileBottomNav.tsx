@@ -1,19 +1,17 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Menu, File, Code } from 'lucide-react';
+import { Menu, File } from 'lucide-react';
 import { ValidationResult } from '../../utils/graphValidation';
 
 interface MobileBottomNavProps {
   onPanelToggle: (panel: 'palette' | 'properties') => void;
-  onCodePreview: () => void;
   hasNodes: boolean;
   validationResult: ValidationResult;
 }
 
 const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   onPanelToggle,
-  onCodePreview,
   hasNodes,
   validationResult
 }) => {
@@ -39,17 +37,6 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         >
           <File className="w-4 h-4" />
           <span className="text-xs">Properties</span>
-        </Button>
-        <Button 
-          variant="ghost" 
-          size="sm"
-          onClick={onCodePreview}
-          disabled={!hasNodes}
-          className="flex flex-col items-center space-y-1 touch-manipulation"
-          style={{ minHeight: '44px', minWidth: '44px' }}
-        >
-          <Code className="w-4 h-4" />
-          <span className="text-xs">Code</span>
         </Button>
       </div>
     </div>

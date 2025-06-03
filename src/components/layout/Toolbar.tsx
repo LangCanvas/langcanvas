@@ -4,8 +4,7 @@ import { Button } from '@/components/ui/button';
 import { 
   Download, 
   Upload, 
-  File, 
-  Code,
+  File,
   Menu,
   X,
   AlertTriangle,
@@ -19,7 +18,6 @@ interface ToolbarProps {
   onNewProject: () => void;
   onImport: () => void;
   onExport: () => void;
-  onCodePreview: () => void;
   hasNodes: boolean;
   validationResult?: ValidationResult;
 }
@@ -30,7 +28,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
   onNewProject,
   onImport,
   onExport,
-  onCodePreview,
   hasNodes,
   validationResult
 }) => {
@@ -137,23 +134,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
             <span className="hidden md:inline">Export</span>
           </Button>
         </div>
-      </div>
-      
-      <div className="flex items-center space-x-1">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={onCodePreview}
-          className={`text-gray-600 hover:text-gray-800 touch-manipulation ${
-            validationResult?.errorCount ? 'opacity-50' : ''
-          }`}
-          disabled={!hasNodes || (validationResult?.errorCount ?? 0) > 0}
-          title={validationResult?.errorCount ? "Fix errors before previewing code" : "Show generated code (read-only)"}
-          style={{ minHeight: '44px' }}
-        >
-          <Code className="w-4 h-4 mr-1" />
-          <span className="hidden sm:inline">Preview</span>
-        </Button>
       </div>
     </header>
   );
