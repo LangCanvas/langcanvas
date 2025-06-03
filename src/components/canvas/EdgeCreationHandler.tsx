@@ -1,18 +1,18 @@
 
 import React, { useState } from 'react';
-import { Node as NodeData } from '../../hooks/useNodes';
+import { EnhancedNode } from '../../types/nodeTypes';
 import { usePointerEvents } from '../../hooks/usePointerEvents';
 import { useToast } from '@/hooks/use-toast';
 
 interface EdgeCreationHandlerProps {
-  nodes: NodeData[];
-  onAddEdge: (sourceNode: NodeData, targetNode: NodeData) => { success: boolean; error?: string };
+  nodes: EnhancedNode[];
+  onAddEdge: (sourceNode: EnhancedNode, targetNode: EnhancedNode) => { success: boolean; error?: string };
   canvasRef: React.RefObject<HTMLDivElement>;
   children: (props: {
     isCreatingEdge: boolean;
-    edgePreview: { startX: number; startY: number; endX: number; endY: number; sourceNode: NodeData } | null;
+    edgePreview: { startX: number; startY: number; endX: number; endY: number; sourceNode: EnhancedNode } | null;
     hoveredNodeId: string | null;
-    handleStartConnection: (sourceNode: NodeData, startX: number, startY: number) => void;
+    handleStartConnection: (sourceNode: EnhancedNode, startX: number, startY: number) => void;
   }) => React.ReactNode;
 }
 
@@ -23,12 +23,12 @@ const EdgeCreationHandler: React.FC<EdgeCreationHandlerProps> = ({
   children 
 }) => {
   const [isCreatingEdge, setIsCreatingEdge] = useState(false);
-  const [edgePreview, setEdgePreview] = useState<{ startX: number; startY: number; endX: number; endY: number; sourceNode: NodeData } | null>(null);
+  const [edgePreview, setEdgePreview] = useState<{ startX: number; startY: number; endX: number; endY: number; sourceNode: EnhancedNode } | null>(null);
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const { toast } = useToast();
   const { addPointerEventListeners } = usePointerEvents();
 
-  const handleStartConnection = (sourceNode: NodeData, startX: number, startY: number) => {
+  const handleStartConnection = (sourceNode: EnhancedNode, startX: number, startY: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
