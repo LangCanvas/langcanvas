@@ -1,15 +1,25 @@
 
 import React, { useState, useRef } from 'react';
 import { Node as NodeType } from '../hooks/useNodes';
+import ConnectionHandle from './ConnectionHandle';
 
 interface NodeComponentProps {
   node: NodeType;
   isSelected: boolean;
+  canCreateEdge: boolean;
   onSelect: (id: string) => void;
   onMove: (id: string, x: number, y: number) => void;
+  onStartConnection: (sourceNode: NodeType, startX: number, startY: number) => void;
 }
 
-const NodeComponent: React.FC<NodeComponentProps> = ({ node, isSelected, onSelect, onMove }) => {
+const NodeComponent: React.FC<NodeComponentProps> = ({ 
+  node, 
+  isSelected, 
+  canCreateEdge, 
+  onSelect, 
+  onMove, 
+  onStartConnection 
+}) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const nodeRef = useRef<HTMLDivElement>(null);
@@ -79,7 +89,7 @@ const NodeComponent: React.FC<NodeComponentProps> = ({ node, isSelected, onSelec
       fontSize: '14px',
       fontWeight: '500',
       boxShadow: isDragging ? '0 4px 12px rgba(0,0,0,0.15)' : '0 2px 4px rgba(0,0,0,0.1)',
-      zIndex: isSelected ? 10 : 1,
+      zIndex: isSelected ? 10 : 5,
     };
 
     switch (node.type) {
@@ -132,6 +142,13 @@ const NodeComponent: React.FC<NodeComponentProps> = ({ node, isSelected, onSelec
       <span style={{ transform: node.type === 'condition' ? 'rotate(-45deg)' : 'none' }}>
         {node.name}
       </span>
+      
+      {/* Connection Handle */}
+      <ConnectionHandle
+        node={node}
+        canCreateEdge={canCreateEdge}
+        onStartConnection={onStartConnection}
+      />
     </div>
   );
 };

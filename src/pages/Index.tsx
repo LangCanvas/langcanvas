@@ -11,6 +11,7 @@ import NodePalette from '../components/NodePalette';
 import Canvas from '../components/Canvas';
 import PropertiesPanel from '../components/PropertiesPanel';
 import { useNodes } from '../hooks/useNodes';
+import { useEdges } from '../hooks/useEdges';
 
 const Index = () => {
   const { 
@@ -22,6 +23,17 @@ const Index = () => {
     deleteNode, 
     selectNode 
   } = useNodes();
+
+  const {
+    edges,
+    selectedEdge,
+    selectedEdgeId,
+    addEdge,
+    deleteEdge,
+    deleteEdgesForNode,
+    selectEdge,
+    canCreateEdge
+  } = useEdges();
 
   const handleNewProject = () => {
     console.log("New project - not implemented yet");
@@ -37,6 +49,15 @@ const Index = () => {
 
   const handleCodePreview = () => {
     console.log("Code preview - not implemented yet");
+  };
+
+  const handleDeleteNode = (nodeId: string) => {
+    deleteEdgesForNode(nodeId);
+    deleteNode(nodeId);
+  };
+
+  const handleAddEdge = (sourceNode: any, targetNode: any) => {
+    return addEdge(sourceNode, targetNode);
   };
 
   return (
@@ -101,11 +122,17 @@ const Index = () => {
         <main className="flex-1 relative overflow-auto">
           <Canvas
             nodes={nodes}
+            edges={edges}
             selectedNodeId={selectedNodeId}
+            selectedEdgeId={selectedEdgeId}
             onAddNode={addNode}
             onSelectNode={selectNode}
+            onSelectEdge={selectEdge}
             onMoveNode={updateNodePosition}
-            onDeleteNode={deleteNode}
+            onDeleteNode={handleDeleteNode}
+            onDeleteEdge={deleteEdge}
+            onAddEdge={handleAddEdge}
+            canCreateEdge={canCreateEdge}
           />
         </main>
 
@@ -115,8 +142,10 @@ const Index = () => {
             <h2 className="text-sm font-medium text-gray-700">Properties</h2>
           </div>
           <PropertiesPanel 
-            selectedNode={selectedNode} 
-            onDeleteNode={deleteNode}
+            selectedNode={selectedNode}
+            selectedEdge={selectedEdge}
+            onDeleteNode={handleDeleteNode}
+            onDeleteEdge={deleteEdge}
           />
         </aside>
       </div>

@@ -3,29 +3,48 @@ import React, { useRef, useEffect, useState } from 'react';
 import { Menu } from 'lucide-react';
 import { NodeType } from './NodePalette';
 import { Node as NodeData } from '../hooks/useNodes';
+import { Edge } from '../hooks/useEdges';
+import { useToast } from '@/hooks/use-toast';
 import NodeComponent from './Node';
+import EdgeRenderer from './EdgeRenderer';
 
 interface CanvasProps {
   className?: string;
   nodes: NodeData[];
+  edges: Edge[];
   selectedNodeId: string | null;
+  selectedEdgeId: string | null;
   onAddNode: (type: NodeData['type'], x: number, y: number) => NodeData | null;
   onSelectNode: (id: string | null) => void;
+  onSelectEdge: (id: string | null) => void;
   onMoveNode: (id: string, x: number, y: number) => void;
   onDeleteNode: (id: string) => void;
+  onDeleteEdge: (id: string) => void;
+  onAddEdge: (sourceNode: NodeData, targetNode: NodeData) => { success: boolean; error?: string };
+  canCreateEdge: (sourceNode: NodeData) => boolean;
 }
 
 const Canvas: React.FC<CanvasProps> = ({ 
   className, 
   nodes, 
+  edges,
   selectedNodeId, 
+  selectedEdgeId,
   onAddNode, 
   onSelectNode, 
+  onSelectEdge,
   onMoveNode,
-  onDeleteNode 
+  onDeleteNode,
+  onDeleteEdge,
+  onAddEdge,
+  canCreateEdge
 }) => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [isCreatingEdge, setIsCreatingEdge] = useState(false);
+  const [edgePreview, setEdgePreview] = useState<{ startX: number; startY: number; endX: number; endY: number; sourceNode: NodeData } | null>(null);
+  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -50,7 +69,7 @@ const Canvas: React.FC<CanvasProps> = ({
       if (data) {
         const nodeType: NodeType = JSON.parse(data);
         const rect = canvas.getBoundingClientRect();
-        const x = event.clientX - rect.left - 60; // Center the node on cursor
+        const x = event.clientX - rect.left - 60;
         const y = event.clientY - rect.top - 30;
         
         console.log(`Creating ${nodeType.name} node at (${x}, ${y})`);
@@ -59,10 +78,10 @@ const Canvas: React.FC<CanvasProps> = ({
     };
 
     const handleClick = (event: MouseEvent) => {
-      // If clicking on the canvas background (not on a node), deselect
       const target = event.target as HTMLElement;
       if (target === canvas || target.closest('.canvas-background')) {
         onSelectNode(null);
+        onSelectEdge(null);
       }
     };
 
@@ -77,20 +96,97 @@ const Canvas: React.FC<CanvasProps> = ({
       canvas.removeEventListener('drop', handleDrop);
       canvas.removeEventListener('click', handleClick);
     };
-  }, [onAddNode, onSelectNode]);
+  }, [onAddNode, onSelectNode, onSelectEdge]);
 
   // Handle keyboard events for deletion
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Delete' && selectedNodeId) {
+      if (event.key === 'Delete') {
         event.preventDefault();
-        onDeleteNode(selectedNodeId);
+        if (selectedNodeId) {
+          onDeleteNode(selectedNodeId);
+        } else if (selectedEdgeId) {
+          onDeleteEdge(selectedEdgeId);
+        }
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [selectedNodeId, onDeleteNode]);
+  }, [selectedNodeId, selectedEdgeId, onDeleteNode, onDeleteEdge]);
+
+  // Handle edge creation
+  const handleStartConnection = (sourceNode: NodeData, startX: number, startY: number) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const canvasRect = canvas.getBoundingClientRect();
+    const relativeStartX = startX - canvasRect.left;
+    const relativeStartY = startY - canvasRect.top;
+
+    setIsCreatingEdge(true);
+    setEdgePreview({
+      startX: relativeStartX,
+      startY: relativeStartY,
+      endX: relativeStartX,
+      endY: relativeStartY,
+      sourceNode
+    });
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const newEndX = e.clientX - canvasRect.left;
+      const newEndY = e.clientY - canvasRect.top;
+      
+      setEdgePreview(prev => prev ? {
+        ...prev,
+        endX: newEndX,
+        endY: newEndY
+      } : null);
+
+      // Check if hovering over a node
+      const elementUnderCursor = document.elementFromPoint(e.clientX, e.clientY);
+      const nodeElement = elementUnderCursor?.closest('[data-node-id]') as HTMLElement;
+      
+      if (nodeElement) {
+        const nodeId = nodeElement.getAttribute('data-node-id');
+        setHoveredNodeId(nodeId);
+      } else {
+        setHoveredNodeId(null);
+      }
+    };
+
+    const handleMouseUp = (e: MouseEvent) => {
+      const elementUnderCursor = document.elementFromPoint(e.clientX, e.clientY);
+      const nodeElement = elementUnderCursor?.closest('[data-node-id]') as HTMLElement;
+      
+      if (nodeElement) {
+        const targetNodeId = nodeElement.getAttribute('data-node-id');
+        const targetNode = nodes.find(n => n.id === targetNodeId);
+        
+        if (targetNode && targetNode.id !== sourceNode.id) {
+          const result = onAddEdge(sourceNode, targetNode);
+          if (!result.success && result.error) {
+            toast({
+              title: "Connection Failed",
+              description: result.error,
+              variant: "destructive",
+            });
+          }
+        }
+      }
+
+      // Cleanup
+      setIsCreatingEdge(false);
+      setEdgePreview(null);
+      setHoveredNodeId(null);
+      
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
 
   return (
     <div
@@ -106,6 +202,42 @@ const Canvas: React.FC<CanvasProps> = ({
         backgroundSize: '20px 20px'
       }}
     >
+      {/* Edge Renderer */}
+      <EdgeRenderer
+        edges={edges}
+        nodes={nodes}
+        selectedEdgeId={selectedEdgeId}
+        onSelectEdge={onSelectEdge}
+      />
+
+      {/* Edge Preview while creating */}
+      {edgePreview && (
+        <svg className="absolute inset-0 pointer-events-none z-10" style={{ width: '100%', height: '100%' }}>
+          <defs>
+            <marker
+              id="arrowhead-preview"
+              markerWidth="10"
+              markerHeight="7"
+              refX="9"
+              refY="3.5"
+              orient="auto"
+            >
+              <polygon points="0 0, 10 3.5, 0 7" fill="#6b7280" />
+            </marker>
+          </defs>
+          <line
+            x1={edgePreview.startX}
+            y1={edgePreview.startY}
+            x2={edgePreview.endX}
+            y2={edgePreview.endY}
+            stroke="#6b7280"
+            strokeWidth="2"
+            strokeDasharray="5,5"
+            markerEnd="url(#arrowhead-preview)"
+          />
+        </svg>
+      )}
+
       <div className="canvas-background absolute inset-0">
         {isDragOver && (
           <div className="absolute inset-4 border-2 border-dashed border-blue-300 rounded-lg bg-blue-50/50 flex items-center justify-center">
@@ -128,13 +260,19 @@ const Canvas: React.FC<CanvasProps> = ({
 
       {/* Render all nodes */}
       {nodes.map((node) => (
-        <NodeComponent
+        <div
           key={node.id}
-          node={node}
-          isSelected={selectedNodeId === node.id}
-          onSelect={onSelectNode}
-          onMove={onMoveNode}
-        />
+          className={hoveredNodeId === node.id ? 'ring-2 ring-blue-400 ring-opacity-50 rounded-lg' : ''}
+        >
+          <NodeComponent
+            node={node}
+            isSelected={selectedNodeId === node.id}
+            canCreateEdge={canCreateEdge(node)}
+            onSelect={onSelectNode}
+            onMove={onMoveNode}
+            onStartConnection={handleStartConnection}
+          />
+        </div>
       ))}
     </div>
   );

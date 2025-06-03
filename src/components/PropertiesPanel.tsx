@@ -1,17 +1,26 @@
 
 import React from 'react';
-import { Code, Trash2 } from 'lucide-react';
+import { Code, Trash2, ArrowRight } from 'lucide-react';
 import { Node } from '../hooks/useNodes';
+import { Edge } from '../hooks/useEdges';
 import { Button } from '@/components/ui/button';
 
 interface PropertiesPanelProps {
   selectedNode?: Node;
+  selectedEdge?: Edge;
   className?: string;
   onDeleteNode?: (id: string) => void;
+  onDeleteEdge?: (id: string) => void;
 }
 
-const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedNode, className, onDeleteNode }) => {
-  if (!selectedNode) {
+const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ 
+  selectedNode, 
+  selectedEdge, 
+  className, 
+  onDeleteNode, 
+  onDeleteEdge 
+}) => {
+  if (!selectedNode && !selectedEdge) {
     return (
       <div className={`flex-1 p-4 ${className}`}>
         <div className="flex items-center justify-center h-full text-center text-gray-400">
@@ -19,7 +28,7 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedNode, classNa
             <div className="mb-2">
               <Code className="w-8 h-8 mx-auto mb-3 opacity-30" />
             </div>
-            <p className="text-sm">Select a node to edit its properties</p>
+            <p className="text-sm">Select a node or edge to edit its properties</p>
           </div>
         </div>
       </div>
@@ -36,6 +45,55 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedNode, classNa
     }
   };
 
+  if (selectedEdge) {
+    return (
+      <div className={`flex-1 p-4 ${className}`}>
+        <div className="space-y-4">
+          <div className="pb-2 border-b border-gray-200">
+            <h3 className="text-sm font-medium text-gray-700">Edge Properties</h3>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Connection
+            </label>
+            <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded border">
+              <span className="truncate">{selectedEdge.source}</span>
+              <ArrowRight className="w-4 h-4 flex-shrink-0" />
+              <span className="truncate">{selectedEdge.target}</span>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Edge ID
+            </label>
+            <p className="text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded border font-mono text-xs">
+              {selectedEdge.id}
+            </p>
+          </div>
+
+          {onDeleteEdge && (
+            <div className="pt-4 border-t border-gray-200">
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => onDeleteEdge(selectedEdge.id)}
+                className="w-full"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete Edge
+              </Button>
+              <p className="text-xs text-gray-500 mt-2 text-center">
+                You can also press Delete key to remove the selected edge
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`flex-1 p-4 ${className}`}>
       <div className="space-y-4">
@@ -48,7 +106,7 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedNode, classNa
             Node Type
           </label>
           <p className="text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded border">
-            {getNodeTypeDisplayName(selectedNode.type)}
+            {getNodeTypeDisplayName(selectedNode!.type)}
           </p>
         </div>
         
@@ -60,7 +118,7 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedNode, classNa
             type="text"
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             placeholder="Enter node name"
-            defaultValue={selectedNode.name || ''}
+            defaultValue={selectedNode!.name || ''}
             readOnly
             title="Node name editing will be available in a future update"
           />
@@ -76,7 +134,7 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedNode, classNa
               <input
                 type="number"
                 className="w-full px-2 py-1 text-sm border border-gray-300 rounded bg-gray-50"
-                value={Math.round(selectedNode.x)}
+                value={Math.round(selectedNode!.x)}
                 readOnly
               />
             </div>
@@ -85,7 +143,7 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedNode, classNa
               <input
                 type="number"
                 className="w-full px-2 py-1 text-sm border border-gray-300 rounded bg-gray-50"
-                value={Math.round(selectedNode.y)}
+                value={Math.round(selectedNode!.y)}
                 readOnly
               />
             </div>
@@ -110,7 +168,7 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedNode, classNa
             <Button
               variant="destructive"
               size="sm"
-              onClick={() => onDeleteNode(selectedNode.id)}
+              onClick={() => onDeleteNode(selectedNode!.id)}
               className="w-full"
             >
               <Trash2 className="w-4 h-4 mr-2" />
