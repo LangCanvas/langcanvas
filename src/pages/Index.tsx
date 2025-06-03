@@ -25,6 +25,7 @@ const Index = () => {
     selectedNodeId, 
     addNode, 
     updateNodePosition, 
+    updateNodeProperties,
     deleteNode, 
     selectNode 
   } = useNodes();
@@ -34,10 +35,12 @@ const Index = () => {
     selectedEdge,
     selectedEdgeId,
     addEdge,
+    updateEdgeProperties,
     deleteEdge,
     deleteEdgesForNode,
     selectEdge,
-    canCreateEdge
+    canCreateEdge,
+    getNodeOutgoingEdges
   } = useEdges();
 
   const handleNewProject = () => {
@@ -64,6 +67,8 @@ const Index = () => {
   const handleAddEdge = (sourceNode: any, targetNode: any) => {
     return addEdge(sourceNode, targetNode);
   };
+
+  const nodeOutgoingEdges = selectedNode ? getNodeOutgoingEdges(selectedNode.id) : [];
 
   return (
     <div className="h-screen flex flex-col bg-gray-50">
@@ -206,6 +211,10 @@ const Index = () => {
                     selectedEdge={selectedEdge}
                     onDeleteNode={handleDeleteNode}
                     onDeleteEdge={deleteEdge}
+                    onUpdateNodeProperties={updateNodeProperties}
+                    onUpdateEdgeProperties={updateEdgeProperties}
+                    allNodes={nodes}
+                    nodeOutgoingEdges={nodeOutgoingEdges}
                   />
                 )}
               </div>
@@ -241,6 +250,10 @@ const Index = () => {
             selectedEdge={selectedEdge}
             onDeleteNode={handleDeleteNode}
             onDeleteEdge={deleteEdge}
+            onUpdateNodeProperties={updateNodeProperties}
+            onUpdateEdgeProperties={updateEdgeProperties}
+            allNodes={nodes}
+            nodeOutgoingEdges={nodeOutgoingEdges}
           />
         </aside>
       </div>

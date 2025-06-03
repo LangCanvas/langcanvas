@@ -7,6 +7,7 @@ export interface Edge {
   source: string;
   target: string;
   label?: string;
+  value?: string;
 }
 
 export const useEdges = () => {
@@ -76,6 +77,14 @@ export const useEdges = () => {
     return { valid: true };
   }, [findPath]);
 
+  const generateBranchLabel = useCallback((sourceNodeType: string, existingEdges: Edge[], sourceNodeId: string): string => {
+    if (sourceNodeType === 'condition') {
+      const outgoingEdges = existingEdges.filter(edge => edge.source === sourceNodeId);
+      return `Branch${outgoingEdges.length + 1}`;
+    }
+    return '';
+  }, []);
+
   const addEdge = useCallback((sourceNode: Node, targetNode: Node) => {
     const validation = validateConnection(sourceNode, targetNode, edges);
     
@@ -84,15 +93,24 @@ export const useEdges = () => {
     }
 
     const id = `edge-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const label = generateBranchLabel(sourceNode.type, edges, sourceNode.id);
+    
     const newEdge: Edge = {
       id,
       source: sourceNode.id,
-      target: targetNode.id
+      target: targetNode.id,
+      label: label || undefined
     };
 
     setEdges(prev => [...prev, newEdge]);
     return { success: true, edge: newEdge };
-  }, [edges, validateConnection]);
+  }, [edges, validateConnection, generateBranchLabel]);
+
+  const updateEdgeProperties = useCallback((edgeId: string, updates: Partial<Edge>) => {
+    setEdges(prev => prev.map(edge => 
+      edge.id === edgeId ? { ...edge, ...updates } : edge
+    ));
+  }, []);
 
   const deleteEdge = useCallback((edgeId: string) => {
     setEdges(prev => prev.filter(edge => edge.id !== edgeId));
@@ -108,6 +126,12 @@ export const useEdges = () => {
     }
   }, [selectedEdgeId, edges]);
 
+  const updateEdgesForNodeRename = useCallback((oldNodeId: string, newNodeId: string) => {
+    // Note: This is for if we used names as IDs, but we use unique IDs
+    // This function would update edge references if needed
+    console.log('Node rename detected:', oldNodeId, '->', newNodeId);
+  }, []);
+
   const selectEdge = useCallback((edgeId: string | null) => {
     setSelectedEdgeId(edgeId);
   }, []);
@@ -122,15 +146,22 @@ export const useEdges = () => {
     return true; // Condition nodes can have multiple outgoing edges
   }, [edges]);
 
+  const getNodeOutgoingEdges = useCallback((nodeId: string) => {
+    return edges.filter(edge => edge.source === nodeId);
+  }, [edges]);
+
   return {
     edges,
     selectedEdge,
     selectedEdgeId,
     addEdge,
+    updateEdgeProperties,
     deleteEdge,
     deleteEdgesForNode,
+    updateEdgesForNodeRename,
     selectEdge,
     validateConnection,
-    canCreateEdge
+    canCreateEdge,
+    getNodeOutgoingEdges
   };
 };

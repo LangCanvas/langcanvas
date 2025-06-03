@@ -7,6 +7,8 @@ export interface Node {
   type: 'start' | 'tool' | 'condition' | 'end';
   x: number;
   y: number;
+  description?: string;
+  conditionVariable?: string;
 }
 
 export const useNodes = () => {
@@ -46,7 +48,9 @@ export const useNodes = () => {
       name,
       type,
       x,
-      y
+      y,
+      description: '',
+      conditionVariable: type === 'condition' ? '' : undefined
     };
 
     setNodes(prev => [...prev, newNode]);
@@ -56,6 +60,12 @@ export const useNodes = () => {
   const updateNodePosition = useCallback((id: string, x: number, y: number) => {
     setNodes(prev => prev.map(node => 
       node.id === id ? { ...node, x, y } : node
+    ));
+  }, []);
+
+  const updateNodeProperties = useCallback((id: string, updates: Partial<Node>) => {
+    setNodes(prev => prev.map(node => 
+      node.id === id ? { ...node, ...updates } : node
     ));
   }, []);
 
@@ -78,6 +88,7 @@ export const useNodes = () => {
     selectedNodeId,
     addNode,
     updateNodePosition,
+    updateNodeProperties,
     deleteNode,
     selectNode
   };
