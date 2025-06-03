@@ -1,8 +1,14 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { EnhancedNode } from '../../types/nodeTypes';
 import { usePointerEvents } from '../../hooks/usePointerEvents';
-import { useToast } from '@/hooks/use-toast';
+
+interface EdgePreview {
+  startX: number;
+  startY: number;
+  endX: number;
+  endY: number;
+}
 
 interface EdgeCreationHandlerProps {
   nodes: EnhancedNode[];
@@ -10,107 +16,89 @@ interface EdgeCreationHandlerProps {
   canvasRef: React.RefObject<HTMLDivElement>;
   children: (props: {
     isCreatingEdge: boolean;
-    edgePreview: { startX: number; startY: number; endX: number; endY: number; sourceNode: EnhancedNode } | null;
+    edgePreview: EdgePreview | null;
     hoveredNodeId: string | null;
     handleStartConnection: (sourceNode: EnhancedNode, startX: number, startY: number) => void;
   }) => React.ReactNode;
 }
 
-const EdgeCreationHandler: React.FC<EdgeCreationHandlerProps> = ({ 
-  nodes, 
-  onAddEdge, 
-  canvasRef, 
-  children 
+const EdgeCreationHandler: React.FC<EdgeCreationHandlerProps> = ({
+  nodes,
+  onAddEdge,
+  canvasRef,
+  children
 }) => {
   const [isCreatingEdge, setIsCreatingEdge] = useState(false);
-  const [edgePreview, setEdgePreview] = useState<{ startX: number; startY: number; endX: number; endY: number; sourceNode: EnhancedNode } | null>(null);
+  const [edgePreview, setEdgePreview] = useState<EdgePreview | null>(null);
+  const [sourceNode, setSourceNode] = useState<EnhancedNode | null>(null);
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
-  const { toast } = useToast();
-  const { addPointerEventListeners } = usePointerEvents();
+  const { getPointerEvent, addPointerEventListeners } = usePointerEvents();
 
-  const handleStartConnection = (sourceNode: EnhancedNode, startX: number, startY: number) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const canvasRect = canvas.getBoundingClientRect();
-    const relativeStartX = startX - canvasRect.left;
-    const relativeStartY = startY - canvasRect.top;
-
+  const handleStartConnection = useCallback((node: EnhancedNode, startX: number, startY: number) => {
+    console.log(`🔗 Starting edge creation from ${node.label}`);
     setIsCreatingEdge(true);
+    setSourceNode(node);
     setEdgePreview({
-      startX: relativeStartX,
-      startY: relativeStartY,
-      endX: relativeStartX,
-      endY: relativeStartY,
-      sourceNode
+      startX,
+      startY,
+      endX: startX,
+      endY: startY
     });
+  }, []);
 
-    const handlePointerMove = (pointerEvent: any) => {
-      const newEndX = pointerEvent.clientX - canvasRect.left;
-      const newEndY = pointerEvent.clientY - canvasRect.top;
-      
-      setEdgePreview(prev => prev ? {
-        ...prev,
-        endX: newEndX,
-        endY: newEndY
-      } : null);
+  const handlePointerMove = useCallback((pointerEvent: any) => {
+    if (!isCreatingEdge || !canvasRef.current) return;
 
-      // Check if hovering over a node
-      const elementUnderCursor = document.elementFromPoint(pointerEvent.clientX, pointerEvent.clientY);
-      const nodeElement = elementUnderCursor?.closest('[data-node-id]') as HTMLElement;
-      
-      if (nodeElement) {
-        const nodeId = nodeElement.getAttribute('data-node-id');
-        setHoveredNodeId(nodeId);
-      } else {
-        setHoveredNodeId(null);
-      }
-    };
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = pointerEvent.clientX - rect.left;
+    const y = pointerEvent.clientY - rect.top;
 
-    const handlePointerEnd = (pointerEvent: any) => {
-      const elementUnderCursor = document.elementFromPoint(pointerEvent.clientX, pointerEvent.clientY);
-      const nodeElement = elementUnderCursor?.closest('[data-node-id]') as HTMLElement;
-      
-      if (nodeElement) {
-        const targetNodeId = nodeElement.getAttribute('data-node-id');
-        const targetNode = nodes.find(n => n.id === targetNodeId);
-        
-        if (targetNode && targetNode.id !== sourceNode.id) {
-          const result = onAddEdge(sourceNode, targetNode);
-          if (!result.success && result.error) {
-            toast({
-              title: "Connection Failed",
-              description: result.error,
-              variant: "destructive",
-            });
-          }
+    setEdgePreview(prev => prev ? { ...prev, endX: x, endY: y } : null);
+
+    // Check if hovering over a node
+    const nodeElement = document.elementFromPoint(pointerEvent.clientX, pointerEvent.clientY);
+    const nodeContainer = nodeElement?.closest('[data-node-id]');
+    const nodeId = nodeContainer?.getAttribute('data-node-id');
+    
+    if (nodeId && nodeId !== sourceNode?.id) {
+      setHoveredNodeId(nodeId);
+    } else {
+      setHoveredNodeId(null);
+    }
+  }, [isCreatingEdge, sourceNode?.id, canvasRef]);
+
+  const handlePointerEnd = useCallback((pointerEvent: any) => {
+    if (!isCreatingEdge || !sourceNode) return;
+
+    // Find the target node
+    const nodeElement = document.elementFromPoint(pointerEvent.clientX, pointerEvent.clientY);
+    const nodeContainer = nodeElement?.closest('[data-node-id]');
+    const targetNodeId = nodeContainer?.getAttribute('data-node-id');
+    
+    if (targetNodeId && targetNodeId !== sourceNode.id) {
+      const targetNode = nodes.find(node => node.id === targetNodeId);
+      if (targetNode) {
+        console.log(`🔗 Completing edge: ${sourceNode.label} -> ${targetNode.label}`);
+        const result = onAddEdge(sourceNode, targetNode);
+        if (!result.success && result.error) {
+          console.error('Edge creation failed:', result.error);
         }
       }
+    }
 
-      // Cleanup
-      setIsCreatingEdge(false);
-      setEdgePreview(null);
-      setHoveredNodeId(null);
-    };
+    // Reset state
+    setIsCreatingEdge(false);
+    setEdgePreview(null);
+    setSourceNode(null);
+    setHoveredNodeId(null);
+  }, [isCreatingEdge, sourceNode, nodes, onAddEdge]);
+
+  React.useEffect(() => {
+    if (!isCreatingEdge) return;
 
     const cleanup = addPointerEventListeners(document.body, handlePointerMove, handlePointerEnd);
-    
-    // Auto-cleanup after a timeout for touch devices
-    const timeout = setTimeout(() => {
-      if (isCreatingEdge) {
-        setIsCreatingEdge(false);
-        setEdgePreview(null);
-        setHoveredNodeId(null);
-        cleanup();
-      }
-    }, 10000);
-
-    // Return cleanup function that also clears timeout
-    return () => {
-      cleanup();
-      clearTimeout(timeout);
-    };
-  };
+    return cleanup;
+  }, [isCreatingEdge, handlePointerMove, handlePointerEnd, addPointerEventListeners]);
 
   return (
     <>
