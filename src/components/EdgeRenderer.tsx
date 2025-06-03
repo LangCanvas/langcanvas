@@ -143,19 +143,22 @@ const EdgeRenderer: React.FC<EdgeRendererProps> = ({
         }
         
         return (
-          <line
-            key={edge.id}
-            x1={start.x}
-            y1={start.y}
-            x2={end.x}
-            y2={end.y}
-            stroke={strokeColor}
-            strokeWidth={strokeWidth}
-            markerEnd={markerEnd}
-            className="pointer-events-auto cursor-pointer hover:stroke-blue-500"
-            onClick={(e) => handleEdgeClick(e, edge.id)}
-            title={tooltip}
-          />
+          <g key={edge.id}>
+            <line
+              x1={start.x}
+              y1={start.y}
+              x2={end.x}
+              y2={end.y}
+              stroke={strokeColor}
+              strokeWidth={strokeWidth}
+              markerEnd={markerEnd}
+              className="pointer-events-auto cursor-pointer hover:stroke-blue-500"
+              onClick={(e) => handleEdgeClick(e, edge.id)}
+            />
+            {tooltip && (
+              <title>{tooltip}</title>
+            )}
+          </g>
         );
       })}
     </svg>

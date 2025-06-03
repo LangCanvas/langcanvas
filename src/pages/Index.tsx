@@ -16,7 +16,8 @@ import { useValidation } from '../hooks/useValidation';
 
 const Index = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [activePanel, setActivePanel] = useState<'palette' | 'properties' | 'validation' | null>(null);
+  const [activePanel, setActivePanel] = useState<'palette' | 'properties' | null>(null);
+  const [showValidationPanel, setShowValidationPanel] = useState(false);
   
   const { 
     nodes, 
@@ -102,7 +103,7 @@ const Index = () => {
     setActivePanel(null);
   };
 
-  const handlePanelToggle = (panel: 'palette' | 'properties' | 'validation') => {
+  const handlePanelToggle = (panel: 'palette' | 'properties') => {
     console.log(`Panel toggle clicked: ${panel}`);
     if (activePanel === panel) {
       setActivePanel(null);
@@ -115,6 +116,7 @@ const Index = () => {
     console.log("Closing panels");
     setActivePanel(null);
     setIsMobileMenuOpen(false);
+    setShowValidationPanel(false);
   };
 
   const nodeOutgoingEdges = selectedNode ? getNodeOutgoingEdges(selectedNode.id) : [];
@@ -192,7 +194,7 @@ const Index = () => {
             <h2 className="text-sm font-medium text-gray-700">Properties</h2>
             {validationResult.issues.length > 0 && (
               <button
-                onClick={() => handlePanelToggle('validation')}
+                onClick={() => setShowValidationPanel(!showValidationPanel)}
                 className="text-xs px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 transition-colors"
               >
                 <ValidationPanel validationResult={validationResult} compact />
@@ -200,10 +202,10 @@ const Index = () => {
             )}
           </div>
           
-          {activePanel === 'validation' ? (
+          {showValidationPanel ? (
             <ValidationPanel 
               validationResult={validationResult} 
-              onClose={() => setActivePanel(null)}
+              onClose={() => setShowValidationPanel(false)}
             />
           ) : (
             <PropertiesPanel 
