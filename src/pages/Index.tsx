@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import NodePalette from '../components/NodePalette';
 import Canvas from '../components/Canvas';
@@ -10,6 +9,7 @@ import MobileBottomNav from '../components/layout/MobileBottomNav';
 import MobilePanelOverlay from '../components/layout/MobilePanelOverlay';
 import { useNodes } from '../hooks/useNodes';
 import { useEdges } from '../hooks/useEdges';
+import { useNodeCreation } from '../hooks/useNodeCreation';
 import { useWorkflowSerializer } from '../hooks/useWorkflowSerializer';
 import { useWorkflowActions } from '../hooks/useWorkflowActions';
 import { useValidation } from '../hooks/useValidation';
@@ -42,6 +42,14 @@ const Index = () => {
     canCreateEdge,
     getNodeOutgoingEdges
   } = useEdges();
+
+  // Enhanced node creation with deduplication
+  const {
+    createNode,
+    pendingNodeType,
+    setPendingCreation,
+    clearPendingCreation
+  } = useNodeCreation({ onAddNode: addNode });
 
   const {
     exportWorkflow,
@@ -116,6 +124,7 @@ const Index = () => {
     setActivePanel(null);
     setIsMobileMenuOpen(false);
     setShowValidationPanel(false);
+    clearPendingCreation();
   };
 
   const nodeOutgoingEdges = selectedNode ? getNodeOutgoingEdges(selectedNode.id) : [];
@@ -146,7 +155,7 @@ const Index = () => {
       <div className="flex-1 flex overflow-hidden">
         {/* Desktop Left Sidebar - Node Palette */}
         <aside className="hidden lg:flex w-64 bg-white border-r border-gray-200 flex-col">
-          <NodePalette />
+          <NodePalette onNodeTypeSelect={setPendingCreation} />
         </aside>
 
         <MobilePanelOverlay
@@ -171,7 +180,7 @@ const Index = () => {
             edges={edges}
             selectedNodeId={selectedNodeId}
             selectedEdgeId={selectedEdgeId}
-            onAddNode={addNode}
+            onAddNode={createNode}
             onSelectNode={selectNode}
             onSelectEdge={selectEdge}
             onMoveNode={updateNodePosition}
@@ -183,6 +192,8 @@ const Index = () => {
             getEdgeValidationClass={getEdgeErrorClass}
             getNodeTooltip={getNodeTooltip}
             getEdgeTooltip={getEdgeTooltip}
+            pendingNodeType={pendingNodeType}
+            onClearPendingCreation={clearPendingCreation}
           />
         </main>
 

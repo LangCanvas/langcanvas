@@ -2,7 +2,11 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 
-const NodePalette = () => {
+interface NodePaletteProps {
+  onNodeTypeSelect?: (type: string) => void;
+}
+
+const NodePalette: React.FC<NodePaletteProps> = ({ onNodeTypeSelect }) => {
   const nodeTypes = [
     { type: 'start', label: 'Start', color: 'bg-green-100 border-green-300 text-green-800' },
     { type: 'tool', label: 'Tool', color: 'bg-blue-100 border-blue-300 text-blue-800' },
@@ -12,34 +16,36 @@ const NodePalette = () => {
 
   const handleDragStart = (e: React.DragEvent, nodeType: string) => {
     e.dataTransfer.setData('text/plain', nodeType);
+    e.dataTransfer.effectAllowed = 'copy';
   };
 
-  const handleTouchStart = (e: React.TouchEvent, nodeType: string) => {
-    // Set up for mobile node creation
-    const canvas = document.getElementById('canvas');
-    if (canvas) {
-      canvas.setAttribute('data-node-type', nodeType);
-    }
-  };
-
-  const handleClick = (nodeType: string) => {
-    // For mobile: set the node type on canvas for next tap
-    const canvas = document.getElementById('canvas');
-    if (canvas) {
-      canvas.setAttribute('data-node-type', nodeType);
-      
-      // Show visual feedback
-      const instruction = document.createElement('div');
-      instruction.className = 'fixed top-4 left-4 right-4 bg-blue-100 border border-blue-300 rounded-lg p-3 text-blue-800 text-sm z-50 lg:hidden';
-      instruction.textContent = `Tap on the canvas to place the ${nodeType} node`;
-      document.body.appendChild(instruction);
-      
-      // Remove instruction after 3 seconds
-      setTimeout(() => {
-        if (document.body.contains(instruction)) {
-          document.body.removeChild(instruction);
-        }
-      }, 3000);
+  const handleClick = (e: React.MouseEvent, nodeType: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    console.log(`🎯 Node palette clicked: ${nodeType}`);
+    
+    if (onNodeTypeSelect) {
+      onNodeTypeSelect(nodeType);
+    } else {
+      // Fallback for mobile: set the node type on canvas for next tap
+      const canvas = document.getElementById('canvas');
+      if (canvas) {
+        canvas.setAttribute('data-node-type', nodeType);
+        
+        // Show visual feedback
+        const instruction = document.createElement('div');
+        instruction.className = 'fixed top-4 left-4 right-4 bg-blue-100 border border-blue-300 rounded-lg p-3 text-blue-800 text-sm z-50 lg:hidden';
+        instruction.textContent = `Tap on the canvas to place the ${nodeType} node`;
+        document.body.appendChild(instruction);
+        
+        // Remove instruction after 3 seconds
+        setTimeout(() => {
+          if (document.body.contains(instruction)) {
+            document.body.removeChild(instruction);
+          }
+        }, 3000);
+      }
     }
   };
 
@@ -54,8 +60,7 @@ const NodePalette = () => {
             className={`w-full h-12 ${color} border-2 border-dashed hover:border-solid transition-all duration-200 touch-manipulation`}
             draggable
             onDragStart={(e) => handleDragStart(e, type)}
-            onTouchStart={(e) => handleTouchStart(e, type)}
-            onClick={() => handleClick(type)}
+            onClick={(e) => handleClick(e, type)}
             style={{ 
               minHeight: '48px',
               touchAction: 'manipulation'

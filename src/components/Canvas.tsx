@@ -2,6 +2,7 @@
 import React, { useRef, useEffect } from 'react';
 import { Node as NodeData } from '../hooks/useNodes';
 import { Edge } from '../hooks/useEdges';
+import { useNodeCreation } from '../hooks/useNodeCreation';
 import { useMobileDetection } from '../hooks/useMobileDetection';
 import DragDropHandler from './canvas/DragDropHandler';
 import EdgeCreationHandler from './canvas/EdgeCreationHandler';
@@ -29,6 +30,8 @@ interface CanvasProps {
   getEdgeValidationClass?: (edgeId: string) => string;
   getNodeTooltip?: (nodeId: string) => string;
   getEdgeTooltip?: (edgeId: string) => string;
+  pendingNodeType?: NodeData['type'] | null;
+  onClearPendingCreation?: () => void;
 }
 
 const Canvas: React.FC<CanvasProps> = ({ 
@@ -48,10 +51,14 @@ const Canvas: React.FC<CanvasProps> = ({
   getNodeValidationClass,
   getEdgeValidationClass,
   getNodeTooltip,
-  getEdgeTooltip
+  getEdgeTooltip,
+  pendingNodeType,
+  onClearPendingCreation
 }) => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const isMobile = useMobileDetection();
+  
+  const { createNode } = useNodeCreation({ onAddNode });
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -61,43 +68,46 @@ const Canvas: React.FC<CanvasProps> = ({
       const target = event.target as HTMLElement;
       
       // Check if we're trying to place a node (mobile)
-      const nodeType = canvas.getAttribute('data-node-type') as NodeData['type'];
+      const nodeType = (pendingNodeType || canvas.getAttribute('data-node-type')) as NodeData['type'];
+      
       if (nodeType && (target === canvas || target.closest('.canvas-background'))) {
+        event.preventDefault();
+        event.stopPropagation();
+        
         const rect = canvas.getBoundingClientRect();
         const x = event.clientX - rect.left;
         const y = event.clientY - rect.top;
-        onAddNode(nodeType, x, y);
-        canvas.removeAttribute('data-node-type');
         
-        // Remove any instruction messages
-        const instructions = document.querySelectorAll('.fixed.bg-blue-100');
-        instructions.forEach(inst => {
-          if (document.body.contains(inst)) {
-            document.body.removeChild(inst);
-          }
-        });
+        console.log(`🎯 Canvas click: placing ${nodeType} at (${x}, ${y})`);
+        
+        const result = createNode(nodeType, x, y);
+        
+        if (result && onClearPendingCreation) {
+          onClearPendingCreation();
+        }
+        
         return;
       }
       
-      // Regular selection logic
-      if (target === canvas || target.closest('.canvas-background')) {
+      // Regular selection logic - only if no pending node creation
+      if (!nodeType && (target === canvas || target.closest('.canvas-background'))) {
         onSelectNode(null);
         onSelectEdge(null);
       }
     };
 
-    canvas.addEventListener('click', handleClick);
-    return () => canvas.removeEventListener('click', handleClick);
-  }, [onSelectNode, onSelectEdge, onAddNode]);
+    canvas.addEventListener('click', handleClick, { capture: true });
+    return () => canvas.removeEventListener('click', handleClick, { capture: true });
+  }, [onSelectNode, onSelectEdge, createNode, pendingNodeType, onClearPendingCreation]);
 
   return (
-    <DragDropHandler onAddNode={onAddNode}>
+    <DragDropHandler onAddNode={createNode}>
       <div
         ref={canvasRef}
         id="canvas"
         className={`w-full h-full relative transition-colors ${className} ${
           isMobile ? 'touch-pan-y' : ''
-        }`}
+        } ${pendingNodeType ? 'cursor-crosshair' : ''}`}
         style={{
           touchAction: 'pan-x pan-y',
         }}
@@ -139,6 +149,13 @@ const Canvas: React.FC<CanvasProps> = ({
               {isMobile && isCreatingEdge && (
                 <div className="absolute top-4 left-4 right-4 bg-blue-100 border border-blue-300 rounded-lg p-3 text-blue-800 text-sm z-20">
                   Drag to another node to create a connection
+                </div>
+              )}
+
+              {/* Pending node creation instruction */}
+              {pendingNodeType && (
+                <div className="absolute top-4 left-4 right-4 bg-green-100 border border-green-300 rounded-lg p-3 text-green-800 text-sm z-20">
+                  Click on the canvas to place the {pendingNodeType} node
                 </div>
               )}
 
