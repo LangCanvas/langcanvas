@@ -1,6 +1,7 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { Node } from '../hooks/useNodes';
+import { usePointerEvents } from '../hooks/usePointerEvents';
 
 interface ConnectionHandleProps {
   node: Node;
@@ -11,12 +12,14 @@ interface ConnectionHandleProps {
 const ConnectionHandle: React.FC<ConnectionHandleProps> = ({ node, canCreateEdge, onStartConnection }) => {
   const [isHovered, setIsHovered] = useState(false);
   const handleRef = useRef<HTMLDivElement>(null);
+  const { getPointerEvent } = usePointerEvents();
 
-  const handleMouseDown = (e: React.MouseEvent) => {
+  const handlePointerDown = (e: React.MouseEvent | React.TouchEvent) => {
     if (!canCreateEdge) return;
     
-    e.preventDefault();
-    e.stopPropagation();
+    const pointerEvent = getPointerEvent(e);
+    pointerEvent.preventDefault();
+    pointerEvent.stopPropagation();
     
     const rect = handleRef.current?.getBoundingClientRect();
     if (rect) {
@@ -27,28 +30,30 @@ const ConnectionHandle: React.FC<ConnectionHandleProps> = ({ node, canCreateEdge
   // Don't show handle for end nodes (no outgoing connections)
   if (node.type === 'end') return null;
 
-  // Position handle on the right side of the node
+  // Position handle on the right side of the node with larger touch target
   const handleStyle = {
     position: 'absolute' as const,
-    right: '-6px',
+    right: '-8px',
     top: '50%',
     transform: 'translateY(-50%)',
-    width: '12px',
-    height: '12px',
+    width: '16px', // Larger for better touch target
+    height: '16px', // Larger for better touch target
     borderRadius: '50%',
     backgroundColor: canCreateEdge ? (isHovered ? '#3b82f6' : '#9ca3af') : '#d1d5db',
     border: '2px solid white',
     cursor: canCreateEdge ? 'crosshair' : 'not-allowed',
     zIndex: 20,
     opacity: canCreateEdge ? 1 : 0.5,
-    transition: 'all 0.2s ease'
+    transition: 'all 0.2s ease',
+    touchAction: 'none', // Prevent default touch behaviors
   };
 
   return (
     <div
       ref={handleRef}
       style={handleStyle}
-      onMouseDown={handleMouseDown}
+      onMouseDown={handlePointerDown}
+      onTouchStart={handlePointerDown}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       title={canCreateEdge ? "Drag to connect" : "Cannot create more connections"}

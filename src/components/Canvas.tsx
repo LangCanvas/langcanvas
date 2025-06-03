@@ -1,10 +1,10 @@
-
 import React, { useRef, useEffect, useState } from 'react';
 import { Menu } from 'lucide-react';
 import { NodeType } from './NodePalette';
 import { Node as NodeData } from '../hooks/useNodes';
 import { Edge } from '../hooks/useEdges';
 import { useToast } from '@/hooks/use-toast';
+import { usePointerEvents } from '../hooks/usePointerEvents';
 import NodeComponent from './Node';
 import EdgeRenderer from './EdgeRenderer';
 
@@ -44,7 +44,20 @@ const Canvas: React.FC<CanvasProps> = ({
   const [isCreatingEdge, setIsCreatingEdge] = useState(false);
   const [edgePreview, setEdgePreview] = useState<{ startX: number; startY: number; endX: number; endY: number; sourceNode: NodeData } | null>(null);
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
   const { toast } = useToast();
+  const { getPointerEvent, addPointerEventListeners } = usePointerEvents();
+
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768 || 'ontouchstart' in window);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -115,7 +128,7 @@ const Canvas: React.FC<CanvasProps> = ({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [selectedNodeId, selectedEdgeId, onDeleteNode, onDeleteEdge]);
 
-  // Handle edge creation
+  // Handle edge creation with unified pointer events
   const handleStartConnection = (sourceNode: NodeData, startX: number, startY: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -133,9 +146,9 @@ const Canvas: React.FC<CanvasProps> = ({
       sourceNode
     });
 
-    const handleMouseMove = (e: MouseEvent) => {
-      const newEndX = e.clientX - canvasRect.left;
-      const newEndY = e.clientY - canvasRect.top;
+    const handlePointerMove = (pointerEvent: any) => {
+      const newEndX = pointerEvent.clientX - canvasRect.left;
+      const newEndY = pointerEvent.clientY - canvasRect.top;
       
       setEdgePreview(prev => prev ? {
         ...prev,
@@ -144,7 +157,7 @@ const Canvas: React.FC<CanvasProps> = ({
       } : null);
 
       // Check if hovering over a node
-      const elementUnderCursor = document.elementFromPoint(e.clientX, e.clientY);
+      const elementUnderCursor = document.elementFromPoint(pointerEvent.clientX, pointerEvent.clientY);
       const nodeElement = elementUnderCursor?.closest('[data-node-id]') as HTMLElement;
       
       if (nodeElement) {
@@ -155,8 +168,8 @@ const Canvas: React.FC<CanvasProps> = ({
       }
     };
 
-    const handleMouseUp = (e: MouseEvent) => {
-      const elementUnderCursor = document.elementFromPoint(e.clientX, e.clientY);
+    const handlePointerEnd = (pointerEvent: any) => {
+      const elementUnderCursor = document.elementFromPoint(pointerEvent.clientX, pointerEvent.clientY);
       const nodeElement = elementUnderCursor?.closest('[data-node-id]') as HTMLElement;
       
       if (nodeElement) {
@@ -179,13 +192,25 @@ const Canvas: React.FC<CanvasProps> = ({
       setIsCreatingEdge(false);
       setEdgePreview(null);
       setHoveredNodeId(null);
-      
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
     };
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    const cleanup = addPointerEventListeners(document.body, handlePointerMove, handlePointerEnd);
+    
+    // Auto-cleanup after a timeout for touch devices
+    const timeout = setTimeout(() => {
+      if (isCreatingEdge) {
+        setIsCreatingEdge(false);
+        setEdgePreview(null);
+        setHoveredNodeId(null);
+        cleanup();
+      }
+    }, 10000);
+
+    // Return cleanup function that also clears timeout
+    return () => {
+      cleanup();
+      clearTimeout(timeout);
+    };
   };
 
   return (
@@ -194,12 +219,13 @@ const Canvas: React.FC<CanvasProps> = ({
       id="canvas"
       className={`w-full h-full relative transition-colors ${
         isDragOver ? 'bg-blue-50' : 'bg-gradient-to-br from-gray-50 to-gray-100'
-      } ${className}`}
+      } ${className} ${isMobile ? 'touch-pan-y' : ''}`}
       style={{
         backgroundImage: isDragOver 
           ? 'radial-gradient(circle, #dbeafe 1px, transparent 1px)'
           : 'radial-gradient(circle, #e5e7eb 1px, transparent 1px)',
-        backgroundSize: '20px 20px'
+        backgroundSize: isMobile ? '15px 15px' : '20px 20px', // Smaller grid on mobile
+        touchAction: 'pan-x pan-y', // Allow panning but prevent default gestures
       }}
     >
       {/* Edge Renderer */}
@@ -241,28 +267,39 @@ const Canvas: React.FC<CanvasProps> = ({
       <div className="canvas-background absolute inset-0">
         {isDragOver && (
           <div className="absolute inset-4 border-2 border-dashed border-blue-300 rounded-lg bg-blue-50/50 flex items-center justify-center">
-            <p className="text-blue-600 font-medium">Drop node here</p>
+            <p className="text-blue-600 font-medium text-sm sm:text-base">Drop node here</p>
           </div>
         )}
         
         {!isDragOver && nodes.length === 0 && (
-          <div className="absolute inset-0 flex items-center justify-center">
+          <div className="absolute inset-0 flex items-center justify-center p-4">
             <div className="text-center text-gray-400">
               <div className="mb-2">
-                <Menu className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                <Menu className="w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-4 opacity-30" />
               </div>
-              <p className="text-lg font-medium mb-1">Welcome to LangCanvas</p>
-              <p className="text-sm">Drag nodes from the palette to start building your graph</p>
+              <p className="text-base sm:text-lg font-medium mb-1">Welcome to LangCanvas</p>
+              <p className="text-xs sm:text-sm">
+                {isMobile ? 'Tap nodes from the palette to add them' : 'Drag nodes from the palette to start building your graph'}
+              </p>
             </div>
           </div>
         )}
       </div>
 
+      {/* Mobile connection instructions */}
+      {isMobile && isCreatingEdge && (
+        <div className="absolute top-4 left-4 right-4 bg-blue-100 border border-blue-300 rounded-lg p-3 text-blue-800 text-sm z-20">
+          Drag to another node to create a connection
+        </div>
+      )}
+
       {/* Render all nodes */}
       {nodes.map((node) => (
         <div
           key={node.id}
-          className={hoveredNodeId === node.id ? 'ring-2 ring-blue-400 ring-opacity-50 rounded-lg' : ''}
+          className={`${hoveredNodeId === node.id ? 'ring-2 ring-blue-400 ring-opacity-50 rounded-lg' : ''} ${
+            isMobile ? 'touch-manipulation' : ''
+          }`}
         >
           <NodeComponent
             node={node}

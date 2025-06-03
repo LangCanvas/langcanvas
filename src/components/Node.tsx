@@ -1,6 +1,7 @@
 
 import React, { useState, useRef } from 'react';
 import { Node as NodeType } from '../hooks/useNodes';
+import { usePointerEvents } from '../hooks/usePointerEvents';
 import ConnectionHandle from './ConnectionHandle';
 
 interface NodeComponentProps {
@@ -23,16 +24,18 @@ const NodeComponent: React.FC<NodeComponentProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const nodeRef = useRef<HTMLDivElement>(null);
+  const { getPointerEvent, addPointerEventListeners } = usePointerEvents();
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault();
+  const handlePointerDown = (e: React.MouseEvent | React.TouchEvent) => {
+    const pointerEvent = getPointerEvent(e);
+    pointerEvent.preventDefault();
     onSelect(node.id);
     
     const rect = nodeRef.current?.getBoundingClientRect();
     if (rect) {
       setDragOffset({
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top
+        x: pointerEvent.clientX - rect.left,
+        y: pointerEvent.clientY - rect.top
       });
       setIsDragging(true);
     }
@@ -41,17 +44,17 @@ const NodeComponent: React.FC<NodeComponentProps> = ({
   React.useEffect(() => {
     if (!isDragging) return;
 
-    const handleMouseMove = (e: MouseEvent) => {
+    const handlePointerMove = (pointerEvent: any) => {
       const canvas = document.getElementById('canvas');
       const canvasRect = canvas?.getBoundingClientRect();
       
       if (canvasRect) {
         const newX = Math.max(0, Math.min(
-          e.clientX - canvasRect.left - dragOffset.x,
+          pointerEvent.clientX - canvasRect.left - dragOffset.x,
           canvasRect.width - 120 // Node width
         ));
         const newY = Math.max(0, Math.min(
-          e.clientY - canvasRect.top - dragOffset.y,
+          pointerEvent.clientY - canvasRect.top - dragOffset.y,
           canvasRect.height - 60 // Node height
         ));
         
@@ -59,18 +62,13 @@ const NodeComponent: React.FC<NodeComponentProps> = ({
       }
     };
 
-    const handleMouseUp = () => {
+    const handlePointerEnd = () => {
       setIsDragging(false);
     };
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isDragging, dragOffset, node.id, onMove]);
+    const cleanup = addPointerEventListeners(document.body, handlePointerMove, handlePointerEnd);
+    return cleanup;
+  }, [isDragging, dragOffset, node.id, onMove, addPointerEventListeners]);
 
   const getNodeStyle = () => {
     const baseStyle = {
@@ -90,6 +88,7 @@ const NodeComponent: React.FC<NodeComponentProps> = ({
       fontWeight: '500',
       boxShadow: isDragging ? '0 4px 12px rgba(0,0,0,0.15)' : '0 2px 4px rgba(0,0,0,0.1)',
       zIndex: isSelected ? 10 : 5,
+      touchAction: 'none', // Prevent default touch behaviors
     };
 
     switch (node.type) {
@@ -134,7 +133,8 @@ const NodeComponent: React.FC<NodeComponentProps> = ({
     <div
       ref={nodeRef}
       style={getNodeStyle()}
-      onMouseDown={handleMouseDown}
+      onMouseDown={handlePointerDown}
+      onTouchStart={handlePointerDown}
       className={`node ${node.type}-node ${isSelected ? 'selected' : ''}`}
       data-node-id={node.id}
       data-node-type={node.type}
