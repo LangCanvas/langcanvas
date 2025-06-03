@@ -120,7 +120,7 @@ Contributions are welcome! Please:
 
 ## 📝 License
 
-LangCanvas is open-source and released under the MIT License. See [LICENSE](LICENSE) for more details.
+LangCanvas is open-source and released under the MIT License. See [LICENSE](https://github.com/LangCanvas/langcanvas/blob/main/LICENSE.txt) for more details.
 
 ---
 
