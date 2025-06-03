@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -66,7 +65,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 px-2 sm:px-4 py-2 flex items-center justify-between shadow-sm">
+    <header className="bg-gray-100 border-b border-gray-200 px-2 sm:px-4 py-2 flex items-center justify-between shadow-sm">
       <div className="flex items-center space-x-1">
         <Button
           variant="ghost"
