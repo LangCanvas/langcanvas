@@ -1,9 +1,9 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import NodePalette from '../NodePalette';
 import PropertiesPanel from '../PropertiesPanel';
+import { ValidationResult } from '../../utils/graphValidation';
 
 interface MobilePanelOverlayProps {
   activePanel: 'palette' | 'properties' | null;
@@ -17,6 +17,7 @@ interface MobilePanelOverlayProps {
   onUpdateEdgeProperties: (edgeId: string, updates: any) => void;
   allNodes: any[];
   nodeOutgoingEdges: any[];
+  validationResult: ValidationResult;
 }
 
 const MobilePanelOverlay: React.FC<MobilePanelOverlayProps> = ({
@@ -30,7 +31,8 @@ const MobilePanelOverlay: React.FC<MobilePanelOverlayProps> = ({
   onUpdateNodeProperties,
   onUpdateEdgeProperties,
   allNodes,
-  nodeOutgoingEdges
+  nodeOutgoingEdges,
+  validationResult
 }) => {
   if (!activePanel) return null;
 
