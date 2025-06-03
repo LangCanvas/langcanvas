@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -109,6 +108,7 @@ const EnhancedPropertiesPanel: React.FC<EnhancedPropertiesPanelProps> = ({
               <SelectValue placeholder="Select node type" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="start">Start</SelectItem>
               <SelectItem value="agent">Agent</SelectItem>
               <SelectItem value="tool">Tool</SelectItem>
               <SelectItem value="function">Function</SelectItem>
