@@ -1,16 +1,16 @@
 
 import React, { useState, useRef } from 'react';
-import { Node as NodeType } from '../hooks/useNodes';
+import { EnhancedNode } from '../types/nodeTypes';
 import { usePointerEvents } from '../hooks/usePointerEvents';
 import ConnectionHandle from './ConnectionHandle';
 
 interface NodeComponentProps {
-  node: NodeType;
+  node: EnhancedNode;
   isSelected: boolean;
   canCreateEdge: boolean;
   onSelect: (id: string) => void;
   onMove: (id: string, x: number, y: number) => void;
-  onStartConnection: (sourceNode: NodeType, startX: number, startY: number) => void;
+  onStartConnection: (sourceNode: EnhancedNode, startX: number, startY: number) => void;
   validationClass?: string;
   validationTooltip?: string;
 }
@@ -96,7 +96,7 @@ const NodeComponent: React.FC<NodeComponentProps> = ({
     };
 
     switch (node.type) {
-      case 'start':
+      case 'agent':
         return {
           ...baseStyle,
           backgroundColor: '#f0fdf4',
@@ -111,7 +111,14 @@ const NodeComponent: React.FC<NodeComponentProps> = ({
           borderColor: isSelected ? '#2563eb' : '#3b82f6',
           color: '#1d4ed8',
         };
-      case 'condition':
+      case 'function':
+        return {
+          ...baseStyle,
+          backgroundColor: '#faf5ff',
+          borderColor: isSelected ? '#9333ea' : '#a855f7',
+          color: '#7c3aed',
+        };
+      case 'conditional':
         return {
           ...baseStyle,
           backgroundColor: '#fff7ed',
@@ -119,6 +126,13 @@ const NodeComponent: React.FC<NodeComponentProps> = ({
           color: '#c2410c',
           transform: 'rotate(45deg)',
           fontSize: '12px',
+        };
+      case 'parallel':
+        return {
+          ...baseStyle,
+          backgroundColor: '#ecfeff',
+          borderColor: isSelected ? '#0891b2' : '#06b6d4',
+          color: '#0e7490',
         };
       case 'end':
         return {
@@ -147,8 +161,8 @@ const NodeComponent: React.FC<NodeComponentProps> = ({
       data-node-type={node.type}
       title={tooltipText}
     >
-      <span style={{ transform: node.type === 'condition' ? 'rotate(-45deg)' : 'none' }}>
-        {node.name}
+      <span style={{ transform: node.type === 'conditional' ? 'rotate(-45deg)' : 'none' }}>
+        {node.label}
       </span>
       
       {/* Connection Handle */}
