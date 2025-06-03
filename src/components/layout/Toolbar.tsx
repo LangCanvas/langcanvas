@@ -78,7 +78,14 @@ const Toolbar: React.FC<ToolbarProps> = ({
           {isMobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
         </Button>
         
-        <h1 className="text-base sm:text-lg font-semibold text-gray-800 mr-2 sm:mr-4">LangCanvas</h1>
+        <div className="flex items-center space-x-2">
+          <img 
+            src="/lovable-uploads/655971a4-1644-42d9-984c-106deca1859b.png" 
+            alt="LangCanvas Logo" 
+            className="w-6 h-6"
+          />
+          <h1 className="text-base sm:text-lg font-semibold text-gray-800 mr-2 sm:mr-4">LangCanvas</h1>
+        </div>
         
         {/* Validation Status Indicator */}
         {validationResult && hasNodes && (
