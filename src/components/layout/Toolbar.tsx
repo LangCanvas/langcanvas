@@ -70,7 +70,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
             size="sm" 
             onClick={onExport}
             className="text-gray-600 hover:text-gray-800 touch-manipulation"
-            disabled={!hasNodes}
             style={{ minHeight: '44px' }}
           >
             <Download className="w-4 h-4 mr-1" />

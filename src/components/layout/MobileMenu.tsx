@@ -77,7 +77,6 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
             variant="ghost" 
             className="w-full justify-start touch-manipulation"
             onClick={onExport}
-            disabled={!hasNodes}
             style={{ minHeight: '44px' }}
           >
             <Download className="w-4 h-4 mr-2" />
