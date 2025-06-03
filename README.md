@@ -1,73 +1,136 @@
-# Welcome to your Lovable project
+# 🌟 LangCanvas: Visual Workflow Editor for LangGraph
 
-## Project info
+LangCanvas is an intuitive, user-friendly, and frontend-only visual editor for building, editing, and managing complex LangGraph workflows entirely in your browser. It simplifies the design and modification of AI-driven stateful workflows through an interactive drag-and-drop interface.
 
-**URL**: https://lovable.dev/projects/81e31f9d-9a71-44b4-9296-5c7fa5ec0eee
+---
 
-## How can I edit this code?
+## 🚀 Overview
 
-There are several ways of editing your application.
+LangCanvas allows you to:
 
-**Use Lovable**
+* Visually create LangGraph workflows
+* Import and export workflows in JSON format
+* Edit every detail of LangGraph nodes using intuitive UI controls
+* Manage complex branching logic and node configurations without writing any code
+* Save and load your work locally, no registration or backend required
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/81e31f9d-9a71-44b4-9296-5c7fa5ec0eee) and start prompting.
+---
 
-Changes made via Lovable will be committed automatically to this repo.
+## 🛠️ Features
 
-**Use your preferred IDE**
+* **Visual Drag-and-Drop Interface:** Easily add, move, and configure nodes.
+* **Complete Node Customization:** Edit node parameters, logic, retry policies, timeouts, and metadata directly in the UI.
+* **Import & Export:** Load existing LangGraph workflows and export changes seamlessly in JSON format.
+* **Frontend-Only:** No server-side dependency, entirely browser-based.
+* **User-Friendly Design:** Clear UI, minimal learning curve, highly accessible for both beginners and experts.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+---
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 🔧 Technology Stack
 
-Follow these steps:
+* **React** for interactive UI
+* **D3.js or React Flow** for visual workflow management
+* **Tailwind CSS** for responsive and clean styling
+* **JSON** for structured workflow import/export
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+---
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## 🎨 Getting Started
 
-# Step 3: Install the necessary dependencies.
-npm i
+### Prerequisites
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+Ensure you have Node.js and npm installed on your system.
+
+### Installation
+
+Clone the repository:
+
+```bash
+git clone https://github.com/yourusername/langcanvas.git
+cd langcanvas
+npm install
 ```
 
-**Edit a file directly in GitHub**
+### Development
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Run the development server:
 
-**Use GitHub Codespaces**
+```bash
+npm start
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Open your browser and go to `http://localhost:3000`.
 
-## What technologies are used for this project?
+---
 
-This project is built with:
+## 📚 Usage
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+* **Creating Workflows:** Use the sidebar to drag nodes into the canvas.
+* **Editing Nodes:** Click a node to open its configuration panel to modify properties and logic.
+* **Importing Workflows:** Use the import option to load existing LangGraph JSON files.
+* **Exporting Workflows:** Save your current workflow locally by exporting to JSON.
 
-## How can I deploy this project?
+---
 
-Simply open [Lovable](https://lovable.dev/projects/81e31f9d-9a71-44b4-9296-5c7fa5ec0eee) and click on Share -> Publish.
+## 📂 JSON Workflow Structure
 
-## Can I connect a custom domain to my Lovable project?
+LangCanvas saves workflows in a structured JSON format for easy portability and readability:
 
-Yes, you can!
+```json
+{
+  "nodes": [
+    {
+      "id": "unique_node_id",
+      "type": "agent|tool|function|conditional|parallel|end",
+      "label": "Node Label",
+      "function": {
+        "name": "python_function_name",
+        "input_schema": {"param1": "type"},
+        "output_schema": {"output1": "type"}
+      },
+      "config": {"timeout": 30}
+    }
+  ],
+  "edges": [{"from": "node1", "to": "node2"}],
+  "meta": {"created_by": "LangCanvas", "version": "1.0"}
+}
+```
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+---
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+## 📌 Roadmap
+
+* Enhanced conditional logic builder
+* Additional export formats (YAML, Python)
+* Collaboration and version control integration
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please:
+
+1. Fork the repository.
+2. Create a new branch (`git checkout -b feature/YourFeature`).
+3. Commit your changes (`git commit -m 'Add some feature'`).
+4. Push your branch (`git push origin feature/YourFeature`).
+5. Open a pull request.
+
+---
+
+## 📝 License
+
+LangCanvas is open-source and released under the MIT License. See [LICENSE](LICENSE) for more details.
+
+---
+
+## 📞 Contact
+
+For questions, suggestions, or issues, please reach out via:
+
+* **Email:** [youremail@example.com](mailto:youremail@example.com)
+* **GitHub Issues:** [Issues](https://github.com/yourusername/langcanvas/issues)
+
+---
+
+🌟 **Happy Workflow Building!** 🌟
