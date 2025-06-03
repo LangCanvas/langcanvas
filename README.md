@@ -129,7 +129,7 @@ LangCanvas is open-source and released under the MIT License. See [LICENSE](LICE
 For questions, suggestions, or issues, please reach out via:
 
 * **Email:** [bdevay@gmail.com](mailto:bdevay@gmail.com)
-* **GitHub Issues:** [Issues](https://github.com/langcanvas/issues)
+* **GitHub Issues:** [Issues](https://github.com/LangCanvas/langcanvas/issues)
 
 ---
 
