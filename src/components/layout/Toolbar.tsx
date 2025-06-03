@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -81,7 +82,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
           <img 
             src="/lovable-uploads/655971a4-1644-42d9-984c-106deca1859b.png" 
             alt="LangCanvas" 
-            className="w-12 h-12"
+            className="w-16 h-16 sm:w-20 sm:h-20"
           />
         </div>
         
