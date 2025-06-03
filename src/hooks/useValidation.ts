@@ -1,11 +1,11 @@
 
 import { useState, useCallback, useEffect } from 'react';
-import { Node } from './useNodes';
+import { EnhancedNode } from '../types/nodeTypes';
 import { Edge } from './useEdges';
 import { validateGraph, ValidationResult, ValidationIssue } from '../utils/graphValidation';
 
 interface UseValidationProps {
-  nodes: Node[];
+  nodes: EnhancedNode[];
   edges: Edge[];
 }
 

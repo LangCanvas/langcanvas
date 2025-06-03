@@ -1,5 +1,5 @@
 
-import { Node } from '../hooks/useNodes';
+import { EnhancedNode } from '../types/nodeTypes';
 import { Edge } from '../hooks/useEdges';
 
 export interface ValidationIssue {
@@ -18,20 +18,20 @@ export interface ValidationResult {
   warningCount: number;
 }
 
-export const validateGraph = (nodes: Node[], edges: Edge[]): ValidationResult => {
+export const validateGraph = (nodes: EnhancedNode[], edges: Edge[]): ValidationResult => {
   const issues: ValidationIssue[] = [];
   let issueCounter = 0;
 
   // Helper function to create issue ID
   const createIssueId = () => `issue-${++issueCounter}`;
 
-  // 1. Check for Start nodes
-  const startNodes = nodes.filter(node => node.type === 'start');
+  // 1. Check for Start nodes (agent nodes act as start nodes)
+  const startNodes = nodes.filter(node => node.type === 'agent');
   if (startNodes.length === 0) {
     issues.push({
       id: createIssueId(),
       severity: 'error',
-      message: 'No Start node present. Please add a Start node to designate an entry point.',
+      message: 'No Start node present. Please add an Agent node to designate an entry point.',
       type: 'missing_start'
     });
   } else if (startNodes.length > 1) {
@@ -44,22 +44,22 @@ export const validateGraph = (nodes: Node[], edges: Edge[]): ValidationResult =>
     });
   }
 
-  // 2. Check for duplicate names
-  const nameMap = new Map<string, string[]>();
+  // 2. Check for duplicate labels (using label instead of name)
+  const labelMap = new Map<string, string[]>();
   nodes.forEach(node => {
-    const name = node.name.toLowerCase();
-    if (!nameMap.has(name)) {
-      nameMap.set(name, []);
+    const label = node.label?.toLowerCase() || '';
+    if (!labelMap.has(label)) {
+      labelMap.set(label, []);
     }
-    nameMap.get(name)!.push(node.id);
+    labelMap.get(label)!.push(node.id);
   });
 
-  nameMap.forEach((nodeIds, name) => {
-    if (nodeIds.length > 1) {
+  labelMap.forEach((nodeIds, label) => {
+    if (nodeIds.length > 1 && label.trim() !== '') {
       issues.push({
         id: createIssueId(),
         severity: 'error',
-        message: `Multiple nodes share the name '${name}'. Names must be unique.`,
+        message: `Multiple nodes share the label '${label}'. Labels must be unique.`,
         nodeIds,
         type: 'duplicate_names'
       });
@@ -137,7 +137,7 @@ export const validateGraph = (nodes: Node[], edges: Edge[]): ValidationResult =>
       issues.push({
         id: createIssueId(),
         severity: 'warning',
-        message: `Node '${node.name}' is unreachable (no path from Start). It will never execute.`,
+        message: `Node '${node.label}' is unreachable (no path from Start). It will never execute.`,
         nodeIds: [node.id],
         type: 'unreachable'
       });
@@ -154,7 +154,7 @@ export const validateGraph = (nodes: Node[], edges: Edge[]): ValidationResult =>
     issues.push({
       id: createIssueId(),
       severity: 'warning',
-      message: `Node '${node.name}' has no outgoing connection and is not an End node. The workflow may not terminate properly.`,
+      message: `Node '${node.label}' has no outgoing connection and is not an End node. The workflow may not terminate properly.`,
       nodeIds: [node.id],
       type: 'orphaned_end'
     });
@@ -176,12 +176,12 @@ export const validateGraph = (nodes: Node[], edges: Edge[]): ValidationResult =>
       return;
     }
 
-    // Check if Start node has incoming edges
-    if (targetNode.type === 'start') {
+    // Check if Agent node has incoming edges
+    if (targetNode.type === 'agent') {
       issues.push({
         id: createIssueId(),
         severity: 'error',
-        message: `Start node '${targetNode.name}' cannot have incoming connections.`,
+        message: `Agent node '${targetNode.label}' cannot have incoming connections.`,
         edgeIds: [edge.id],
         nodeIds: [targetNode.id],
         type: 'invalid_connection'
@@ -193,7 +193,7 @@ export const validateGraph = (nodes: Node[], edges: Edge[]): ValidationResult =>
       issues.push({
         id: createIssueId(),
         severity: 'error',
-        message: `End node '${sourceNode.name}' cannot have outgoing connections.`,
+        message: `End node '${sourceNode.label}' cannot have outgoing connections.`,
         edgeIds: [edge.id],
         nodeIds: [sourceNode.id],
         type: 'invalid_connection'
@@ -208,7 +208,7 @@ export const validateGraph = (nodes: Node[], edges: Edge[]): ValidationResult =>
       issues.push({
         id: createIssueId(),
         severity: 'error',
-        message: `Tool node '${toolNode.name}' has multiple outputs. Use a Condition node to branch.`,
+        message: `Tool node '${toolNode.label}' has multiple outputs. Use a Condition node to branch.`,
         nodeIds: [toolNode.id],
         edgeIds: outgoingEdges.map(e => e.id),
         type: 'invalid_connection'
@@ -216,8 +216,8 @@ export const validateGraph = (nodes: Node[], edges: Edge[]): ValidationResult =>
     }
   });
 
-  // 8. Check Condition nodes
-  nodes.filter(node => node.type === 'condition').forEach(conditionNode => {
+  // 8. Check Conditional nodes
+  nodes.filter(node => node.type === 'conditional').forEach(conditionNode => {
     const outgoingEdges = edges.filter(edge => edge.source === conditionNode.id);
     
     // Check for single branch condition
@@ -225,20 +225,9 @@ export const validateGraph = (nodes: Node[], edges: Edge[]): ValidationResult =>
       issues.push({
         id: createIssueId(),
         severity: 'warning',
-        message: `Condition node '${conditionNode.name}' has only one branch and will act like a normal step.`,
+        message: `Condition node '${conditionNode.label}' has only one branch and will act like a normal step.`,
         nodeIds: [conditionNode.id],
         type: 'single_branch_condition'
-      });
-    }
-
-    // Check for missing condition variable
-    if (!conditionNode.conditionVariable?.trim()) {
-      issues.push({
-        id: createIssueId(),
-        severity: 'warning',
-        message: `Condition node '${conditionNode.name}' has no condition variable set.`,
-        nodeIds: [conditionNode.id],
-        type: 'missing_condition_var'
       });
     }
 
@@ -249,7 +238,7 @@ export const validateGraph = (nodes: Node[], edges: Edge[]): ValidationResult =>
       issues.push({
         id: createIssueId(),
         severity: 'error',
-        message: `Condition node '${conditionNode.name}' has duplicate branch labels.`,
+        message: `Condition node '${conditionNode.label}' has duplicate branch labels.`,
         nodeIds: [conditionNode.id],
         edgeIds: outgoingEdges.map(e => e.id),
         type: 'invalid_connection'
