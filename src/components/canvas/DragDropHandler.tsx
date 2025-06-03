@@ -1,62 +1,51 @@
 
-import React, { useRef, useEffect, useState } from 'react';
-import { NodeType } from '../NodePalette';
-import { Node as NodeData } from '../../hooks/useNodes';
+import React, { useState, useRef } from 'react';
+import { Node } from '../../hooks/useNodes';
 
 interface DragDropHandlerProps {
-  onAddNode: (type: NodeData['type'], x: number, y: number) => NodeData | null;
   children: React.ReactNode;
+  onAddNode: (type: Node['type'], x: number, y: number) => Node | null;
 }
 
-const DragDropHandler: React.FC<DragDropHandlerProps> = ({ onAddNode, children }) => {
-  const canvasRef = useRef<HTMLDivElement>(null);
+const DragDropHandler: React.FC<DragDropHandlerProps> = ({ children, onAddNode }) => {
   const [isDragOver, setIsDragOver] = useState(false);
+  const dropZoneRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
 
-    const handleDragOver = (event: DragEvent) => {
-      event.preventDefault();
-      setIsDragOver(true);
-    };
-
-    const handleDragLeave = (event: DragEvent) => {
-      if (!canvas.contains(event.relatedTarget as Node)) {
-        setIsDragOver(false);
-      }
-    };
-
-    const handleDrop = (event: DragEvent) => {
-      event.preventDefault();
+  const handleDragLeave = (e: React.DragEvent) => {
+    if (!dropZoneRef.current?.contains(e.relatedTarget as Node)) {
       setIsDragOver(false);
-      
-      const data = event.dataTransfer?.getData('application/json');
-      if (data) {
-        const nodeType: NodeType = JSON.parse(data);
-        const rect = canvas.getBoundingClientRect();
-        const x = event.clientX - rect.left - 60;
-        const y = event.clientY - rect.top - 30;
-        
-        console.log(`Creating ${nodeType.name} node at (${x}, ${y})`);
-        onAddNode(nodeType.id as NodeData['type'], Math.max(0, x), Math.max(0, y));
-      }
-    };
+    }
+  };
 
-    canvas.addEventListener('dragover', handleDragOver);
-    canvas.addEventListener('dragleave', handleDragLeave);
-    canvas.addEventListener('drop', handleDrop);
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    
+    const nodeType = e.dataTransfer.getData('text/plain') as Node['type'];
+    if (!nodeType) return;
 
-    return () => {
-      canvas.removeEventListener('dragover', handleDragOver);
-      canvas.removeEventListener('dragleave', handleDragLeave);
-      canvas.removeEventListener('drop', handleDrop);
-    };
-  }, [onAddNode]);
+    const rect = dropZoneRef.current?.getBoundingClientRect();
+    if (rect) {
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      onAddNode(nodeType, x, y);
+    }
+  };
 
   return (
-    <div ref={canvasRef} className="w-full h-full">
-      {React.cloneElement(children as React.ReactElement, { isDragOver })}
+    <div
+      ref={dropZoneRef}
+      className={`w-full h-full ${isDragOver ? 'bg-blue-50' : ''}`}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {children}
     </div>
   );
 };

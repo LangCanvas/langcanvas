@@ -1,72 +1,48 @@
 
 import React from 'react';
-import { Play, Wrench, GitBranch, Square } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
-export interface NodeType {
-  id: string;
-  name: string;
-  icon: React.ReactNode;
-  color: string;
-  description: string;
-}
+const NodePalette = () => {
+  const nodeTypes = [
+    { type: 'start', label: 'Start', color: 'bg-green-100 border-green-300 text-green-800' },
+    { type: 'tool', label: 'Tool', color: 'bg-blue-100 border-blue-300 text-blue-800' },
+    { type: 'condition', label: 'Condition', color: 'bg-orange-100 border-orange-300 text-orange-800' },
+    { type: 'end', label: 'End', color: 'bg-red-100 border-red-300 text-red-800' }
+  ];
 
-const nodeTypes: NodeType[] = [
-  {
-    id: 'start',
-    name: 'Start',
-    icon: <Play className="w-5 h-5" />,
-    color: 'text-green-600',
-    description: 'Starting point of the workflow'
-  },
-  {
-    id: 'tool',
-    name: 'Tool',
-    icon: <Wrench className="w-5 h-5" />,
-    color: 'text-blue-600',
-    description: 'Execute a tool or function'
-  },
-  {
-    id: 'condition',
-    name: 'Condition',
-    icon: <GitBranch className="w-5 h-5" />,
-    color: 'text-orange-600',
-    description: 'Conditional branching logic'
-  },
-  {
-    id: 'end',
-    name: 'End',
-    icon: <Square className="w-5 h-5" />,
-    color: 'text-red-600',
-    description: 'End point of the workflow'
-  }
-];
+  const handleDragStart = (e: React.DragEvent, nodeType: string) => {
+    e.dataTransfer.setData('text/plain', nodeType);
+  };
 
-const NodePalette: React.FC = () => {
-  const handleDragStart = (event: React.DragEvent, nodeType: NodeType) => {
-    event.dataTransfer.setData('application/json', JSON.stringify(nodeType));
-    console.log(`Dragging ${nodeType.name} node`);
+  const handleTouchStart = (e: React.TouchEvent, nodeType: string) => {
+    // Store the node type for touch-based node creation
+    (e.target as HTMLElement).setAttribute('data-node-type', nodeType);
   };
 
   return (
     <div className="p-4">
-      <h3 className="text-sm font-medium text-gray-700 mb-3">Available Nodes</h3>
-      <div className="space-y-2">
-        {nodeTypes.map((nodeType) => (
-          <div
-            key={nodeType.id}
-            className="flex items-center p-3 bg-gray-50 rounded-lg border border-gray-200 cursor-grab hover:bg-gray-100 transition-colors active:cursor-grabbing"
-            draggable="true"
-            onDragStart={(e) => handleDragStart(e, nodeType)}
-            title={nodeType.description}
+      <h2 className="text-sm font-medium text-gray-700 mb-4">Node Palette</h2>
+      <div className="space-y-3">
+        {nodeTypes.map(({ type, label, color }) => (
+          <Button
+            key={type}
+            variant="outline"
+            className={`w-full h-12 ${color} border-2 border-dashed hover:border-solid transition-all duration-200 touch-manipulation`}
+            draggable
+            onDragStart={(e) => handleDragStart(e, type)}
+            onTouchStart={(e) => handleTouchStart(e, type)}
+            style={{ 
+              minHeight: '48px',
+              touchAction: 'manipulation'
+            }}
           >
-            <div className={nodeType.color}>
-              {nodeType.icon}
-            </div>
-            <span className="ml-3 text-sm font-medium text-gray-700">
-              {nodeType.name}
-            </span>
-          </div>
+            {label}
+          </Button>
         ))}
+      </div>
+      <div className="mt-6 text-xs text-gray-500">
+        <p className="hidden lg:block">Drag nodes to the canvas to create them</p>
+        <p className="lg:hidden">Tap nodes from the palette to add them</p>
       </div>
     </div>
   );

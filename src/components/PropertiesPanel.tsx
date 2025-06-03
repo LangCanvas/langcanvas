@@ -1,398 +1,307 @@
-
 import React, { useState, useEffect } from 'react';
-import { Code, Trash2, ArrowRight, Plus, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Trash2 } from 'lucide-react';
 import { Node } from '../hooks/useNodes';
 import { Edge } from '../hooks/useEdges';
 import { useNodeProperties } from '../hooks/useNodeProperties';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 
 interface PropertiesPanelProps {
-  selectedNode?: Node;
-  selectedEdge?: Edge;
-  className?: string;
-  onDeleteNode?: (id: string) => void;
-  onDeleteEdge?: (id: string) => void;
-  onUpdateNodeProperties?: (id: string, updates: Partial<Node>) => void;
-  onUpdateEdgeProperties?: (id: string, updates: Partial<Edge>) => void;
-  allNodes?: Node[];
-  nodeOutgoingEdges?: Edge[];
+  selectedNode: Node | null;
+  selectedEdge: Edge | null;
+  onDeleteNode: (nodeId: string) => void;
+  onDeleteEdge: (edgeId: string) => void;
+  onUpdateNodeProperties: (nodeId: string, updates: Partial<Node>) => void;
+  onUpdateEdgeProperties: (edgeId: string, updates: Partial<Edge>) => void;
+  allNodes: Node[];
+  nodeOutgoingEdges: Edge[];
 }
 
-const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ 
-  selectedNode, 
-  selectedEdge, 
-  className, 
-  onDeleteNode, 
+const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
+  selectedNode,
+  selectedEdge,
+  onDeleteNode,
   onDeleteEdge,
   onUpdateNodeProperties,
   onUpdateEdgeProperties,
-  allNodes = [],
-  nodeOutgoingEdges = []
+  allNodes,
+  nodeOutgoingEdges
 }) => {
-  const [editingName, setEditingName] = useState('');
-  const [editingDescription, setEditingDescription] = useState('');
-  const [editingConditionVariable, setEditingConditionVariable] = useState('');
+  const [localName, setLocalName] = useState('');
+  const [localDescription, setLocalDescription] = useState('');
+  const [localConditionVariable, setLocalConditionVariable] = useState('');
   const [nameError, setNameError] = useState('');
-  const [branchErrors, setBranchErrors] = useState<{[key: string]: string}>({});
-  
-  const { validateNodeName, validateBranchLabel } = useNodeProperties();
+  const [branchErrors, setBranchErrors] = useState<Record<string, string>>({});
+
+  const { validateNodeName, validateBranchLabel, sanitizeNodeName } = useNodeProperties();
 
   useEffect(() => {
     if (selectedNode) {
-      setEditingName(selectedNode.name);
-      setEditingDescription(selectedNode.description || '');
-      setEditingConditionVariable(selectedNode.conditionVariable || '');
-      setNameError('');
-      setBranchErrors({});
+      setLocalName(selectedNode.name);
+      setLocalDescription(selectedNode.description || '');
+      setLocalConditionVariable(selectedNode.conditionVariable || '');
     }
   }, [selectedNode]);
 
+  useEffect(() => {
+    if (selectedEdge) {
+      // You might want to load edge properties into local state here
+      // For example, if you have an edge label:
+      // setLocalEdgeLabel(selectedEdge.label || '');
+    }
+  }, [selectedEdge]);
+
   const handleNameChange = (newName: string) => {
-    setEditingName(newName);
-    setNameError('');
-  };
-
-  const handleNameBlur = () => {
-    if (!selectedNode || !onUpdateNodeProperties) return;
-
-    const trimmedName = editingName.trim();
-    
-    // Don't allow renaming Start and End nodes
-    if (selectedNode.type === 'start' || selectedNode.type === 'end') {
-      setEditingName(selectedNode.name);
-      return;
-    }
-
-    const validation = validateNodeName(trimmedName, selectedNode.id, allNodes);
-    
-    if (!validation.valid) {
-      setNameError(validation.error || 'Invalid name');
-      setEditingName(selectedNode.name); // Revert
-      return;
-    }
-
-    if (trimmedName !== selectedNode.name) {
-      onUpdateNodeProperties(selectedNode.id, { name: trimmedName });
+    setLocalName(newName);
+    if (selectedNode) {
+      const validation = validateNodeName(newName, selectedNode.id, allNodes);
+      if (validation.valid) {
+        setNameError('');
+        onUpdateNodeProperties(selectedNode.id, { name: newName });
+      } else {
+        setNameError(validation.error || '');
+      }
     }
   };
 
-  const handleDescriptionBlur = () => {
-    if (!selectedNode || !onUpdateNodeProperties) return;
-    
-    if (editingDescription !== (selectedNode.description || '')) {
-      onUpdateNodeProperties(selectedNode.id, { description: editingDescription });
+  const handleDescriptionChange = (newDescription: string) => {
+    setLocalDescription(newDescription);
+    if (selectedNode) {
+      onUpdateNodeProperties(selectedNode.id, { description: newDescription });
     }
   };
 
-  const handleConditionVariableBlur = () => {
-    if (!selectedNode || !onUpdateNodeProperties) return;
-    
-    if (editingConditionVariable !== (selectedNode.conditionVariable || '')) {
-      onUpdateNodeProperties(selectedNode.id, { conditionVariable: editingConditionVariable });
+  const handleConditionVariableChange = (newVariable: string) => {
+    setLocalConditionVariable(newVariable);
+    if (selectedNode) {
+      onUpdateNodeProperties(selectedNode.id, { conditionVariable: newVariable });
     }
   };
 
   const handleBranchLabelChange = (edgeId: string, newLabel: string) => {
-    if (!onUpdateEdgeProperties) return;
-
     const validation = validateBranchLabel(newLabel, edgeId, nodeOutgoingEdges);
-    
-    if (!validation.valid) {
-      setBranchErrors(prev => ({ ...prev, [edgeId]: validation.error || 'Invalid label' }));
-      return;
+    if (validation.valid) {
+      setBranchErrors(prev => ({ ...prev, [edgeId]: '' }));
+      onUpdateEdgeProperties(edgeId, { label: newLabel });
+    } else {
+      setBranchErrors(prev => ({ ...prev, [edgeId]: validation.error || '' }));
     }
-
-    setBranchErrors(prev => {
-      const newErrors = { ...prev };
-      delete newErrors[edgeId];
-      return newErrors;
-    });
-
-    onUpdateEdgeProperties(edgeId, { label: newLabel });
   };
 
   const handleBranchValueChange = (edgeId: string, newValue: string) => {
-    if (!onUpdateEdgeProperties) return;
     onUpdateEdgeProperties(edgeId, { value: newValue });
   };
 
   const handleDeleteBranch = (edgeId: string) => {
-    if (onDeleteEdge) {
-      onDeleteEdge(edgeId);
+    console.log(`Deleting branch: ${edgeId}`);
+    onDeleteEdge(edgeId);
+  };
+
+  const handleDeleteNode = () => {
+    if (selectedNode) {
+      console.log(`Deleting node: ${selectedNode.id}`);
+      onDeleteNode(selectedNode.id);
     }
+  };
+
+  const getTargetNodeName = (targetId: string) => {
+    const targetNode = allNodes.find(node => node.id === targetId);
+    return targetNode ? targetNode.name : 'Unknown';
   };
 
   if (!selectedNode && !selectedEdge) {
     return (
-      <div className={`flex-1 p-4 ${className}`}>
-        <div className="flex items-center justify-center h-full text-center text-gray-400">
-          <div>
-            <div className="mb-2">
-              <Code className="w-8 h-8 mx-auto mb-3 opacity-30" />
-            </div>
-            <p className="text-sm">Select a node or edge to edit its properties</p>
-          </div>
-        </div>
+      <div className="p-4 text-center text-gray-500">
+        <p>Select a node to view its properties</p>
       </div>
     );
   }
 
-  const getNodeTypeDisplayName = (type: string) => {
-    switch (type) {
-      case 'start': return 'Start Node';
-      case 'tool': return 'Tool Node';
-      case 'condition': return 'Condition Node';
-      case 'end': return 'End Node';
-      default: return 'Unknown Node';
-    }
-  };
-
-  if (selectedEdge) {
+  if (selectedNode) {
+    const isStartOrEnd = selectedNode.type === 'start' || selectedNode.type === 'end';
+    
     return (
-      <div className={`flex-1 p-4 ${className}`}>
-        <div className="space-y-4">
-          <div className="pb-2 border-b border-gray-200">
-            <h3 className="text-sm font-medium text-gray-700">Edge Properties</h3>
-          </div>
-          
-          <div>
-            <Label className="text-sm font-medium text-gray-700 mb-1">
-              Connection
-            </Label>
-            <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded border">
-              <span className="truncate">{selectedEdge.source}</span>
-              <ArrowRight className="w-4 h-4 flex-shrink-0" />
-              <span className="truncate">{selectedEdge.target}</span>
-            </div>
-          </div>
-
-          {selectedEdge.label && (
-            <div>
-              <Label className="text-sm font-medium text-gray-700 mb-1">
-                Branch Label
-              </Label>
-              <p className="text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded border">
-                {selectedEdge.label}
-              </p>
-            </div>
-          )}
-
-          <div>
-            <Label className="text-sm font-medium text-gray-700 mb-1">
-              Edge ID
-            </Label>
-            <p className="text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded border font-mono text-xs">
-              {selectedEdge.id}
-            </p>
-          </div>
-
-          {onDeleteEdge && (
-            <div className="pt-4 border-t border-gray-200">
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => onDeleteEdge(selectedEdge.id)}
-                className="w-full"
-              >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Delete Edge
-              </Button>
-              <p className="text-xs text-gray-500 mt-2 text-center">
-                You can also press Delete key to remove the selected edge
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  const isNameEditable = selectedNode!.type !== 'start' && selectedNode!.type !== 'end';
-
-  return (
-    <div className={`flex-1 p-4 ${className}`}>
-      <div className="space-y-4">
-        <div className="pb-2 border-b border-gray-200">
-          <h3 className="text-sm font-medium text-gray-700">Node Properties</h3>
-        </div>
-        
+      <div className="p-4 space-y-4">
+        {/* Node Type */}
         <div>
-          <Label className="text-sm font-medium text-gray-700 mb-1">
-            Node Type
+          <Label className="text-sm font-medium text-gray-700">
+            Type: {selectedNode.type.charAt(0).toUpperCase() + selectedNode.type.slice(1)} Node
           </Label>
-          <p className="text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded border">
-            {getNodeTypeDisplayName(selectedNode!.type)}
-          </p>
         </div>
-        
+
+        {/* Node Name */}
         <div>
-          <Label className="text-sm font-medium text-gray-700 mb-1">
+          <Label htmlFor="node-name" className="text-sm font-medium text-gray-700">
             Name
           </Label>
-          <Input
-            type="text"
-            value={editingName}
-            onChange={(e) => handleNameChange(e.target.value)}
-            onBlur={handleNameBlur}
-            onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-            placeholder="Enter node name"
-            readOnly={!isNameEditable}
-            className={`${!isNameEditable ? 'bg-gray-50' : ''} ${nameError ? 'border-red-500' : ''}`}
-            title={!isNameEditable ? "Start and End node names cannot be changed" : ""}
-          />
-          {nameError && (
-            <p className="text-xs text-red-500 mt-1">{nameError}</p>
+          {isStartOrEnd ? (
+            <Input
+              id="node-name"
+              value={localName}
+              disabled
+              className="mt-1 bg-gray-100"
+              style={{ minHeight: '44px' }}
+            />
+          ) : (
+            <div>
+              <Input
+                id="node-name"
+                value={localName}
+                onChange={(e) => handleNameChange(e.target.value)}
+                className={`mt-1 touch-manipulation ${nameError ? 'border-red-500' : ''}`}
+                placeholder="Enter node name"
+                style={{ minHeight: '44px' }}
+              />
+              {nameError && (
+                <p className="text-sm text-red-600 mt-1">{nameError}</p>
+              )}
+            </div>
           )}
         </div>
-        
+
+        {/* Node Description */}
         <div>
-          <Label className="text-sm font-medium text-gray-700 mb-1">
-            Position
-          </Label>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <Label className="block text-xs text-gray-500 mb-1">X</Label>
-              <Input
-                type="number"
-                className="text-sm bg-gray-50"
-                value={Math.round(selectedNode!.x)}
-                readOnly
-              />
-            </div>
-            <div>
-              <Label className="block text-xs text-gray-500 mb-1">Y</Label>
-              <Input
-                type="number"
-                className="text-sm bg-gray-50"
-                value={Math.round(selectedNode!.y)}
-                readOnly
-              />
-            </div>
-          </div>
-        </div>
-        
-        <div>
-          <Label className="text-sm font-medium text-gray-700 mb-1">
+          <Label htmlFor="node-description" className="text-sm font-medium text-gray-700">
             Description
           </Label>
           <Textarea
-            value={editingDescription}
-            onChange={(e) => setEditingDescription(e.target.value)}
-            onBlur={handleDescriptionBlur}
+            id="node-description"
+            value={localDescription}
+            onChange={(e) => handleDescriptionChange(e.target.value)}
+            className="mt-1 touch-manipulation"
+            placeholder="Enter node description"
             rows={3}
-            placeholder="Optional description or notes about this node"
-            className="resize-none"
+            style={{ minHeight: '88px' }}
           />
         </div>
 
-        {selectedNode!.type === 'condition' && (
+        {/* Condition Node Specific Fields */}
+        {selectedNode.type === 'condition' && (
           <>
+            {/* Condition Variable */}
             <div>
-              <Label className="text-sm font-medium text-gray-700 mb-1">
+              <Label htmlFor="condition-variable" className="text-sm font-medium text-gray-700">
                 Condition Variable
               </Label>
               <Input
-                type="text"
-                value={editingConditionVariable}
-                onChange={(e) => setEditingConditionVariable(e.target.value)}
-                onBlur={handleConditionVariableBlur}
+                id="condition-variable"
+                value={localConditionVariable}
+                onChange={(e) => handleConditionVariableChange(e.target.value)}
+                className="mt-1 touch-manipulation"
                 placeholder="e.g., difficulty, user_response"
-                title="State variable or key to evaluate for branching decisions"
+                style={{ minHeight: '44px' }}
               />
               <p className="text-xs text-gray-500 mt-1">
-                State variable to check for branching logic
+                The state variable to check for branching decisions
               </p>
             </div>
 
+            {/* Branches */}
             <div>
-              <Label className="text-sm font-medium text-gray-700 mb-2 block">
+              <Label className="text-sm font-medium text-gray-700">
                 Branches ({nodeOutgoingEdges.length})
               </Label>
-              
-              {nodeOutgoingEdges.length === 0 ? (
-                <p className="text-sm text-gray-500 italic">
-                  No outgoing connections. Draw connections from this node to create branches.
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {nodeOutgoingEdges.map((edge) => {
-                    const targetNode = allNodes.find(n => n.id === edge.target);
-                    return (
-                      <div key={edge.id} className="border rounded p-3 bg-gray-50">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs text-gray-500">Branch to: {targetNode?.name || 'Unknown'}</span>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteBranch(edge.id)}
-                            className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
-                          >
-                            <X className="w-3 h-3" />
-                          </Button>
+              {nodeOutgoingEdges.length > 0 ? (
+                <div className="mt-2 space-y-3">
+                  {nodeOutgoingEdges.map((edge, index) => (
+                    <div key={edge.id} className="border border-gray-200 rounded-lg p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-gray-600">
+                          Branch {index + 1} → {getTargetNodeName(edge.target)}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteBranch(edge.id)}
+                          className="text-red-600 hover:text-red-800 hover:bg-red-50 touch-manipulation"
+                          style={{ minHeight: '36px', minWidth: '36px' }}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <div>
+                          <Label className="text-xs font-medium text-gray-600">
+                            Branch Label
+                          </Label>
+                          <Input
+                            value={edge.label || ''}
+                            onChange={(e) => handleBranchLabelChange(edge.id, e.target.value)}
+                            className={`mt-1 touch-manipulation ${branchErrors[edge.id] ? 'border-red-500' : ''}`}
+                            placeholder="e.g., yes, no, error"
+                            style={{ minHeight: '36px' }}
+                          />
+                          {branchErrors[edge.id] && (
+                            <p className="text-xs text-red-600 mt-1">{branchErrors[edge.id]}</p>
+                          )}
                         </div>
                         
-                        <div className="space-y-2">
-                          <div>
-                            <Label className="text-xs text-gray-600 mb-1 block">Branch Label</Label>
-                            <Input
-                              type="text"
-                              value={edge.label || ''}
-                              onChange={(e) => handleBranchLabelChange(edge.id, e.target.value)}
-                              placeholder="e.g., Yes, No, Easy"
-                              className={`text-sm ${branchErrors[edge.id] ? 'border-red-500' : ''}`}
-                            />
-                            {branchErrors[edge.id] && (
-                              <p className="text-xs text-red-500 mt-1">{branchErrors[edge.id]}</p>
-                            )}
-                          </div>
-                          
-                          <div>
-                            <Label className="text-xs text-gray-600 mb-1 block">Condition Value</Label>
-                            <Input
-                              type="text"
-                              value={edge.value || ''}
-                              onChange={(e) => handleBranchValueChange(edge.id, e.target.value)}
-                              placeholder="e.g., easy, yes, 5 (leave empty for default)"
-                              className="text-sm"
-                            />
-                          </div>
+                        <div>
+                          <Label className="text-xs font-medium text-gray-600">
+                            Branch Value
+                          </Label>
+                          <Input
+                            value={edge.value || ''}
+                            onChange={(e) => handleBranchValueChange(edge.id, e.target.value)}
+                            className="mt-1 touch-manipulation"
+                            placeholder="e.g., easy, hard (optional)"
+                            style={{ minHeight: '36px' }}
+                          />
+                          <p className="text-xs text-gray-500 mt-1">
+                            Leave empty for default branch
+                          </p>
                         </div>
                       </div>
-                    );
-                  })}
+                    </div>
+                  ))}
                 </div>
+              ) : (
+                <p className="text-sm text-gray-500 mt-2">
+                  No branches yet. Connect this node to other nodes to create branches.
+                </p>
               )}
-              
-              <p className="text-xs text-gray-500 mt-2">
-                Draw new connections from this node to add more branches. 
-                One branch can be left without a condition value to serve as the default case.
-              </p>
             </div>
           </>
         )}
 
-        {onDeleteNode && (
+        {/* Delete Node Button */}
+        {!isStartOrEnd && (
           <div className="pt-4 border-t border-gray-200">
             <Button
               variant="destructive"
-              size="sm"
-              onClick={() => onDeleteNode(selectedNode!.id)}
-              className="w-full"
+              onClick={handleDeleteNode}
+              className="w-full touch-manipulation"
+              style={{ minHeight: '44px' }}
             >
               <Trash2 className="w-4 h-4 mr-2" />
               Delete Node
             </Button>
-            <p className="text-xs text-gray-500 mt-2 text-center">
-              You can also press Delete key to remove the selected node
-            </p>
           </div>
         )}
       </div>
-    </div>
-  );
+    );
+  }
+
+  if (selectedEdge) {
+    return (
+      <div className="p-4">
+        <h3 className="text-sm font-medium text-gray-700 mb-4">Edge Properties</h3>
+        <p className="text-sm text-gray-500">
+          Connection from {getTargetNodeName(selectedEdge.source)} to {getTargetNodeName(selectedEdge.target)}
+        </p>
+        {selectedEdge.label && (
+          <p className="text-sm text-gray-700 mt-2">
+            Label: {selectedEdge.label}
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  return null;
 };
 
 export default PropertiesPanel;

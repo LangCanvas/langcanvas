@@ -17,7 +17,7 @@ import { useEdges } from '../hooks/useEdges';
 
 const Index = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [activePanel, setActivePanel] = useState<'palette' | 'properties'>('palette');
+  const [activePanel, setActivePanel] = useState<'palette' | 'properties' | null>(null);
   
   const { 
     nodes, 
@@ -68,6 +68,27 @@ const Index = () => {
     return addEdge(sourceNode, targetNode);
   };
 
+  const handleMobileMenuToggle = () => {
+    console.log("Mobile menu toggle clicked");
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+    setActivePanel(null);
+  };
+
+  const handlePanelToggle = (panel: 'palette' | 'properties') => {
+    console.log(`Panel toggle clicked: ${panel}`);
+    if (activePanel === panel) {
+      setActivePanel(null);
+    } else {
+      setActivePanel(panel);
+    }
+  };
+
+  const closePanels = () => {
+    console.log("Closing panels");
+    setActivePanel(null);
+    setIsMobileMenuOpen(false);
+  };
+
   const nodeOutgoingEdges = selectedNode ? getNodeOutgoingEdges(selectedNode.id) : [];
 
   return (
@@ -78,8 +99,9 @@ const Index = () => {
           <Button
             variant="ghost"
             size="sm"
-            className="lg:hidden"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="lg:hidden touch-manipulation"
+            onClick={handleMobileMenuToggle}
+            style={{ minHeight: '44px', minWidth: '44px' }}
           >
             {isMobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
           </Button>
@@ -91,7 +113,8 @@ const Index = () => {
               variant="ghost" 
               size="sm" 
               onClick={handleNewProject}
-              className="text-gray-600 hover:text-gray-800"
+              className="text-gray-600 hover:text-gray-800 touch-manipulation"
+              style={{ minHeight: '44px' }}
             >
               <File className="w-4 h-4 mr-1" />
               <span className="hidden md:inline">New</span>
@@ -100,7 +123,8 @@ const Index = () => {
               variant="ghost" 
               size="sm" 
               onClick={handleImport}
-              className="text-gray-600 hover:text-gray-800"
+              className="text-gray-600 hover:text-gray-800 touch-manipulation"
+              style={{ minHeight: '44px' }}
             >
               <Upload className="w-4 h-4 mr-1" />
               <span className="hidden md:inline">Import</span>
@@ -109,8 +133,9 @@ const Index = () => {
               variant="ghost" 
               size="sm" 
               onClick={handleExport}
-              className="text-gray-600 hover:text-gray-800"
+              className="text-gray-600 hover:text-gray-800 touch-manipulation"
               disabled={nodes.length === 0}
+              style={{ minHeight: '44px' }}
             >
               <Download className="w-4 h-4 mr-1" />
               <span className="hidden md:inline">Export</span>
@@ -123,9 +148,10 @@ const Index = () => {
             variant="ghost" 
             size="sm" 
             onClick={handleCodePreview}
-            className="text-gray-600 hover:text-gray-800"
+            className="text-gray-600 hover:text-gray-800 touch-manipulation"
             disabled={nodes.length === 0}
             title="Show generated code (read-only)"
+            style={{ minHeight: '44px' }}
           >
             <Code className="w-4 h-4 mr-1" />
             <span className="hidden sm:inline">Preview</span>
@@ -135,12 +161,25 @@ const Index = () => {
 
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40" onClick={() => setIsMobileMenuOpen(false)}>
-          <div className="absolute left-0 top-0 h-full w-80 bg-white shadow-lg transform transition-transform" onClick={(e) => e.stopPropagation()}>
+        <div 
+          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40" 
+          onClick={closePanels}
+          style={{ touchAction: 'none' }}
+        >
+          <div 
+            className="absolute left-0 top-0 h-full w-80 bg-white shadow-lg transform transition-transform" 
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="p-4 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-gray-800">Menu</h2>
-                <Button variant="ghost" size="sm" onClick={() => setIsMobileMenuOpen(false)}>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={closePanels}
+                  className="touch-manipulation"
+                  style={{ minHeight: '44px', minWidth: '44px' }}
+                >
                   <X className="w-4 h-4" />
                 </Button>
               </div>
@@ -149,21 +188,23 @@ const Index = () => {
             <div className="p-4 space-y-2">
               <Button 
                 variant="ghost" 
-                className="w-full justify-start"
+                className="w-full justify-start touch-manipulation"
                 onClick={() => {
-                  setActivePanel('palette');
+                  handlePanelToggle('palette');
                   setIsMobileMenuOpen(false);
                 }}
+                style={{ minHeight: '44px' }}
               >
                 Node Palette
               </Button>
               <Button 
                 variant="ghost" 
-                className="w-full justify-start"
+                className="w-full justify-start touch-manipulation"
                 onClick={() => {
-                  setActivePanel('properties');
+                  handlePanelToggle('properties');
                   setIsMobileMenuOpen(false);
                 }}
+                style={{ minHeight: '44px' }}
               >
                 Properties
               </Button>
@@ -180,9 +221,16 @@ const Index = () => {
         </aside>
 
         {/* Mobile Panel Overlay */}
-        {(activePanel === 'palette' || activePanel === 'properties') && (
-          <div className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-30" onClick={() => setActivePanel('palette')}>
-            <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-white rounded-t-lg transform transition-transform" onClick={(e) => e.stopPropagation()}>
+        {activePanel && (
+          <div 
+            className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-30" 
+            onClick={closePanels}
+            style={{ touchAction: 'none' }}
+          >
+            <div 
+              className="absolute bottom-0 left-0 right-0 h-1/2 bg-white rounded-t-lg transform transition-transform overflow-hidden" 
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="p-4 border-b border-gray-200">
                 <div className="flex items-center justify-between">
                   <h2 className="text-lg font-semibold text-gray-800">
@@ -192,11 +240,19 @@ const Index = () => {
                     <Button 
                       variant="ghost" 
                       size="sm"
-                      onClick={() => setActivePanel(activePanel === 'palette' ? 'properties' : 'palette')}
+                      onClick={() => handlePanelToggle(activePanel === 'palette' ? 'properties' : 'palette')}
+                      className="touch-manipulation"
+                      style={{ minHeight: '44px' }}
                     >
                       {activePanel === 'palette' ? 'Properties' : 'Palette'}
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => setActivePanel('palette')}>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={closePanels}
+                      className="touch-manipulation"
+                      style={{ minHeight: '44px', minWidth: '44px' }}
+                    >
                       <X className="w-4 h-4" />
                     </Button>
                   </div>
@@ -264,8 +320,9 @@ const Index = () => {
           <Button 
             variant="ghost" 
             size="sm"
-            onClick={() => setActivePanel('palette')}
-            className="flex flex-col items-center space-y-1"
+            onClick={() => handlePanelToggle('palette')}
+            className="flex flex-col items-center space-y-1 touch-manipulation"
+            style={{ minHeight: '44px', minWidth: '44px' }}
           >
             <Menu className="w-4 h-4" />
             <span className="text-xs">Palette</span>
@@ -273,8 +330,9 @@ const Index = () => {
           <Button 
             variant="ghost" 
             size="sm"
-            onClick={() => setActivePanel('properties')}
-            className="flex flex-col items-center space-y-1"
+            onClick={() => handlePanelToggle('properties')}
+            className="flex flex-col items-center space-y-1 touch-manipulation"
+            style={{ minHeight: '44px', minWidth: '44px' }}
           >
             <File className="w-4 h-4" />
             <span className="text-xs">Properties</span>
@@ -284,7 +342,8 @@ const Index = () => {
             size="sm"
             onClick={handleCodePreview}
             disabled={nodes.length === 0}
-            className="flex flex-col items-center space-y-1"
+            className="flex flex-col items-center space-y-1 touch-manipulation"
+            style={{ minHeight: '44px', minWidth: '44px' }}
           >
             <Code className="w-4 h-4" />
             <span className="text-xs">Code</span>
