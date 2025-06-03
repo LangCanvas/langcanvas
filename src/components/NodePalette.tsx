@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { NodeType } from '../types/nodeTypes';
@@ -9,6 +8,7 @@ interface NodePaletteProps {
 
 const NodePalette: React.FC<NodePaletteProps> = ({ onNodeTypeSelect }) => {
   const nodeTypes = [
+    { type: 'start' as NodeType, label: 'Start', color: 'bg-green-100 border-green-300 text-green-800' },
     { type: 'agent' as NodeType, label: 'Agent', color: 'bg-green-100 border-green-300 text-green-800' },
     { type: 'tool' as NodeType, label: 'Tool', color: 'bg-blue-100 border-blue-300 text-blue-800' },
     { type: 'function' as NodeType, label: 'Function', color: 'bg-purple-100 border-purple-300 text-purple-800' },

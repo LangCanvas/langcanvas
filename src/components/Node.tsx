@@ -95,13 +95,20 @@ const NodeComponent: React.FC<NodeComponentProps> = ({
     };
 
     switch (node.type) {
-      case 'agent':
+      case 'start':
         return {
           ...baseStyle,
           backgroundColor: '#f0fdf4',
           borderColor: isSelected ? '#16a34a' : '#22c55e',
           color: '#15803d',
           borderRadius: '30px', // Circular for start node
+        };
+      case 'agent':
+        return {
+          ...baseStyle,
+          backgroundColor: '#f0fdf4',
+          borderColor: isSelected ? '#16a34a' : '#22c55e',
+          color: '#15803d',
         };
       case 'tool':
         return {

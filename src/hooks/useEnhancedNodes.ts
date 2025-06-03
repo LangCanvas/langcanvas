@@ -7,9 +7,9 @@ export const useEnhancedNodes = () => {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
   const addNode = useCallback((type: NodeType, x: number, y: number) => {
-    // Prevent adding multiple start nodes (treating 'agent' as start equivalent)
-    if (type === 'agent' && nodes.some(node => node.type === 'agent')) {
-      alert('A workflow can only have one Agent (start) node.');
+    // Prevent adding multiple start nodes
+    if (type === 'start' && nodes.some(node => node.type === 'start')) {
+      alert('A workflow can only have one Start node.');
       return null;
     }
 

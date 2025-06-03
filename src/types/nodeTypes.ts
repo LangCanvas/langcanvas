@@ -1,5 +1,4 @@
-
-export type NodeType = 'agent' | 'tool' | 'function' | 'conditional' | 'parallel' | 'end';
+export type NodeType = 'start' | 'agent' | 'tool' | 'function' | 'conditional' | 'parallel' | 'end';
 
 export interface InputSchema {
   [key: string]: string;

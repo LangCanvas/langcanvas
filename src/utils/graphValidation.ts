@@ -1,4 +1,3 @@
-
 import { EnhancedNode } from '../types/nodeTypes';
 import { Edge } from '../hooks/useEdges';
 
@@ -25,13 +24,13 @@ export const validateGraph = (nodes: EnhancedNode[], edges: Edge[]): ValidationR
   // Helper function to create issue ID
   const createIssueId = () => `issue-${++issueCounter}`;
 
-  // 1. Check for Start nodes (agent nodes act as start nodes)
-  const startNodes = nodes.filter(node => node.type === 'agent');
+  // 1. Check for Start nodes
+  const startNodes = nodes.filter(node => node.type === 'start');
   if (startNodes.length === 0) {
     issues.push({
       id: createIssueId(),
       severity: 'error',
-      message: 'No Start node present. Please add an Agent node to designate an entry point.',
+      message: 'No Start node present. Please add a Start node to designate an entry point.',
       type: 'missing_start'
     });
   } else if (startNodes.length > 1) {
@@ -176,12 +175,12 @@ export const validateGraph = (nodes: EnhancedNode[], edges: Edge[]): ValidationR
       return;
     }
 
-    // Check if Agent node has incoming edges
-    if (targetNode.type === 'agent') {
+    // Check if Start node has incoming edges
+    if (targetNode.type === 'start') {
       issues.push({
         id: createIssueId(),
         severity: 'error',
-        message: `Agent node '${targetNode.label}' cannot have incoming connections.`,
+        message: `Start node '${targetNode.label}' cannot have incoming connections.`,
         edgeIds: [edge.id],
         nodeIds: [targetNode.id],
         type: 'invalid_connection'

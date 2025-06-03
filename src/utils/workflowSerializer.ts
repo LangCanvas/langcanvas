@@ -1,4 +1,3 @@
-
 import { EnhancedNode } from '../types/nodeTypes';
 import { Edge } from '../hooks/useEdges';
 
@@ -6,7 +5,7 @@ export interface WorkflowJSON {
   nodes: Array<{
     id: string;
     label: string;
-    type: 'agent' | 'tool' | 'function' | 'conditional' | 'parallel' | 'end';
+    type: 'start' | 'agent' | 'tool' | 'function' | 'conditional' | 'parallel' | 'end';
     position: { x: number; y: number };
     function: {
       name: string;
@@ -46,14 +45,14 @@ export interface WorkflowJSON {
 }
 
 export const exportToJSON = (nodes: EnhancedNode[], edges: Edge[]): WorkflowJSON => {
-  // Find the entry point (target of agent node's outgoing edge)
-  const agentNode = nodes.find(node => node.type === 'agent');
+  // Find the entry point (target of start node's outgoing edge)
+  const startNode = nodes.find(node => node.type === 'start');
   let entryPoint: string | undefined;
   
-  if (agentNode) {
-    const agentEdge = edges.find(edge => edge.source === agentNode.id);
-    if (agentEdge) {
-      const targetNode = nodes.find(node => node.id === agentEdge.target);
+  if (startNode) {
+    const startEdge = edges.find(edge => edge.source === startNode.id);
+    if (startEdge) {
+      const targetNode = nodes.find(node => node.id === startEdge.target);
       entryPoint = targetNode?.label;
     }
   }
@@ -145,7 +144,7 @@ export const importFromJSON = (
       }
 
       // Validate node type
-      if (!['agent', 'tool', 'function', 'conditional', 'parallel', 'end'].includes(jsonNode.type)) {
+      if (!['start', 'agent', 'tool', 'function', 'conditional', 'parallel', 'end'].includes(jsonNode.type)) {
         errors.push(`Unknown node type: ${jsonNode.type} for node ${jsonNode.label} - treating as tool`);
         jsonNode.type = 'tool' as any;
       }
@@ -243,7 +242,7 @@ export const validateWorkflowJSON = (jsonData: string | WorkflowJSON): { valid: 
 
     // Validate nodes
     const nodeLabels = new Set<string>();
-    let hasAgent = false;
+    let hasStart = false;
 
     for (const node of workflow.nodes || []) {
       if (!node.label) {
@@ -257,15 +256,15 @@ export const validateWorkflowJSON = (jsonData: string | WorkflowJSON): { valid: 
       }
       nodeLabels.add(node.label);
 
-      if (!['agent', 'tool', 'function', 'conditional', 'parallel', 'end'].includes(node.type)) {
+      if (!['start', 'agent', 'tool', 'function', 'conditional', 'parallel', 'end'].includes(node.type)) {
         errors.push(`Invalid node type: ${node.type} for node ${node.label}`);
       }
 
-      if (node.type === 'agent') {
-        if (hasAgent) {
-          errors.push('Multiple agent nodes found');
+      if (node.type === 'start') {
+        if (hasStart) {
+          errors.push('Multiple start nodes found');
         }
-        hasAgent = true;
+        hasStart = true;
       }
 
       if (typeof node.position?.x !== 'number' || typeof node.position?.y !== 'number') {
