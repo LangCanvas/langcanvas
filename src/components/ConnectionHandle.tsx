@@ -1,12 +1,12 @@
 
 import React, { useState, useRef } from 'react';
-import { Node } from '../hooks/useNodes';
+import { EnhancedNode } from '../types/nodeTypes';
 import { usePointerEvents } from '../hooks/usePointerEvents';
 
 interface ConnectionHandleProps {
-  node: Node;
+  node: EnhancedNode;
   canCreateEdge: boolean;
-  onStartConnection: (sourceNode: Node, startX: number, startY: number) => void;
+  onStartConnection: (sourceNode: EnhancedNode, startX: number, startY: number) => void;
 }
 
 const ConnectionHandle: React.FC<ConnectionHandleProps> = ({ node, canCreateEdge, onStartConnection }) => {
