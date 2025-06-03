@@ -17,7 +17,7 @@ const DragDropHandler: React.FC<DragDropHandlerProps> = ({ children, onAddNode }
   };
 
   const handleDragLeave = (e: React.DragEvent) => {
-    if (!dropZoneRef.current?.contains(e.relatedTarget as Node)) {
+    if (!dropZoneRef.current?.contains(e.relatedTarget as HTMLElement)) {
       setIsDragOver(false);
     }
   };
@@ -37,6 +37,22 @@ const DragDropHandler: React.FC<DragDropHandlerProps> = ({ children, onAddNode }
     }
   };
 
+  const handleClick = (e: React.MouseEvent) => {
+    // Handle mobile node creation via click
+    const target = e.target as HTMLElement;
+    const nodeType = target.getAttribute('data-node-type') as Node['type'];
+    
+    if (nodeType && dropZoneRef.current) {
+      const rect = dropZoneRef.current.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      onAddNode(nodeType, x, y);
+      
+      // Clear the temporary node type
+      target.removeAttribute('data-node-type');
+    }
+  };
+
   return (
     <div
       ref={dropZoneRef}
@@ -44,6 +60,7 @@ const DragDropHandler: React.FC<DragDropHandlerProps> = ({ children, onAddNode }
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
+      onClick={handleClick}
     >
       {children}
     </div>

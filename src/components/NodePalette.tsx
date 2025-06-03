@@ -15,8 +15,32 @@ const NodePalette = () => {
   };
 
   const handleTouchStart = (e: React.TouchEvent, nodeType: string) => {
-    // Store the node type for touch-based node creation
-    (e.target as HTMLElement).setAttribute('data-node-type', nodeType);
+    // Set up for mobile node creation
+    const canvas = document.getElementById('canvas');
+    if (canvas) {
+      canvas.setAttribute('data-node-type', nodeType);
+    }
+  };
+
+  const handleClick = (nodeType: string) => {
+    // For mobile: set the node type on canvas for next tap
+    const canvas = document.getElementById('canvas');
+    if (canvas) {
+      canvas.setAttribute('data-node-type', nodeType);
+      
+      // Show visual feedback
+      const instruction = document.createElement('div');
+      instruction.className = 'fixed top-4 left-4 right-4 bg-blue-100 border border-blue-300 rounded-lg p-3 text-blue-800 text-sm z-50 lg:hidden';
+      instruction.textContent = `Tap on the canvas to place the ${nodeType} node`;
+      document.body.appendChild(instruction);
+      
+      // Remove instruction after 3 seconds
+      setTimeout(() => {
+        if (document.body.contains(instruction)) {
+          document.body.removeChild(instruction);
+        }
+      }, 3000);
+    }
   };
 
   return (
@@ -31,6 +55,7 @@ const NodePalette = () => {
             draggable
             onDragStart={(e) => handleDragStart(e, type)}
             onTouchStart={(e) => handleTouchStart(e, type)}
+            onClick={() => handleClick(type)}
             style={{ 
               minHeight: '48px',
               touchAction: 'manipulation'
@@ -42,7 +67,7 @@ const NodePalette = () => {
       </div>
       <div className="mt-6 text-xs text-gray-500">
         <p className="hidden lg:block">Drag nodes to the canvas to create them</p>
-        <p className="lg:hidden">Tap nodes from the palette to add them</p>
+        <p className="lg:hidden">Tap a node type, then tap on the canvas to place it</p>
       </div>
     </div>
   );

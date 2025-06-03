@@ -51,6 +51,27 @@ const Canvas: React.FC<CanvasProps> = ({
 
     const handleClick = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
+      
+      // Check if we're trying to place a node (mobile)
+      const nodeType = canvas.getAttribute('data-node-type') as NodeData['type'];
+      if (nodeType && (target === canvas || target.closest('.canvas-background'))) {
+        const rect = canvas.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        onAddNode(nodeType, x, y);
+        canvas.removeAttribute('data-node-type');
+        
+        // Remove any instruction messages
+        const instructions = document.querySelectorAll('.fixed.bg-blue-100');
+        instructions.forEach(inst => {
+          if (document.body.contains(inst)) {
+            document.body.removeChild(inst);
+          }
+        });
+        return;
+      }
+      
+      // Regular selection logic
       if (target === canvas || target.closest('.canvas-background')) {
         onSelectNode(null);
         onSelectEdge(null);
@@ -59,7 +80,7 @@ const Canvas: React.FC<CanvasProps> = ({
 
     canvas.addEventListener('click', handleClick);
     return () => canvas.removeEventListener('click', handleClick);
-  }, [onSelectNode, onSelectEdge]);
+  }, [onSelectNode, onSelectEdge, onAddNode]);
 
   return (
     <DragDropHandler onAddNode={onAddNode}>
