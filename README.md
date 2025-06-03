@@ -128,8 +128,8 @@ LangCanvas is open-source and released under the MIT License. See [LICENSE](LICE
 
 For questions, suggestions, or issues, please reach out via:
 
-* **Email:** [youremail@example.com](mailto:youremail@example.com)
-* **GitHub Issues:** [Issues](https://github.com/yourusername/langcanvas/issues)
+* **Email:** [bdevay@gmail.com](mailto:bdevay@gmail.com)
+* **GitHub Issues:** [Issues](https://github.com/langcanvas/issues)
 
 ---
 
