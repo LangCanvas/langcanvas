@@ -29,6 +29,40 @@ const Toolbar: React.FC<ToolbarProps> = ({
   onCodePreview,
   hasNodes
 }) => {
+  const handleNewClick = () => {
+    console.log("🔴 New button clicked in Toolbar");
+    console.log("🔴 onNewProject function:", onNewProject);
+    try {
+      onNewProject();
+      console.log("🔴 New button handler executed successfully");
+    } catch (error) {
+      console.error("🔴 Error in New button handler:", error);
+    }
+  };
+
+  const handleImportClick = () => {
+    console.log("🔴 Import button clicked in Toolbar");
+    console.log("🔴 onImport function:", onImport);
+    try {
+      onImport();
+      console.log("🔴 Import button handler executed successfully");
+    } catch (error) {
+      console.error("🔴 Error in Import button handler:", error);
+    }
+  };
+
+  const handleExportClick = () => {
+    console.log("🔴 Export button clicked in Toolbar");
+    console.log("🔴 onExport function:", onExport);
+    console.log("🔴 hasNodes:", hasNodes);
+    try {
+      onExport();
+      console.log("🔴 Export button handler executed successfully");
+    } catch (error) {
+      console.error("🔴 Error in Export button handler:", error);
+    }
+  };
+
   return (
     <header className="bg-white border-b border-gray-200 px-2 sm:px-4 py-2 flex items-center justify-between shadow-sm">
       <div className="flex items-center space-x-1">
@@ -48,7 +82,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={onNewProject}
+            onClick={handleNewClick}
             className="text-gray-600 hover:text-gray-800 touch-manipulation"
             style={{ minHeight: '44px' }}
           >
@@ -58,7 +92,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={onImport}
+            onClick={handleImportClick}
             className="text-gray-600 hover:text-gray-800 touch-manipulation"
             style={{ minHeight: '44px' }}
           >
@@ -68,7 +102,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={onExport}
+            onClick={handleExportClick}
             className="text-gray-600 hover:text-gray-800 touch-manipulation"
             style={{ minHeight: '44px' }}
           >

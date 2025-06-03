@@ -59,6 +59,13 @@ const Index = () => {
     selectEdge
   });
 
+  console.log("📍 Index component rendering");
+  console.log("📍 nodes:", nodes);
+  console.log("📍 exportWorkflowAsString:", exportWorkflowAsString);
+  console.log("📍 importWorkflow:", importWorkflow);
+  console.log("📍 validateWorkflow:", validateWorkflow);
+  console.log("📍 clearWorkflow:", clearWorkflow);
+
   const {
     handleNewProject,
     handleImport,
@@ -71,6 +78,12 @@ const Index = () => {
     validateWorkflow,
     clearWorkflow
   });
+
+  console.log("📍 Workflow actions from hook:");
+  console.log("📍 handleNewProject:", handleNewProject);
+  console.log("📍 handleImport:", handleImport);
+  console.log("📍 handleExport:", handleExport);
+  console.log("📍 handleCodePreview:", handleCodePreview);
 
   const handleDeleteNode = (nodeId: string) => {
     deleteEdgesForNode(nodeId);
