@@ -89,22 +89,40 @@ export const useWorkflowActions = ({
 
   const handleExport = () => {
     try {
+      console.log("Export button clicked, starting export process");
       const workflowJson = exportWorkflowAsString();
+      console.log("Generated workflow JSON:", workflowJson);
+      
       const blob = new Blob([workflowJson], { type: 'application/json' });
+      console.log("Created blob:", blob);
+      
       const url = URL.createObjectURL(blob);
+      console.log("Created object URL:", url);
+      
       const link = document.createElement('a');
       link.href = url;
       link.download = 'workflow.json';
+      link.style.display = 'none';
+      
       document.body.appendChild(link);
+      console.log("Added link to document body");
+      
       link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      console.log("Clicked download link");
+      
+      // Clean up
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        console.log("Cleaned up download link and URL");
+      }, 100);
       
       toast({
         title: "Export Successful",
         description: "Workflow exported as workflow.json",
       });
     } catch (error) {
+      console.error("Export error:", error);
       toast({
         title: "Export Failed",
         description: "Failed to export workflow.",
