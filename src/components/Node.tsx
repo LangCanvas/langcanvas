@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { EnhancedNode } from '../types/nodeTypes';
 import { usePointerEvents } from '../hooks/usePointerEvents';
@@ -102,7 +101,7 @@ const NodeComponent: React.FC<NodeComponentProps> = ({
           backgroundColor: '#f0fdf4',
           borderColor: isSelected ? '#16a34a' : '#22c55e',
           color: '#15803d',
-          borderRadius: '30px',
+          borderRadius: '30px', // Circular for start node
         };
       case 'tool':
         return {

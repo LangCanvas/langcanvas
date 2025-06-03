@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { EnhancedNode, NodeType } from '../types/nodeTypes';
 import { createDefaultNode } from '../utils/nodeDefaults';

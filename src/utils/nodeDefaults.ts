@@ -1,4 +1,3 @@
-
 import { EnhancedNode, NodeType } from '../types/nodeTypes';
 
 export const createDefaultNode = (
@@ -43,7 +42,7 @@ export const createDefaultNode = (
 
 const getDefaultLabel = (type: NodeType): string => {
   const labelMap: Record<NodeType, string> = {
-    agent: 'Agent',
+    agent: 'Start', // Changed from 'Agent' to 'Start' to be clearer
     tool: 'Tool',
     function: 'Function',
     conditional: 'Conditional',
@@ -55,7 +54,7 @@ const getDefaultLabel = (type: NodeType): string => {
 
 const getDefaultFunctionName = (type: NodeType): string => {
   const functionMap: Record<NodeType, string> = {
-    agent: 'agent_function',
+    agent: 'start_function', // Changed to reflect start node purpose
     tool: 'tool_function',
     function: 'custom_function',
     conditional: 'conditional_function',
