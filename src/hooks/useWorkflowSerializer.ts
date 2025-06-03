@@ -1,15 +1,15 @@
 
 import { useCallback } from 'react';
-import { Node } from './useNodes';
+import { EnhancedNode } from '../types/nodeTypes';
 import { Edge } from './useEdges';
 import { exportToJSON, importFromJSON, validateWorkflowJSON, WorkflowJSON } from '../utils/workflowSerializer';
 
 interface UseWorkflowSerializerProps {
-  nodes: Node[];
+  nodes: EnhancedNode[];
   edges: Edge[];
-  addNode: (type: Node['type'], x: number, y: number) => Node | null;
-  addEdge: (sourceNode: Node, targetNode: Node) => { success: boolean; error?: string };
-  updateNodeProperties: (nodeId: string, updates: Partial<Node>) => void;
+  addNode: (type: EnhancedNode['type'], x: number, y: number) => EnhancedNode | null;
+  addEdge: (sourceNode: EnhancedNode, targetNode: EnhancedNode) => { success: boolean; error?: string };
+  updateNodeProperties: (nodeId: string, updates: Partial<EnhancedNode>) => void;
   updateEdgeProperties: (edgeId: string, updates: Partial<Edge>) => void;
   deleteNode: (nodeId: string) => void;
   deleteEdge: (edgeId: string) => void;
@@ -71,20 +71,19 @@ export const useWorkflowSerializer = ({
       // Update edge properties for condition nodes
       setTimeout(() => {
         for (const jsonNode of workflow.nodes) {
-          if (jsonNode.type === 'condition' && jsonNode.branches) {
-            const conditionNode = nodes.find(node => node.name === jsonNode.name);
+          if (jsonNode.type === 'conditional' && jsonNode.transitions?.conditions) {
+            const conditionNode = nodes.find(node => node.label === jsonNode.label);
             if (!conditionNode) continue;
 
-            for (const branch of jsonNode.branches) {
-              const targetNode = nodes.find(node => node.name === branch.target);
+            for (const condition of jsonNode.transitions.conditions) {
+              const targetNode = nodes.find(node => node.label === condition.next_node);
               if (!targetNode) continue;
 
               // Find the edge between condition and target
               const edge = edges.find(e => e.source === conditionNode.id && e.target === targetNode.id);
               if (edge) {
                 const edgeUpdates: Partial<Edge> = {};
-                if (branch.label) edgeUpdates.label = branch.label;
-                if (branch.value) edgeUpdates.value = branch.value;
+                if (condition.expression) edgeUpdates.label = condition.expression;
                 
                 if (Object.keys(edgeUpdates).length > 0) {
                   updateEdgeProperties(edge.id, edgeUpdates);

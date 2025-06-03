@@ -1,4 +1,7 @@
 
+// Legacy hook - kept for backward compatibility only
+// New code should use useEnhancedNodes instead
+
 import { useState, useCallback } from 'react';
 
 export interface Node {

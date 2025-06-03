@@ -14,7 +14,8 @@ export const useEnhancedNodes = () => {
       return null;
     }
 
-    const newNode = createDefaultNode(type, x, y);
+    const id = `${type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const newNode = createDefaultNode(id, type, x, y);
     setNodes(prev => [...prev, newNode]);
     return newNode;
   }, [nodes]);
