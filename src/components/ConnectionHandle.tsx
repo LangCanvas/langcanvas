@@ -30,14 +30,30 @@ const ConnectionHandle: React.FC<ConnectionHandleProps> = ({ node, canCreateEdge
   // Don't show handle for end nodes (no outgoing connections)
   if (node.type === 'end') return null;
 
-  // Position handle on the right side of the node with larger touch target
-  const handleStyle = {
+  // Special positioning for diamond-shaped conditional nodes
+  const handleStyle = node.type === 'conditional' ? {
+    position: 'absolute' as const,
+    right: '-20px', // Further right for diamond shape
+    top: '50%',
+    transform: 'translateY(-50%)',
+    width: '16px',
+    height: '16px',
+    borderRadius: '50%',
+    backgroundColor: canCreateEdge ? (isHovered ? '#3b82f6' : '#9ca3af') : '#d1d5db',
+    border: '2px solid white',
+    cursor: canCreateEdge ? 'crosshair' : 'not-allowed',
+    zIndex: 20,
+    opacity: canCreateEdge ? 1 : 0.5,
+    transition: 'all 0.2s ease',
+    touchAction: 'none', // Prevent default touch behaviors
+  } : {
+    // Regular positioning for other node types
     position: 'absolute' as const,
     right: '-8px',
     top: '50%',
     transform: 'translateY(-50%)',
-    width: '16px', // Larger for better touch target
-    height: '16px', // Larger for better touch target
+    width: '16px',
+    height: '16px',
     borderRadius: '50%',
     backgroundColor: canCreateEdge ? (isHovered ? '#3b82f6' : '#9ca3af') : '#d1d5db',
     border: '2px solid white',

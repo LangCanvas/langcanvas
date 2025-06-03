@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { EnhancedNode } from '../types/nodeTypes';
 import { usePointerEvents } from '../hooks/usePointerEvents';
@@ -50,15 +51,19 @@ const NodeComponent: React.FC<NodeComponentProps> = ({
     const handlePointerMove = (pointerEvent: any) => {
       const canvas = document.getElementById('canvas');
       const canvasRect = canvas?.getBoundingClientRect();
+      const scrollContainer = document.querySelector('[data-radix-scroll-area-viewport]');
       
-      if (canvasRect) {
+      if (canvasRect && scrollContainer) {
+        const scrollLeft = scrollContainer.scrollLeft || 0;
+        const scrollTop = scrollContainer.scrollTop || 0;
+        
         const newX = Math.max(0, Math.min(
-          pointerEvent.clientX - canvasRect.left - dragOffset.x,
-          canvasRect.width - 120 // Node width
+          pointerEvent.clientX - canvasRect.left - dragOffset.x + scrollLeft,
+          3000 - 120 // Canvas width minus node width
         ));
         const newY = Math.max(0, Math.min(
-          pointerEvent.clientY - canvasRect.top - dragOffset.y,
-          canvasRect.height - 60 // Node height
+          pointerEvent.clientY - canvasRect.top - dragOffset.y + scrollTop,
+          3000 - 60 // Canvas height minus node height
         ));
         
         onMove(node.id, newX, newY);
@@ -78,13 +83,9 @@ const NodeComponent: React.FC<NodeComponentProps> = ({
       position: 'absolute' as const,
       left: node.x,
       top: node.y,
-      width: '120px',
-      height: '60px',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      borderRadius: '8px',
-      border: '2px solid',
       cursor: isDragging ? 'grabbing' : 'grab',
       userSelect: 'none' as const,
       fontSize: '14px',
@@ -94,10 +95,33 @@ const NodeComponent: React.FC<NodeComponentProps> = ({
       touchAction: 'none', // Prevent default touch behaviors
     };
 
+    // Special handling for conditional node (diamond shape)
+    if (node.type === 'conditional') {
+      return {
+        ...baseStyle,
+        width: '80px',
+        height: '80px',
+        backgroundColor: '#fff7ed',
+        border: `2px solid ${isSelected ? '#ea580c' : '#f97316'}`,
+        color: '#c2410c',
+        clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
+        fontSize: '12px',
+      };
+    }
+
+    // Regular node styles
+    const regularStyle = {
+      ...baseStyle,
+      width: '120px',
+      height: '60px',
+      borderRadius: '8px',
+      border: '2px solid',
+    };
+
     switch (node.type) {
       case 'start':
         return {
-          ...baseStyle,
+          ...regularStyle,
           backgroundColor: '#f0fdf4',
           borderColor: isSelected ? '#16a34a' : '#22c55e',
           color: '#15803d',
@@ -105,51 +129,42 @@ const NodeComponent: React.FC<NodeComponentProps> = ({
         };
       case 'agent':
         return {
-          ...baseStyle,
+          ...regularStyle,
           backgroundColor: '#f0fdf4',
           borderColor: isSelected ? '#16a34a' : '#22c55e',
           color: '#15803d',
         };
       case 'tool':
         return {
-          ...baseStyle,
+          ...regularStyle,
           backgroundColor: '#eff6ff',
           borderColor: isSelected ? '#2563eb' : '#3b82f6',
           color: '#1d4ed8',
         };
       case 'function':
         return {
-          ...baseStyle,
+          ...regularStyle,
           backgroundColor: '#faf5ff',
           borderColor: isSelected ? '#9333ea' : '#a855f7',
           color: '#7c3aed',
         };
-      case 'conditional':
-        return {
-          ...baseStyle,
-          backgroundColor: '#fff7ed',
-          borderColor: isSelected ? '#ea580c' : '#f97316',
-          color: '#c2410c',
-          transform: 'rotate(45deg)',
-          fontSize: '12px',
-        };
       case 'parallel':
         return {
-          ...baseStyle,
+          ...regularStyle,
           backgroundColor: '#ecfeff',
           borderColor: isSelected ? '#0891b2' : '#06b6d4',
           color: '#0e7490',
         };
       case 'end':
         return {
-          ...baseStyle,
+          ...regularStyle,
           backgroundColor: '#fef2f2',
           borderColor: isSelected ? '#dc2626' : '#ef4444',
           color: '#b91c1c',
           borderRadius: '30px',
         };
       default:
-        return baseStyle;
+        return regularStyle;
     }
   };
 
@@ -167,7 +182,7 @@ const NodeComponent: React.FC<NodeComponentProps> = ({
       data-node-type={node.type}
       title={tooltipText}
     >
-      <span style={{ transform: node.type === 'conditional' ? 'rotate(-45deg)' : 'none' }}>
+      <span>
         {node.label}
       </span>
       
