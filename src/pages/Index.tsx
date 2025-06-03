@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -14,6 +13,8 @@ import Canvas from '../components/Canvas';
 import PropertiesPanel from '../components/PropertiesPanel';
 import { useNodes } from '../hooks/useNodes';
 import { useEdges } from '../hooks/useEdges';
+import { useWorkflowSerializer } from '../hooks/useWorkflowSerializer';
+import { useToast } from '@/hooks/use-toast';
 
 const Index = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -43,16 +44,120 @@ const Index = () => {
     getNodeOutgoingEdges
   } = useEdges();
 
+  const {
+    exportWorkflow,
+    exportWorkflowAsString,
+    importWorkflow,
+    validateWorkflow,
+    clearWorkflow
+  } = useWorkflowSerializer({
+    nodes,
+    edges,
+    addNode,
+    addEdge,
+    updateNodeProperties,
+    updateEdgeProperties,
+    deleteNode,
+    deleteEdge,
+    selectNode,
+    selectEdge
+  });
+
+  const { toast } = useToast();
+
   const handleNewProject = () => {
-    console.log("New project - not implemented yet");
+    if (nodes.length > 0) {
+      if (confirm('Are you sure you want to start a new project? All current work will be lost.')) {
+        clearWorkflow();
+        toast({
+          title: "New Project",
+          description: "Started a new project successfully.",
+        });
+      }
+    } else {
+      toast({
+        title: "New Project",
+        description: "Already working on a new project.",
+      });
+    }
   };
 
   const handleImport = () => {
-    console.log("Import JSON - not implemented yet");
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            const jsonString = event.target?.result as string;
+            const validation = validateWorkflow(jsonString);
+            
+            if (!validation.valid) {
+              toast({
+                title: "Import Failed",
+                description: `Invalid file format: ${validation.errors.join(', ')}`,
+                variant: "destructive",
+              });
+              return;
+            }
+
+            const result = importWorkflow(jsonString);
+            if (result.success) {
+              toast({
+                title: "Import Successful",
+                description: result.errors.length > 0 
+                  ? `Imported with warnings: ${result.errors.join(', ')}`
+                  : "Workflow imported successfully.",
+                variant: result.errors.length > 0 ? "default" : "default",
+              });
+            } else {
+              toast({
+                title: "Import Failed",
+                description: result.errors.join(', '),
+                variant: "destructive",
+              });
+            }
+          } catch (error) {
+            toast({
+              title: "Import Failed",
+              description: "Failed to read or parse the file.",
+              variant: "destructive",
+            });
+          }
+        };
+        reader.readAsText(file);
+      }
+    };
+    input.click();
   };
 
   const handleExport = () => {
-    console.log("Export JSON - not implemented yet");
+    try {
+      const workflowJson = exportWorkflowAsString();
+      const blob = new Blob([workflowJson], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'workflow.json';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      toast({
+        title: "Export Successful",
+        description: "Workflow exported as workflow.json",
+      });
+    } catch (error) {
+      toast({
+        title: "Export Failed",
+        description: "Failed to export workflow.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleCodePreview = () => {
@@ -189,25 +294,55 @@ const Index = () => {
               <Button 
                 variant="ghost" 
                 className="w-full justify-start touch-manipulation"
-                onClick={() => {
-                  handlePanelToggle('palette');
-                  setIsMobileMenuOpen(false);
-                }}
+                onClick={handleNewProject}
                 style={{ minHeight: '44px' }}
               >
-                Node Palette
+                <File className="w-4 h-4 mr-2" />
+                New Project
               </Button>
               <Button 
                 variant="ghost" 
                 className="w-full justify-start touch-manipulation"
-                onClick={() => {
-                  handlePanelToggle('properties');
-                  setIsMobileMenuOpen(false);
-                }}
+                onClick={handleImport}
                 style={{ minHeight: '44px' }}
               >
-                Properties
+                <Upload className="w-4 h-4 mr-2" />
+                Import
               </Button>
+              <Button 
+                variant="ghost" 
+                className="w-full justify-start touch-manipulation"
+                onClick={handleExport}
+                disabled={nodes.length === 0}
+                style={{ minHeight: '44px' }}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Export
+              </Button>
+              <div className="border-t border-gray-200 mt-4 pt-4">
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-start touch-manipulation"
+                  onClick={() => {
+                    handlePanelToggle('palette');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  style={{ minHeight: '44px' }}
+                >
+                  Node Palette
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-start touch-manipulation"
+                  onClick={() => {
+                    handlePanelToggle('properties');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  style={{ minHeight: '44px' }}
+                >
+                  Properties
+                </Button>
+              </div>
             </div>
           </div>
         </div>
