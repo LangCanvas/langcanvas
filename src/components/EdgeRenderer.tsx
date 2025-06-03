@@ -1,11 +1,11 @@
 
 import React from 'react';
 import { Edge } from '../hooks/useEdges';
-import { Node } from '../hooks/useNodes';
+import { EnhancedNode } from '../types/nodeTypes';
 
 interface EdgeRendererProps {
   edges: Edge[];
-  nodes: Node[];
+  nodes: EnhancedNode[];
   selectedEdgeId: string | null;
   onSelectEdge: (edgeId: string | null) => void;
   getEdgeValidationClass?: (edgeId: string) => string;

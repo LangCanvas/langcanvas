@@ -2,7 +2,7 @@
 import React from 'react';
 
 interface EdgePreviewProps {
-  edgePreview: { startX: number; startY: number; endX: number; endY: number; sourceNode: any } | null;
+  edgePreview: { startX: number; startY: number; endX: number; endY: number } | null;
 }
 
 const EdgePreview: React.FC<EdgePreviewProps> = ({ edgePreview }) => {
