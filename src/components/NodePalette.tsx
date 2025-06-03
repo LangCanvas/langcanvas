@@ -1,25 +1,28 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
+import { NodeType } from '../types/nodeTypes';
 
 interface NodePaletteProps {
-  onNodeTypeSelect?: (type: string) => void;
+  onNodeTypeSelect?: (type: NodeType) => void;
 }
 
 const NodePalette: React.FC<NodePaletteProps> = ({ onNodeTypeSelect }) => {
   const nodeTypes = [
-    { type: 'start', label: 'Start', color: 'bg-green-100 border-green-300 text-green-800' },
-    { type: 'tool', label: 'Tool', color: 'bg-blue-100 border-blue-300 text-blue-800' },
-    { type: 'condition', label: 'Condition', color: 'bg-orange-100 border-orange-300 text-orange-800' },
-    { type: 'end', label: 'End', color: 'bg-red-100 border-red-300 text-red-800' }
+    { type: 'agent' as NodeType, label: 'Agent', color: 'bg-green-100 border-green-300 text-green-800' },
+    { type: 'tool' as NodeType, label: 'Tool', color: 'bg-blue-100 border-blue-300 text-blue-800' },
+    { type: 'function' as NodeType, label: 'Function', color: 'bg-purple-100 border-purple-300 text-purple-800' },
+    { type: 'conditional' as NodeType, label: 'Conditional', color: 'bg-orange-100 border-orange-300 text-orange-800' },
+    { type: 'parallel' as NodeType, label: 'Parallel', color: 'bg-cyan-100 border-cyan-300 text-cyan-800' },
+    { type: 'end' as NodeType, label: 'End', color: 'bg-red-100 border-red-300 text-red-800' }
   ];
 
-  const handleDragStart = (e: React.DragEvent, nodeType: string) => {
+  const handleDragStart = (e: React.DragEvent, nodeType: NodeType) => {
     e.dataTransfer.setData('text/plain', nodeType);
     e.dataTransfer.effectAllowed = 'copy';
   };
 
-  const handleClick = (e: React.MouseEvent, nodeType: string) => {
+  const handleClick = (e: React.MouseEvent, nodeType: NodeType) => {
     e.preventDefault();
     e.stopPropagation();
     

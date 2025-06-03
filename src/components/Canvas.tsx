@@ -1,6 +1,6 @@
 
 import React, { useRef, useEffect } from 'react';
-import { Node as NodeData } from '../hooks/useNodes';
+import { EnhancedNode, NodeType } from '../types/nodeTypes';
 import { Edge } from '../hooks/useEdges';
 import { useNodeCreation } from '../hooks/useNodeCreation';
 import { useMobileDetection } from '../hooks/useMobileDetection';
@@ -9,28 +9,28 @@ import EdgeCreationHandler from './canvas/EdgeCreationHandler';
 import CanvasBackground from './canvas/CanvasBackground';
 import EdgePreview from './canvas/EdgePreview';
 import KeyboardHandler from './canvas/KeyboardHandler';
-import NodeComponent from './Node';
+import EnhancedNodeComponent from './EnhancedNodeComponent';
 import EdgeRenderer from './EdgeRenderer';
 
 interface CanvasProps {
   className?: string;
-  nodes: NodeData[];
+  nodes: EnhancedNode[];
   edges: Edge[];
   selectedNodeId: string | null;
   selectedEdgeId: string | null;
-  onAddNode: (type: NodeData['type'], x: number, y: number) => NodeData | null;
+  onAddNode: (type: NodeType, x: number, y: number) => EnhancedNode | null;
   onSelectNode: (id: string | null) => void;
   onSelectEdge: (id: string | null) => void;
   onMoveNode: (id: string, x: number, y: number) => void;
   onDeleteNode: (id: string) => void;
   onDeleteEdge: (id: string) => void;
-  onAddEdge: (sourceNode: NodeData, targetNode: NodeData) => { success: boolean; error?: string };
-  canCreateEdge: (sourceNode: NodeData) => boolean;
+  onAddEdge: (sourceNode: EnhancedNode, targetNode: EnhancedNode) => { success: boolean; error?: string };
+  canCreateEdge: (sourceNode: EnhancedNode) => boolean;
   getNodeValidationClass?: (nodeId: string) => string;
   getEdgeValidationClass?: (edgeId: string) => string;
   getNodeTooltip?: (nodeId: string) => string;
   getEdgeTooltip?: (edgeId: string) => string;
-  pendingNodeType?: NodeData['type'] | null;
+  pendingNodeType?: NodeType | null;
   onClearPendingCreation?: () => void;
 }
 
@@ -68,7 +68,7 @@ const Canvas: React.FC<CanvasProps> = ({
       const target = event.target as HTMLElement;
       
       // Check if we're trying to place a node (mobile)
-      const nodeType = (pendingNodeType || canvas.getAttribute('data-node-type')) as NodeData['type'];
+      const nodeType = (pendingNodeType || canvas.getAttribute('data-node-type')) as NodeType;
       
       if (nodeType && (target === canvas || target.closest('.canvas-background'))) {
         event.preventDefault();
@@ -167,7 +167,7 @@ const Canvas: React.FC<CanvasProps> = ({
                     isMobile ? 'touch-manipulation' : ''
                   }`}
                 >
-                  <NodeComponent
+                  <EnhancedNodeComponent
                     node={node}
                     isSelected={selectedNodeId === node.id}
                     canCreateEdge={canCreateEdge(node)}

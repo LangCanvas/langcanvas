@@ -1,13 +1,14 @@
+
 import React, { useState } from 'react';
 import NodePalette from '../components/NodePalette';
 import Canvas from '../components/Canvas';
-import PropertiesPanel from '../components/PropertiesPanel';
+import EnhancedPropertiesPanel from '../components/EnhancedPropertiesPanel';
 import ValidationPanel from '../components/ValidationPanel';
 import Toolbar from '../components/layout/Toolbar';
 import MobileMenu from '../components/layout/MobileMenu';
 import MobileBottomNav from '../components/layout/MobileBottomNav';
 import MobilePanelOverlay from '../components/layout/MobilePanelOverlay';
-import { useNodes } from '../hooks/useNodes';
+import { useEnhancedNodes } from '../hooks/useEnhancedNodes';
 import { useEdges } from '../hooks/useEdges';
 import { useNodeCreation } from '../hooks/useNodeCreation';
 import { useWorkflowSerializer } from '../hooks/useWorkflowSerializer';
@@ -28,7 +29,7 @@ const Index = () => {
     updateNodeProperties,
     deleteNode, 
     selectNode 
-  } = useNodes();
+  } = useEnhancedNodes();
 
   const {
     edges,
@@ -197,7 +198,7 @@ const Index = () => {
           />
         </main>
 
-        {/* Desktop Right Sidebar - Properties Panel */}
+        {/* Desktop Right Sidebar - Enhanced Properties Panel */}
         <aside className="hidden lg:flex w-80 bg-white border-l border-gray-200 flex-col">
           <div className="p-4 border-b border-gray-100 flex items-center justify-between">
             <h2 className="text-sm font-medium text-gray-700">Properties</h2>
@@ -217,15 +218,10 @@ const Index = () => {
               onClose={() => setShowValidationPanel(false)}
             />
           ) : (
-            <PropertiesPanel 
+            <EnhancedPropertiesPanel 
               selectedNode={selectedNode}
-              selectedEdge={selectedEdge}
+              onUpdateNode={updateNodeProperties}
               onDeleteNode={handleDeleteNode}
-              onDeleteEdge={deleteEdge}
-              onUpdateNodeProperties={updateNodeProperties}
-              onUpdateEdgeProperties={updateEdgeProperties}
-              allNodes={nodes}
-              nodeOutgoingEdges={nodeOutgoingEdges}
             />
           )}
         </aside>

@@ -1,10 +1,10 @@
 
 import React, { useState, useRef } from 'react';
-import { Node } from '../../hooks/useNodes';
+import { EnhancedNode, NodeType } from '../../types/nodeTypes';
 
 interface DragDropHandlerProps {
   children: React.ReactNode;
-  onAddNode: (type: Node['type'], x: number, y: number) => Node | null;
+  onAddNode: (type: NodeType, x: number, y: number) => EnhancedNode | null;
 }
 
 const DragDropHandler: React.FC<DragDropHandlerProps> = ({ children, onAddNode }) => {
@@ -41,7 +41,7 @@ const DragDropHandler: React.FC<DragDropHandlerProps> = ({ children, onAddNode }
       return;
     }
     
-    const nodeType = e.dataTransfer.getData('text/plain') as Node['type'];
+    const nodeType = e.dataTransfer.getData('text/plain') as NodeType;
     if (!nodeType) {
       console.log('🚫 Drop blocked: no node type');
       return;

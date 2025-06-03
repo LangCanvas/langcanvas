@@ -1,21 +1,23 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import NodePalette from '../NodePalette';
-import PropertiesPanel from '../PropertiesPanel';
+import EnhancedPropertiesPanel from '../EnhancedPropertiesPanel';
 import { ValidationResult } from '../../utils/graphValidation';
+import { EnhancedNode } from '../../types/nodeTypes';
 
 interface MobilePanelOverlayProps {
   activePanel: 'palette' | 'properties' | null;
   onClose: () => void;
   onPanelToggle: (panel: 'palette' | 'properties') => void;
-  selectedNode: any;
+  selectedNode: EnhancedNode | null;
   selectedEdge: any;
   onDeleteNode: (nodeId: string) => void;
   onDeleteEdge: (edgeId: string) => void;
-  onUpdateNodeProperties: (nodeId: string, updates: any) => void;
+  onUpdateNodeProperties: (nodeId: string, updates: Partial<EnhancedNode>) => void;
   onUpdateEdgeProperties: (edgeId: string, updates: any) => void;
-  allNodes: any[];
+  allNodes: EnhancedNode[];
   nodeOutgoingEdges: any[];
   validationResult: ValidationResult;
 }
@@ -77,15 +79,10 @@ const MobilePanelOverlay: React.FC<MobilePanelOverlayProps> = ({
         <div className="flex-1 overflow-auto">
           {activePanel === 'palette' && <NodePalette />}
           {activePanel === 'properties' && (
-            <PropertiesPanel 
+            <EnhancedPropertiesPanel 
               selectedNode={selectedNode}
-              selectedEdge={selectedEdge}
+              onUpdateNode={onUpdateNodeProperties}
               onDeleteNode={onDeleteNode}
-              onDeleteEdge={onDeleteEdge}
-              onUpdateNodeProperties={onUpdateNodeProperties}
-              onUpdateEdgeProperties={onUpdateEdgeProperties}
-              allNodes={allNodes}
-              nodeOutgoingEdges={nodeOutgoingEdges}
             />
           )}
         </div>

@@ -1,14 +1,14 @@
 
 import { useState, useCallback, useRef } from 'react';
-import { Node } from './useNodes';
+import { EnhancedNode, NodeType } from '../types/nodeTypes';
 
 interface UseNodeCreationProps {
-  onAddNode: (type: Node['type'], x: number, y: number) => Node | null;
+  onAddNode: (type: NodeType, x: number, y: number) => EnhancedNode | null;
 }
 
 export const useNodeCreation = ({ onAddNode }: UseNodeCreationProps) => {
   const [isCreationInProgress, setIsCreationInProgress] = useState(false);
-  const [pendingNodeType, setPendingNodeType] = useState<Node['type'] | null>(null);
+  const [pendingNodeType, setPendingNodeType] = useState<NodeType | null>(null);
   const lastCreationTimeRef = useRef<number>(0);
   const lastCreationPositionRef = useRef<{ x: number; y: number } | null>(null);
 
@@ -40,7 +40,7 @@ export const useNodeCreation = ({ onAddNode }: UseNodeCreationProps) => {
     return true;
   }, []);
 
-  const createNode = useCallback((type: Node['type'], x: number, y: number): Node | null => {
+  const createNode = useCallback((type: NodeType, x: number, y: number): EnhancedNode | null => {
     if (isCreationInProgress) {
       console.log('🚫 Node creation blocked: creation already in progress');
       return null;
@@ -88,7 +88,7 @@ export const useNodeCreation = ({ onAddNode }: UseNodeCreationProps) => {
     }
   }, [isCreationInProgress, canCreateNode, onAddNode]);
 
-  const setPendingCreation = useCallback((type: Node['type'] | null) => {
+  const setPendingCreation = useCallback((type: NodeType | null) => {
     setPendingNodeType(type);
   }, []);
 
