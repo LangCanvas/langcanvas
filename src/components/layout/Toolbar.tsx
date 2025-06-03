@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -81,10 +80,9 @@ const Toolbar: React.FC<ToolbarProps> = ({
         <div className="flex items-center space-x-2">
           <img 
             src="/lovable-uploads/655971a4-1644-42d9-984c-106deca1859b.png" 
-            alt="LangCanvas Logo" 
-            className="w-8 h-8"
+            alt="LangCanvas" 
+            className="w-12 h-12"
           />
-          <h1 className="text-base sm:text-lg font-semibold text-gray-800 mr-2 sm:mr-4">LangCanvas</h1>
         </div>
         
         {/* Validation Status Indicator */}
