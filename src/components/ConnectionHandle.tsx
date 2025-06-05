@@ -15,7 +15,7 @@ const ConnectionHandle: React.FC<ConnectionHandleProps> = ({ node, canCreateEdge
   const { getPointerEvent } = usePointerEvents();
 
   const getNodeEdgePosition = (node: EnhancedNode) => {
-    // Calculate the right edge position for the connection handle
+    // Calculate the right edge position for the connection handle using canvas coordinates
     const nodeWidth = node.type === 'conditional' ? 80 : 120;
     const nodeHeight = node.type === 'conditional' ? 80 : 60;
     
@@ -32,8 +32,9 @@ const ConnectionHandle: React.FC<ConnectionHandleProps> = ({ node, canCreateEdge
     pointerEvent.preventDefault();
     pointerEvent.stopPropagation();
     
-    // Calculate the edge position of the source node
+    // Calculate the edge position of the source node in canvas coordinates
     const edgePosition = getNodeEdgePosition(node);
+    console.log(`🔗 Starting connection from ${node.label} at canvas coords (${edgePosition.x}, ${edgePosition.y})`);
     onStartConnection(node, edgePosition.x, edgePosition.y);
   };
 
@@ -46,31 +47,33 @@ const ConnectionHandle: React.FC<ConnectionHandleProps> = ({ node, canCreateEdge
     right: '-20px',
     top: '50%',
     transform: 'translateY(-50%)',
-    width: '16px',
-    height: '16px',
+    width: '18px',
+    height: '18px',
     borderRadius: '50%',
-    backgroundColor: canCreateEdge ? (isHovered ? '#3b82f6' : '#9ca3af') : '#d1d5db',
-    border: '2px solid white',
+    backgroundColor: canCreateEdge ? (isHovered ? '#3b82f6' : '#10b981') : '#d1d5db',
+    border: '3px solid white',
     cursor: canCreateEdge ? 'crosshair' : 'not-allowed',
     zIndex: 20,
     opacity: canCreateEdge ? 1 : 0.5,
     transition: 'all 0.2s ease',
     touchAction: 'none',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
   } : {
     position: 'absolute' as const,
-    right: '-8px',
+    right: '-9px',
     top: '50%',
     transform: 'translateY(-50%)',
-    width: '16px',
-    height: '16px',
+    width: '18px',
+    height: '18px',
     borderRadius: '50%',
-    backgroundColor: canCreateEdge ? (isHovered ? '#3b82f6' : '#9ca3af') : '#d1d5db',
-    border: '2px solid white',
+    backgroundColor: canCreateEdge ? (isHovered ? '#3b82f6' : '#10b981') : '#d1d5db',
+    border: '3px solid white',
     cursor: canCreateEdge ? 'crosshair' : 'not-allowed',
     zIndex: 20,
     opacity: canCreateEdge ? 1 : 0.5,
     transition: 'all 0.2s ease',
     touchAction: 'none',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
   };
 
   return (

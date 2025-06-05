@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { EnhancedNode } from '../types/nodeTypes';
 
@@ -33,6 +34,8 @@ export const useEdges = () => {
   }, []);
 
   const validateConnection = useCallback((sourceNode: EnhancedNode, targetNode: EnhancedNode, existingEdges: Edge[]): { valid: boolean; error?: string } => {
+    console.log(`🔍 Validating connection: ${sourceNode.label} (${sourceNode.type}) -> ${targetNode.label} (${targetNode.type})`);
+    
     // Cannot connect to self
     if (sourceNode.id === targetNode.id) {
       return { valid: false, error: "Cannot connect a node to itself" };
@@ -68,6 +71,7 @@ export const useEdges = () => {
       return { valid: false, error: "This connection would create a cycle, which is not allowed" };
     }
 
+    console.log(`✅ Connection validation passed: ${sourceNode.label} -> ${targetNode.label}`);
     return { valid: true };
   }, [findPath]);
 
@@ -80,9 +84,12 @@ export const useEdges = () => {
   }, []);
 
   const addEdge = useCallback((sourceNode: EnhancedNode, targetNode: EnhancedNode) => {
+    console.log(`🔗 Attempting to add edge: ${sourceNode.label} -> ${targetNode.label}`);
+    
     const validation = validateConnection(sourceNode, targetNode, edges);
     
     if (!validation.valid) {
+      console.error(`❌ Edge validation failed: ${validation.error}`);
       return { success: false, error: validation.error };
     }
 
@@ -97,6 +104,7 @@ export const useEdges = () => {
     };
 
     setEdges(prev => [...prev, newEdge]);
+    console.log(`✅ Edge added successfully:`, newEdge);
     return { success: true, edge: newEdge };
   }, [edges, validateConnection, generateBranchLabel]);
 

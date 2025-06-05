@@ -37,7 +37,7 @@ const EdgeCreationHandler: React.FC<EdgeCreationHandlerProps> = ({
   const { getPointerEvent, addPointerEventListeners } = usePointerEvents();
 
   const handleStartConnection = useCallback((node: EnhancedNode, startX: number, startY: number) => {
-    console.log(`🔗 Starting edge creation from ${node.label}`);
+    console.log(`🔗 Starting edge creation from ${node.label} at (${startX}, ${startY})`);
     setIsCreatingEdge(true);
     setSourceNode(node);
     setEdgePreview({
@@ -48,16 +48,24 @@ const EdgeCreationHandler: React.FC<EdgeCreationHandlerProps> = ({
     });
   }, []);
 
-  const handlePointerMove = useCallback((pointerEvent: any) => {
-    if (!isCreatingEdge || !canvasRef.current || !sourceNode) return;
-
+  const getCanvasCoordinates = useCallback((clientX: number, clientY: number) => {
+    if (!canvasRef.current) return { x: clientX, y: clientY };
+    
     const rect = canvasRef.current.getBoundingClientRect();
     const scrollContainer = document.querySelector('[data-radix-scroll-area-viewport]');
     const scrollLeft = scrollContainer?.scrollLeft || 0;
     const scrollTop = scrollContainer?.scrollTop || 0;
     
-    const mouseX = pointerEvent.clientX - rect.left + scrollLeft;
-    const mouseY = pointerEvent.clientY - rect.top + scrollTop;
+    return {
+      x: clientX - rect.left + scrollLeft,
+      y: clientY - rect.top + scrollTop
+    };
+  }, [canvasRef]);
+
+  const handlePointerMove = useCallback((pointerEvent: any) => {
+    if (!isCreatingEdge || !canvasRef.current || !sourceNode) return;
+
+    const canvasCoords = getCanvasCoordinates(pointerEvent.clientX, pointerEvent.clientY);
 
     // Check if hovering over a node
     const nodeElement = document.elementFromPoint(pointerEvent.clientX, pointerEvent.clientY);
@@ -68,7 +76,7 @@ const EdgeCreationHandler: React.FC<EdgeCreationHandlerProps> = ({
     if (targetNode && targetNode.id !== sourceNode.id) {
       setHoveredNodeId(targetNode.id);
       
-      // Calculate edge-to-edge connection
+      // Calculate edge-to-edge connection using canvas coordinates
       const targetCenter = getNodeCenter(targetNode);
       const sourceEdgePoint = getNodeEdgePoint(sourceNode, targetCenter.x, targetCenter.y);
       const targetEdgePoint = getNodeEdgePoint(targetNode, sourceEdgePoint.x, sourceEdgePoint.y);
@@ -83,17 +91,17 @@ const EdgeCreationHandler: React.FC<EdgeCreationHandlerProps> = ({
     } else {
       setHoveredNodeId(null);
       
-      // Show edge from source to mouse cursor
-      const sourceEdgePoint = getNodeEdgePoint(sourceNode, mouseX, mouseY);
+      // Show edge from source to mouse cursor using canvas coordinates
+      const sourceEdgePoint = getNodeEdgePoint(sourceNode, canvasCoords.x, canvasCoords.y);
       
       setEdgePreview({
         startX: sourceEdgePoint.x,
         startY: sourceEdgePoint.y,
-        endX: mouseX,
-        endY: mouseY
+        endX: canvasCoords.x,
+        endY: canvasCoords.y
       });
     }
-  }, [isCreatingEdge, sourceNode, nodes, canvasRef]);
+  }, [isCreatingEdge, sourceNode, nodes, getCanvasCoordinates]);
 
   const handlePointerEnd = useCallback((pointerEvent: any) => {
     if (!isCreatingEdge || !sourceNode) return;
@@ -110,6 +118,10 @@ const EdgeCreationHandler: React.FC<EdgeCreationHandlerProps> = ({
         const result = onAddEdge(sourceNode, targetNode);
         if (!result.success && result.error) {
           console.error('Edge creation failed:', result.error);
+          // Show error to user
+          alert(result.error);
+        } else if (result.success) {
+          console.log(`✅ Edge created successfully: ${sourceNode.label} -> ${targetNode.label}`);
         }
       }
     }
