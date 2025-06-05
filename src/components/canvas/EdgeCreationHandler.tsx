@@ -2,12 +2,14 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { EnhancedNode } from '../../types/nodeTypes';
 import { usePointerEvents } from '../../hooks/usePointerEvents';
+import { getNodeEdgePoint, getNodeCenter } from '../../utils/edgeCalculations';
 
 interface EdgePreview {
   startX: number;
   startY: number;
   endX: number;
   endY: number;
+  targetNode?: EnhancedNode;
 }
 
 interface EdgeCreationHandlerProps {
@@ -47,25 +49,51 @@ const EdgeCreationHandler: React.FC<EdgeCreationHandlerProps> = ({
   }, []);
 
   const handlePointerMove = useCallback((pointerEvent: any) => {
-    if (!isCreatingEdge || !canvasRef.current) return;
+    if (!isCreatingEdge || !canvasRef.current || !sourceNode) return;
 
     const rect = canvasRef.current.getBoundingClientRect();
-    const x = pointerEvent.clientX - rect.left;
-    const y = pointerEvent.clientY - rect.top;
-
-    setEdgePreview(prev => prev ? { ...prev, endX: x, endY: y } : null);
+    const scrollContainer = document.querySelector('[data-radix-scroll-area-viewport]');
+    const scrollLeft = scrollContainer?.scrollLeft || 0;
+    const scrollTop = scrollContainer?.scrollTop || 0;
+    
+    const mouseX = pointerEvent.clientX - rect.left + scrollLeft;
+    const mouseY = pointerEvent.clientY - rect.top + scrollTop;
 
     // Check if hovering over a node
     const nodeElement = document.elementFromPoint(pointerEvent.clientX, pointerEvent.clientY);
     const nodeContainer = nodeElement?.closest('[data-node-id]');
-    const nodeId = nodeContainer?.getAttribute('data-node-id');
+    const hoveredNodeId = nodeContainer?.getAttribute('data-node-id');
+    const targetNode = hoveredNodeId ? nodes.find(node => node.id === hoveredNodeId) : null;
     
-    if (nodeId && nodeId !== sourceNode?.id) {
-      setHoveredNodeId(nodeId);
+    if (targetNode && targetNode.id !== sourceNode.id) {
+      setHoveredNodeId(targetNode.id);
+      
+      // Calculate edge-to-edge connection
+      const targetCenter = getNodeCenter(targetNode);
+      const sourceEdgePoint = getNodeEdgePoint(sourceNode, targetCenter.x, targetCenter.y);
+      const targetEdgePoint = getNodeEdgePoint(targetNode, sourceEdgePoint.x, sourceEdgePoint.y);
+      
+      setEdgePreview({
+        startX: sourceEdgePoint.x,
+        startY: sourceEdgePoint.y,
+        endX: targetEdgePoint.x,
+        endY: targetEdgePoint.y,
+        targetNode
+      });
     } else {
       setHoveredNodeId(null);
+      
+      // Show edge from source to mouse cursor
+      const sourceEdgePoint = getNodeEdgePoint(sourceNode, mouseX, mouseY);
+      
+      setEdgePreview({
+        startX: sourceEdgePoint.x,
+        startY: sourceEdgePoint.y,
+        endX: mouseX,
+        endY: mouseY
+      });
     }
-  }, [isCreatingEdge, sourceNode?.id, canvasRef]);
+  }, [isCreatingEdge, sourceNode, nodes, canvasRef]);
 
   const handlePointerEnd = useCallback((pointerEvent: any) => {
     if (!isCreatingEdge || !sourceNode) return;

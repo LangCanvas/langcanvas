@@ -2,6 +2,7 @@
 import React from 'react';
 import { Edge } from '../hooks/useEdges';
 import { EnhancedNode } from '../types/nodeTypes';
+import { getConnectionPoints } from '../utils/edgeCalculations';
 
 interface EdgeRendererProps {
   edges: Edge[];
@@ -20,49 +21,6 @@ const EdgeRenderer: React.FC<EdgeRendererProps> = ({
   getEdgeValidationClass,
   getEdgeTooltip
 }) => {
-  const getNodeCenter = (nodeId: string) => {
-    const node = nodes.find(n => n.id === nodeId);
-    if (!node) return { x: 0, y: 0 };
-    
-    // Node dimensions from Node.tsx
-    const nodeWidth = 120;
-    const nodeHeight = 60;
-    
-    return {
-      x: node.x + nodeWidth / 2,
-      y: node.y + nodeHeight / 2
-    };
-  };
-
-  const getConnectionPoints = (sourceId: string, targetId: string) => {
-    const source = getNodeCenter(sourceId);
-    const target = getNodeCenter(targetId);
-    
-    // Calculate direction and adjust start/end points to node edges
-    const dx = target.x - source.x;
-    const dy = target.y - source.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    
-    if (distance === 0) return { start: source, end: target };
-    
-    const unitX = dx / distance;
-    const unitY = dy / distance;
-    
-    // Offset from center to edge of node
-    const nodeRadius = 30; // Half of the smaller dimension
-    
-    return {
-      start: {
-        x: source.x + unitX * nodeRadius,
-        y: source.y + unitY * nodeRadius
-      },
-      end: {
-        x: target.x - unitX * nodeRadius,
-        y: target.y - unitY * nodeRadius
-      }
-    };
-  };
-
   const handleEdgeClick = (e: React.MouseEvent, edgeId: string) => {
     e.stopPropagation();
     onSelectEdge(selectedEdgeId === edgeId ? null : edgeId);
@@ -119,7 +77,12 @@ const EdgeRenderer: React.FC<EdgeRendererProps> = ({
       </defs>
       
       {edges.map(edge => {
-        const { start, end } = getConnectionPoints(edge.source, edge.target);
+        const sourceNode = nodes.find(n => n.id === edge.source);
+        const targetNode = nodes.find(n => n.id === edge.target);
+        
+        if (!sourceNode || !targetNode) return null;
+        
+        const { start, end } = getConnectionPoints(sourceNode, targetNode);
         const isSelected = selectedEdgeId === edge.id;
         const validationClass = getEdgeValidationClass?.(edge.id) || '';
         const tooltip = getEdgeTooltip?.(edge.id) || '';

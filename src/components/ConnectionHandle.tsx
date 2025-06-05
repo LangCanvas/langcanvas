@@ -14,6 +14,17 @@ const ConnectionHandle: React.FC<ConnectionHandleProps> = ({ node, canCreateEdge
   const handleRef = useRef<HTMLDivElement>(null);
   const { getPointerEvent } = usePointerEvents();
 
+  const getNodeEdgePosition = (node: EnhancedNode) => {
+    // Calculate the right edge position for the connection handle
+    const nodeWidth = node.type === 'conditional' ? 80 : 120;
+    const nodeHeight = node.type === 'conditional' ? 80 : 60;
+    
+    return {
+      x: node.x + nodeWidth,
+      y: node.y + nodeHeight / 2
+    };
+  };
+
   const handlePointerDown = (e: React.MouseEvent | React.TouchEvent) => {
     if (!canCreateEdge) return;
     
@@ -21,10 +32,9 @@ const ConnectionHandle: React.FC<ConnectionHandleProps> = ({ node, canCreateEdge
     pointerEvent.preventDefault();
     pointerEvent.stopPropagation();
     
-    const rect = handleRef.current?.getBoundingClientRect();
-    if (rect) {
-      onStartConnection(node, rect.left + rect.width / 2, rect.top + rect.height / 2);
-    }
+    // Calculate the edge position of the source node
+    const edgePosition = getNodeEdgePosition(node);
+    onStartConnection(node, edgePosition.x, edgePosition.y);
   };
 
   // Don't show handle for end nodes (no outgoing connections)
@@ -33,7 +43,7 @@ const ConnectionHandle: React.FC<ConnectionHandleProps> = ({ node, canCreateEdge
   // Special positioning for diamond-shaped conditional nodes
   const handleStyle = node.type === 'conditional' ? {
     position: 'absolute' as const,
-    right: '-20px', // Further right for diamond shape
+    right: '-20px',
     top: '50%',
     transform: 'translateY(-50%)',
     width: '16px',
@@ -45,9 +55,8 @@ const ConnectionHandle: React.FC<ConnectionHandleProps> = ({ node, canCreateEdge
     zIndex: 20,
     opacity: canCreateEdge ? 1 : 0.5,
     transition: 'all 0.2s ease',
-    touchAction: 'none', // Prevent default touch behaviors
+    touchAction: 'none',
   } : {
-    // Regular positioning for other node types
     position: 'absolute' as const,
     right: '-8px',
     top: '50%',
@@ -61,7 +70,7 @@ const ConnectionHandle: React.FC<ConnectionHandleProps> = ({ node, canCreateEdge
     zIndex: 20,
     opacity: canCreateEdge ? 1 : 0.5,
     transition: 'all 0.2s ease',
-    touchAction: 'none', // Prevent default touch behaviors
+    touchAction: 'none',
   };
 
   return (

@@ -2,11 +2,19 @@
 import React from 'react';
 
 interface EdgePreviewProps {
-  edgePreview: { startX: number; startY: number; endX: number; endY: number } | null;
+  edgePreview: { 
+    startX: number; 
+    startY: number; 
+    endX: number; 
+    endY: number;
+    targetNode?: any;
+  } | null;
 }
 
 const EdgePreview: React.FC<EdgePreviewProps> = ({ edgePreview }) => {
   if (!edgePreview) return null;
+
+  const isConnectingToNode = !!edgePreview.targetNode;
 
   return (
     <svg className="absolute inset-0 pointer-events-none z-10" style={{ width: '100%', height: '100%' }}>
@@ -19,7 +27,10 @@ const EdgePreview: React.FC<EdgePreviewProps> = ({ edgePreview }) => {
           refY="3.5"
           orient="auto"
         >
-          <polygon points="0 0, 10 3.5, 0 7" fill="#6b7280" />
+          <polygon 
+            points="0 0, 10 3.5, 0 7" 
+            fill={isConnectingToNode ? "#10b981" : "#6b7280"} 
+          />
         </marker>
       </defs>
       <line
@@ -27,10 +38,11 @@ const EdgePreview: React.FC<EdgePreviewProps> = ({ edgePreview }) => {
         y1={edgePreview.startY}
         x2={edgePreview.endX}
         y2={edgePreview.endY}
-        stroke="#6b7280"
-        strokeWidth="2"
-        strokeDasharray="5,5"
+        stroke={isConnectingToNode ? "#10b981" : "#6b7280"}
+        strokeWidth="3"
+        strokeDasharray={isConnectingToNode ? "none" : "8,4"}
         markerEnd="url(#arrowhead-preview)"
+        opacity={isConnectingToNode ? "0.8" : "0.6"}
       />
     </svg>
   );
