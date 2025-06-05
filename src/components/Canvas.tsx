@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect } from 'react';
 import { EnhancedNode, NodeType } from '../types/nodeTypes';
 import { Edge } from '../hooks/useEdges';
@@ -118,9 +117,9 @@ const Canvas: React.FC<CanvasProps> = ({
           style={{
             width: '3000px',
             height: '3000px',
-            minWidth: '100%',
-            minHeight: '100%',
-            touchAction: 'pan-x pan-y',
+            minWidth: '100vw',
+            minHeight: '100vh',
+            touchAction: 'manipulation',
           }}
         >
           <KeyboardHandler

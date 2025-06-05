@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { EnhancedNode } from '../types/nodeTypes';
 
@@ -37,11 +36,6 @@ export const useEdges = () => {
     // Cannot connect to self
     if (sourceNode.id === targetNode.id) {
       return { valid: false, error: "Cannot connect a node to itself" };
-    }
-
-    // Agent node cannot be a target
-    if (targetNode.type === 'agent') {
-      return { valid: false, error: "Agent node cannot have incoming connections" };
     }
 
     // End node cannot be a source

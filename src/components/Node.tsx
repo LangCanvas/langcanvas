@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { EnhancedNode } from '../types/nodeTypes';
 import { usePointerEvents } from '../hooks/usePointerEvents';
@@ -95,17 +94,19 @@ const NodeComponent: React.FC<NodeComponentProps> = ({
       touchAction: 'none', // Prevent default touch behaviors
     };
 
-    // Special handling for conditional node (diamond shape)
+    // Special handling for conditional node (diamond shape) with improved contrast
     if (node.type === 'conditional') {
       return {
         ...baseStyle,
         width: '80px',
         height: '80px',
-        backgroundColor: '#fff7ed',
-        border: `2px solid ${isSelected ? '#ea580c' : '#f97316'}`,
-        color: '#c2410c',
+        backgroundColor: '#fff4e6',
+        border: `3px solid ${isSelected ? '#d97706' : '#ea580c'}`,
+        color: '#9a3412',
         clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
         fontSize: '12px',
+        fontWeight: '600',
+        boxShadow: isDragging ? '0 6px 16px rgba(234, 88, 12, 0.25)' : '0 3px 8px rgba(234, 88, 12, 0.15)',
       };
     }
 
