@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
@@ -81,8 +80,12 @@ const MobilePanelOverlay: React.FC<MobilePanelOverlayProps> = ({
           {activePanel === 'properties' && (
             <EnhancedPropertiesPanel 
               selectedNode={selectedNode}
+              selectedEdge={selectedEdge}
+              allNodes={allNodes}
               onUpdateNode={onUpdateNodeProperties}
+              onUpdateEdge={onUpdateEdgeProperties}
               onDeleteNode={onDeleteNode}
+              onDeleteEdge={onDeleteEdge}
             />
           )}
         </div>

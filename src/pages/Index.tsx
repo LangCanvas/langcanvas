@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import NodePalette from '../components/NodePalette';
 import Canvas from '../components/Canvas';
@@ -220,8 +219,12 @@ const Index = () => {
           ) : (
             <EnhancedPropertiesPanel 
               selectedNode={selectedNode}
+              selectedEdge={selectedEdge}
+              allNodes={nodes}
               onUpdateNode={updateNodeProperties}
+              onUpdateEdge={updateEdgeProperties}
               onDeleteNode={handleDeleteNode}
+              onDeleteEdge={deleteEdge}
             />
           )}
         </aside>

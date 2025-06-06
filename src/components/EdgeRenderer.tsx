@@ -22,7 +22,9 @@ const EdgeRenderer: React.FC<EdgeRendererProps> = ({
   getEdgeTooltip
 }) => {
   const handleEdgeClick = (e: React.MouseEvent, edgeId: string) => {
+    e.preventDefault();
     e.stopPropagation();
+    console.log(`🔗 Edge clicked: ${edgeId}`);
     onSelectEdge(selectedEdgeId === edgeId ? null : edgeId);
   };
 
@@ -30,8 +32,8 @@ const EdgeRenderer: React.FC<EdgeRendererProps> = ({
 
   return (
     <svg 
-      className="absolute inset-0 pointer-events-none z-0" 
-      style={{ width: '100%', height: '100%' }}
+      className="absolute inset-0 z-10" 
+      style={{ width: '100%', height: '100%', pointerEvents: 'none' }}
     >
       <defs>
         <marker
@@ -107,6 +109,18 @@ const EdgeRenderer: React.FC<EdgeRendererProps> = ({
         
         return (
           <g key={edge.id}>
+            {/* Invisible thick line for easier clicking */}
+            <line
+              x1={start.x}
+              y1={start.y}
+              x2={end.x}
+              y2={end.y}
+              stroke="transparent"
+              strokeWidth="12"
+              style={{ pointerEvents: 'auto', cursor: 'pointer' }}
+              onClick={(e) => handleEdgeClick(e, edge.id)}
+            />
+            {/* Visible line */}
             <line
               x1={start.x}
               y1={start.y}
@@ -115,8 +129,8 @@ const EdgeRenderer: React.FC<EdgeRendererProps> = ({
               stroke={strokeColor}
               strokeWidth={strokeWidth}
               markerEnd={markerEnd}
-              className="pointer-events-auto cursor-pointer hover:stroke-blue-500"
-              onClick={(e) => handleEdgeClick(e, edge.id)}
+              style={{ pointerEvents: 'none' }}
+              className={isSelected ? '' : 'hover:brightness-125'}
             />
             {tooltip && (
               <title>{tooltip}</title>

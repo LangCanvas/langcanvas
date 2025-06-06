@@ -68,6 +68,11 @@ const Canvas: React.FC<CanvasProps> = ({
     const handleClick = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
       
+      // Don't handle clicks on SVG elements (edges)
+      if (target.tagName === 'line' || target.tagName === 'svg' || target.closest('svg')) {
+        return;
+      }
+      
       // Check if we're trying to place a node (mobile)
       const nodeType = (pendingNodeType || canvas.getAttribute('data-node-type')) as NodeType;
       
@@ -94,7 +99,7 @@ const Canvas: React.FC<CanvasProps> = ({
         return;
       }
       
-      // Regular selection logic - only if no pending node creation
+      // Regular selection logic - only if no pending node creation and not clicking on nodes
       if (!nodeType && (target === canvas || target.closest('.canvas-background'))) {
         onSelectNode(null);
         onSelectEdge(null);
@@ -136,6 +141,12 @@ const Canvas: React.FC<CanvasProps> = ({
           >
             {({ isCreatingEdge, edgePreview, hoveredNodeId, handleStartConnection }) => (
               <>
+                <CanvasBackground 
+                  isDragOver={false} 
+                  isMobile={isMobile} 
+                  nodeCount={nodes.length} 
+                />
+
                 {/* Edge Renderer */}
                 <EdgeRenderer
                   edges={edges}
@@ -148,12 +159,6 @@ const Canvas: React.FC<CanvasProps> = ({
 
                 {/* Edge Preview while creating */}
                 <EdgePreview edgePreview={edgePreview} />
-
-                <CanvasBackground 
-                  isDragOver={false} 
-                  isMobile={isMobile} 
-                  nodeCount={nodes.length} 
-                />
 
                 {/* Mobile connection instructions */}
                 {isMobile && isCreatingEdge && (
