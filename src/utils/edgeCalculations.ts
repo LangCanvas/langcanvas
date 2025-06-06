@@ -61,6 +61,77 @@ export const getNodeEdgePoint = (node: EnhancedNode, targetX: number, targetY: n
   return { x: edgeX, y: edgeY };
 };
 
+export const getOrthogonalConnectionPoints = (sourceNode: EnhancedNode, targetNode: EnhancedNode) => {
+  const { width: sourceWidth, height: sourceHeight } = getNodeDimensions(sourceNode.type);
+  const { width: targetWidth, height: targetHeight } = getNodeDimensions(targetNode.type);
+  
+  const sourceCenter = getNodeCenter(sourceNode);
+  const targetCenter = getNodeCenter(targetNode);
+  
+  // For orthogonal routing, prefer right edge for source and left edge for target
+  const sourceRight = {
+    x: sourceNode.x + sourceWidth,
+    y: sourceCenter.y
+  };
+  
+  const targetLeft = {
+    x: targetNode.x,
+    y: targetCenter.y
+  };
+  
+  return { start: sourceRight, end: targetLeft };
+};
+
+export const calculateOrthogonalPath = (sourceNode: EnhancedNode, targetNode: EnhancedNode): { x: number, y: number }[] => {
+  const { start, end } = getOrthogonalConnectionPoints(sourceNode, targetNode);
+  const sourceCenter = getNodeCenter(sourceNode);
+  const targetCenter = getNodeCenter(targetNode);
+  
+  const horizontalGap = 50; // Minimum horizontal spacing
+  const waypoints: { x: number, y: number }[] = [];
+  
+  // Add starting point
+  waypoints.push(start);
+  
+  // Determine routing strategy based on relative positions
+  if (targetCenter.x > sourceCenter.x) {
+    // Target is to the right of source - simple L-shape
+    if (Math.abs(start.y - end.y) > 10) {
+      // Not horizontally aligned, create L-shape
+      const midX = start.x + Math.max(horizontalGap, (end.x - start.x) / 2);
+      waypoints.push({ x: midX, y: start.y }); // Move right
+      waypoints.push({ x: midX, y: end.y });   // Move vertically
+    }
+  } else {
+    // Target is to the left of source - create S-shape going around
+    const midX = start.x + horizontalGap;
+    const midY1 = start.y;
+    const midY2 = end.y;
+    
+    // Go right first, then around
+    waypoints.push({ x: midX, y: midY1 });
+    
+    // If target is significantly above or below, go around
+    if (Math.abs(midY2 - midY1) > 20) {
+      const verticalMid = midY1 + (midY2 - midY1) / 2;
+      waypoints.push({ x: midX, y: verticalMid });
+      
+      // Go left to target column
+      const targetMidX = end.x - horizontalGap;
+      waypoints.push({ x: targetMidX, y: verticalMid });
+      waypoints.push({ x: targetMidX, y: end.y });
+    } else {
+      // Direct path back if vertically close
+      waypoints.push({ x: midX, y: end.y });
+    }
+  }
+  
+  // Add ending point
+  waypoints.push(end);
+  
+  return waypoints;
+};
+
 export const getConnectionPoints = (sourceNode: EnhancedNode, targetNode: EnhancedNode) => {
   const sourceCenter = getNodeCenter(sourceNode);
   const targetCenter = getNodeCenter(targetNode);

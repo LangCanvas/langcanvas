@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { EnhancedNode } from '../types/nodeTypes';
 
@@ -7,6 +8,7 @@ export interface Edge {
   target: string;
   label?: string;
   value?: string;
+  waypoints?: { x: number, y: number }[];
 }
 
 export const useEdges = () => {

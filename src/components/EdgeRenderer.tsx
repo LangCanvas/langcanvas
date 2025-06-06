@@ -2,7 +2,7 @@
 import React from 'react';
 import { Edge } from '../hooks/useEdges';
 import { EnhancedNode } from '../types/nodeTypes';
-import { getConnectionPoints } from '../utils/edgeCalculations';
+import { getConnectionPoints, calculateOrthogonalPath } from '../utils/edgeCalculations';
 
 interface EdgeRendererProps {
   edges: Edge[];
@@ -84,7 +84,12 @@ const EdgeRenderer: React.FC<EdgeRendererProps> = ({
         
         if (!sourceNode || !targetNode) return null;
         
-        const { start, end } = getConnectionPoints(sourceNode, targetNode);
+        // Calculate orthogonal path
+        const waypoints = calculateOrthogonalPath(sourceNode, targetNode);
+        const pathString = waypoints.map((point, index) => 
+          `${point.x},${point.y}`
+        ).join(' ');
+        
         const isSelected = selectedEdgeId === edge.id;
         const validationClass = getEdgeValidationClass?.(edge.id) || '';
         const tooltip = getEdgeTooltip?.(edge.id) || '';
@@ -109,25 +114,23 @@ const EdgeRenderer: React.FC<EdgeRendererProps> = ({
         
         return (
           <g key={edge.id}>
-            {/* Invisible thick line for easier clicking */}
-            <line
-              x1={start.x}
-              y1={start.y}
-              x2={end.x}
-              y2={end.y}
+            {/* Invisible thick polyline for easier clicking */}
+            <polyline
+              points={pathString}
+              fill="none"
               stroke="transparent"
               strokeWidth="12"
+              strokeLinejoin="round"
               style={{ pointerEvents: 'auto', cursor: 'pointer' }}
               onClick={(e) => handleEdgeClick(e, edge.id)}
             />
-            {/* Visible line */}
-            <line
-              x1={start.x}
-              y1={start.y}
-              x2={end.x}
-              y2={end.y}
+            {/* Visible polyline */}
+            <polyline
+              points={pathString}
+              fill="none"
               stroke={strokeColor}
               strokeWidth={strokeWidth}
+              strokeLinejoin="round"
               markerEnd={markerEnd}
               style={{ pointerEvents: 'none' }}
               className={isSelected ? '' : 'hover:brightness-125'}
