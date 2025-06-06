@@ -88,15 +88,31 @@ export const calculateOrthogonalPath = (sourceNode: EnhancedNode, targetNode: En
   const targetCenter = getNodeCenter(targetNode);
   
   const horizontalGap = 50; // Minimum horizontal spacing
+  const verticalTolerance = 20; // Tolerance for considering nodes vertically aligned
   const waypoints: { x: number, y: number }[] = [];
   
   // Add starting point
   waypoints.push(start);
   
+  // Check if nodes are vertically aligned (within tolerance) and can use straight line
+  if (Math.abs(start.y - end.y) <= verticalTolerance && targetCenter.x > sourceCenter.x) {
+    // Nodes are roughly horizontally aligned and target is to the right - use straight line
+    waypoints.push(end);
+    return waypoints;
+  }
+  
+  // Check if nodes are horizontally close and vertically separated - use simple L-shape
+  if (Math.abs(sourceCenter.x - targetCenter.x) <= horizontalGap * 2) {
+    // Nodes are close horizontally - use simple vertical then horizontal path
+    waypoints.push({ x: start.x, y: end.y });
+    waypoints.push(end);
+    return waypoints;
+  }
+  
   // Determine routing strategy based on relative positions
   if (targetCenter.x > sourceCenter.x) {
     // Target is to the right of source - simple L-shape
-    if (Math.abs(start.y - end.y) > 10) {
+    if (Math.abs(start.y - end.y) > verticalTolerance) {
       // Not horizontally aligned, create L-shape
       const midX = start.x + Math.max(horizontalGap, (end.x - start.x) / 2);
       waypoints.push({ x: midX, y: start.y }); // Move right
@@ -112,7 +128,7 @@ export const calculateOrthogonalPath = (sourceNode: EnhancedNode, targetNode: En
     waypoints.push({ x: midX, y: midY1 });
     
     // If target is significantly above or below, go around
-    if (Math.abs(midY2 - midY1) > 20) {
+    if (Math.abs(midY2 - midY1) > verticalTolerance) {
       const verticalMid = midY1 + (midY2 - midY1) / 2;
       waypoints.push({ x: midX, y: verticalMid });
       

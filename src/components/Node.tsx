@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { EnhancedNode } from '../types/nodeTypes';
 import { usePointerEvents } from '../hooks/usePointerEvents';
@@ -26,6 +27,7 @@ const NodeComponent: React.FC<NodeComponentProps> = ({
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [initialScrollPosition, setInitialScrollPosition] = useState({ x: 0, y: 0 });
   const nodeRef = useRef<HTMLDivElement>(null);
   const { getPointerEvent, addPointerEventListeners } = usePointerEvents();
 
@@ -35,10 +37,24 @@ const NodeComponent: React.FC<NodeComponentProps> = ({
     onSelect(node.id);
     
     const rect = nodeRef.current?.getBoundingClientRect();
-    if (rect) {
+    const canvas = document.getElementById('canvas');
+    const canvasRect = canvas?.getBoundingClientRect();
+    const scrollContainer = document.querySelector('[data-radix-scroll-area-viewport]');
+    
+    if (rect && canvasRect && scrollContainer) {
+      const scrollLeft = scrollContainer.scrollLeft || 0;
+      const scrollTop = scrollContainer.scrollTop || 0;
+      
+      // Store initial scroll position
+      setInitialScrollPosition({ x: scrollLeft, y: scrollTop });
+      
+      // Calculate drag offset relative to the canvas coordinate system
+      const canvasX = pointerEvent.clientX - canvasRect.left + scrollLeft;
+      const canvasY = pointerEvent.clientY - canvasRect.top + scrollTop;
+      
       setDragOffset({
-        x: pointerEvent.clientX - rect.left,
-        y: pointerEvent.clientY - rect.top
+        x: canvasX - node.x,
+        y: canvasY - node.y
       });
       setIsDragging(true);
     }
@@ -56,12 +72,16 @@ const NodeComponent: React.FC<NodeComponentProps> = ({
         const scrollLeft = scrollContainer.scrollLeft || 0;
         const scrollTop = scrollContainer.scrollTop || 0;
         
+        // Calculate new position relative to canvas coordinate system
+        const canvasX = pointerEvent.clientX - canvasRect.left + scrollLeft;
+        const canvasY = pointerEvent.clientY - canvasRect.top + scrollTop;
+        
         const newX = Math.max(0, Math.min(
-          pointerEvent.clientX - canvasRect.left - dragOffset.x + scrollLeft,
+          canvasX - dragOffset.x,
           3000 - 120 // Canvas width minus node width
         ));
         const newY = Math.max(0, Math.min(
-          pointerEvent.clientY - canvasRect.top - dragOffset.y + scrollTop,
+          canvasY - dragOffset.y,
           3000 - 60 // Canvas height minus node height
         ));
         
