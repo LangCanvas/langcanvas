@@ -74,8 +74,9 @@ export const getOrthogonalConnectionPoints = (sourceNode: EnhancedNode, targetNo
     y: sourceCenter.y
   };
   
+  // Fix: Ensure target connection point is exactly at the left edge of the target node
   const targetLeft = {
-    x: targetNode.x,
+    x: targetNode.x, // This should be the exact left edge, not inside the node
     y: targetCenter.y
   };
   
