@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { EnhancedNode } from '../types/nodeTypes';
 
@@ -52,18 +51,6 @@ export const useEdges = () => {
     );
     if (duplicateEdge) {
       return { valid: false, error: "This connection already exists" };
-    }
-
-    // Agent and Tool nodes can only have one outgoing edge
-    if (sourceNode.type === 'agent' || sourceNode.type === 'tool') {
-      const existingOutgoing = existingEdges.filter(edge => edge.source === sourceNode.id);
-      if (existingOutgoing.length > 0) {
-        const nodeTypeName = sourceNode.type === 'agent' ? 'Agent' : 'Tool';
-        return { 
-          valid: false, 
-          error: `${nodeTypeName} nodes can only have one outgoing connection${sourceNode.type === 'tool' ? '; use a Conditional for branching' : ''}` 
-        };
-      }
     }
 
     // Check for cycles
@@ -141,12 +128,9 @@ export const useEdges = () => {
   const selectedEdge = selectedEdgeId ? edges.find(edge => edge.id === selectedEdgeId) : null;
 
   const canCreateEdge = useCallback((sourceNode: EnhancedNode) => {
-    if (sourceNode.type === 'end') return false;
-    if (sourceNode.type === 'agent' || sourceNode.type === 'tool') {
-      return !edges.some(edge => edge.source === sourceNode.id);
-    }
-    return true; // Conditional nodes can have multiple outgoing edges
-  }, [edges]);
+    // Only end nodes cannot create outgoing edges
+    return sourceNode.type !== 'end';
+  }, []);
 
   const getNodeOutgoingEdges = useCallback((nodeId: string) => {
     return edges.filter(edge => edge.source === nodeId);
