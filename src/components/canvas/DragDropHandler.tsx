@@ -47,12 +47,36 @@ const DragDropHandler: React.FC<DragDropHandlerProps> = ({ children, onAddNode }
       return;
     }
 
+    // Get the stored offset from drag data
+    const offsetData = e.dataTransfer.getData('application/offset');
+    let dragOffset = { x: 0, y: 0 };
+    
+    if (offsetData) {
+      try {
+        dragOffset = JSON.parse(offsetData);
+      } catch (error) {
+        console.warn('Failed to parse drag offset data:', error);
+        // Fallback to default offsets based on node type
+        if (nodeType === 'conditional') {
+          dragOffset = { x: 40, y: 40 }; // Half of 80x80
+        } else {
+          dragOffset = { x: 60, y: 30 }; // Half of 120x60
+        }
+      }
+    }
+
     const rect = dropZoneRef.current?.getBoundingClientRect();
     if (rect) {
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+      // Get scroll information
+      const scrollContainer = document.querySelector('[data-radix-scroll-area-viewport]');
+      const scrollLeft = scrollContainer?.scrollLeft || 0;
+      const scrollTop = scrollContainer?.scrollTop || 0;
       
-      console.log(`🎯 Drag & Drop: ${nodeType} at (${x}, ${y})`);
+      // Calculate position accounting for drag offset and scroll
+      const x = e.clientX - rect.left + scrollLeft - dragOffset.x;
+      const y = e.clientY - rect.top + scrollTop - dragOffset.y;
+      
+      console.log(`🎯 Drag & Drop: ${nodeType} at (${x}, ${y}) with offset (${dragOffset.x}, ${dragOffset.y})`);
       
       const result = onAddNode(nodeType, x, y);
       if (result) {
