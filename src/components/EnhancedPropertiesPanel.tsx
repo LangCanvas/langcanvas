@@ -32,6 +32,12 @@ const EnhancedPropertiesPanel: React.FC<EnhancedPropertiesPanelProps> = ({
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
+  // Debug logging for selection changes
+  useEffect(() => {
+    console.log(`🎛️ PropertiesPanel - Node: ${selectedNode?.id || 'null'}, Edge: ${selectedEdge?.id || 'null'}`);
+  }, [selectedNode, selectedEdge]);
+
+  // Validation for nodes only
   useEffect(() => {
     if (selectedNode) {
       const validation = validateNodeConfiguration(selectedNode);
@@ -41,8 +47,14 @@ const EnhancedPropertiesPanel: React.FC<EnhancedPropertiesPanelProps> = ({
     }
   }, [selectedNode]);
 
-  // Show edge properties if an edge is selected
+  // Reset advanced view when switching between selections
+  useEffect(() => {
+    setShowAdvanced(false);
+  }, [selectedNode?.id, selectedEdge?.id]);
+
+  // Prioritize edge selection over node selection to avoid conflicts
   if (selectedEdge) {
+    console.log(`🔗 Rendering edge properties for edge: ${selectedEdge.id}`);
     return (
       <div className="p-4 space-y-6 max-h-full overflow-y-auto">
         <EdgePropertiesForm
@@ -55,8 +67,10 @@ const EnhancedPropertiesPanel: React.FC<EnhancedPropertiesPanelProps> = ({
     );
   }
 
-  // Show node properties if a node is selected
-  if (selectedNode) {
+  // Show node properties if a node is selected and no edge is selected
+  if (selectedNode && !selectedEdge) {
+    console.log(`🎯 Rendering node properties for node: ${selectedNode.id}`);
+    
     const updateNode = (updates: Partial<EnhancedNode>) => {
       onUpdateNode(selectedNode.id, updates);
     };
@@ -109,6 +123,7 @@ const EnhancedPropertiesPanel: React.FC<EnhancedPropertiesPanelProps> = ({
   }
 
   // Default state when nothing is selected
+  console.log('📄 Rendering default properties panel state');
   return (
     <div className="p-4 text-center text-gray-500">
       <p>Select a node or edge to view its properties</p>

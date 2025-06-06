@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect } from 'react';
 import { EnhancedNode, NodeType } from '../types/nodeTypes';
 import { Edge } from '../hooks/useEdges';
@@ -61,6 +62,27 @@ const Canvas: React.FC<CanvasProps> = ({
   
   const { createNode } = useNodeCreation({ onAddNode });
 
+  // Clear selection helper function
+  const clearAllSelections = () => {
+    console.log('🔄 Clearing all selections');
+    onSelectNode(null);
+    onSelectEdge(null);
+  };
+
+  // Safe node selection that clears edge selection
+  const selectNodeSafely = (nodeId: string | null) => {
+    console.log(`🎯 Selecting node: ${nodeId}, clearing edge selection`);
+    onSelectEdge(null); // Clear edge selection first
+    onSelectNode(nodeId);
+  };
+
+  // Safe edge selection that clears node selection
+  const selectEdgeSafely = (edgeId: string | null) => {
+    console.log(`🔗 Selecting edge: ${edgeId}, clearing node selection`);
+    onSelectNode(null); // Clear node selection first
+    onSelectEdge(edgeId);
+  };
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -68,8 +90,9 @@ const Canvas: React.FC<CanvasProps> = ({
     const handleClick = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
       
-      // Don't handle clicks on SVG elements (edges)
+      // Don't handle clicks on SVG elements (edges) - they have their own handlers
       if (target.tagName === 'line' || target.tagName === 'svg' || target.closest('svg')) {
+        console.log('🚫 Canvas ignoring SVG click - handled by EdgeRenderer');
         return;
       }
       
@@ -101,14 +124,19 @@ const Canvas: React.FC<CanvasProps> = ({
       
       // Regular selection logic - only if no pending node creation and not clicking on nodes
       if (!nodeType && (target === canvas || target.closest('.canvas-background'))) {
-        onSelectNode(null);
-        onSelectEdge(null);
+        console.log('🎯 Canvas click: clearing all selections');
+        clearAllSelections();
       }
     };
 
     canvas.addEventListener('click', handleClick, { capture: true });
     return () => canvas.removeEventListener('click', handleClick, { capture: true });
   }, [onSelectNode, onSelectEdge, createNode, pendingNodeType, onClearPendingCreation]);
+
+  // Debug logging for selection state changes
+  useEffect(() => {
+    console.log(`📊 Canvas selection state - Node: ${selectedNodeId}, Edge: ${selectedEdgeId}`);
+  }, [selectedNodeId, selectedEdgeId]);
 
   return (
     <ScrollArea ref={scrollAreaRef} className="w-full h-full">
@@ -152,7 +180,7 @@ const Canvas: React.FC<CanvasProps> = ({
                   edges={edges}
                   nodes={nodes}
                   selectedEdgeId={selectedEdgeId}
-                  onSelectEdge={onSelectEdge}
+                  onSelectEdge={selectEdgeSafely}
                   getEdgeValidationClass={getEdgeValidationClass}
                   getEdgeTooltip={getEdgeTooltip}
                 />
@@ -186,7 +214,7 @@ const Canvas: React.FC<CanvasProps> = ({
                       node={node}
                       isSelected={selectedNodeId === node.id}
                       canCreateEdge={canCreateEdge(node)}
-                      onSelect={onSelectNode}
+                      onSelect={selectNodeSafely}
                       onMove={onMoveNode}
                       onStartConnection={handleStartConnection}
                       validationClass={getNodeValidationClass?.(node.id) || ''}
