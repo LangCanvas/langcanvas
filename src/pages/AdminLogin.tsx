@@ -3,18 +3,19 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, LogIn, Shield, Loader2, RefreshCw } from 'lucide-react';
+import { ArrowLeft, LogIn, Shield, Loader2, RefreshCw, AlertTriangle, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { ErrorHandler } from '@/components/admin/ErrorHandler';
 import { TroubleshootingSection } from '@/components/admin/TroubleshootingSection';
 
 const AdminLogin = () => {
-  const { signIn, signInWithButton, isLoading, error, clearError, isAuthenticated, isAdmin, debugInfo, clearCache } = useAuth();
+  const { signIn, signInWithButton, isLoading, error, authError, clearError, isAuthenticated, isAdmin, debugInfo, clearCache, diagnosticInfo } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [showDebug, setShowDebug] = useState(false);
   const [isAlternativeSignIn, setIsAlternativeSignIn] = useState(false);
+  const [showDiagnostics, setShowDiagnostics] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated && isAdmin) {
@@ -29,7 +30,7 @@ const AdminLogin = () => {
   const handleSignIn = async () => {
     try {
       clearError();
-      console.log('🔐 Admin login attempt started');
+      console.log('🔐 Enhanced admin login attempt started');
       await signIn();
       
       toast({
@@ -37,13 +38,16 @@ const AdminLogin = () => {
         description: "Successfully signed in to admin dashboard.",
       });
     } catch (error) {
-      console.error('🔐 Admin login failed:', error);
+      console.error('🔐 Enhanced admin login failed:', error);
       
-      toast({
-        title: "Sign In Failed",
-        description: error instanceof Error ? error.message : "Please try again.",
-        variant: "destructive",
-      });
+      // Don't show toast for auth errors as they're handled by ErrorHandler
+      if (!authError) {
+        toast({
+          title: "Sign In Failed",
+          description: error instanceof Error ? error.message : "Please try again.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -51,7 +55,7 @@ const AdminLogin = () => {
     try {
       setIsAlternativeSignIn(true);
       clearError();
-      console.log('🔐 Alternative admin login attempt started');
+      console.log('🔐 Alternative enhanced admin login attempt started');
       await signInWithButton();
       
       toast({
@@ -59,13 +63,15 @@ const AdminLogin = () => {
         description: "Successfully signed in to admin dashboard.",
       });
     } catch (error) {
-      console.error('🔐 Alternative admin login failed:', error);
+      console.error('🔐 Alternative enhanced admin login failed:', error);
       
-      toast({
-        title: "Alternative Sign In Failed",
-        description: error instanceof Error ? error.message : "Please try again.",
-        variant: "destructive",
-      });
+      if (!authError) {
+        toast({
+          title: "Alternative Sign In Failed",
+          description: error instanceof Error ? error.message : "Please try again.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsAlternativeSignIn(false);
     }
@@ -77,6 +83,21 @@ const AdminLogin = () => {
       title: "Cache Cleared",
       description: "Authentication cache has been cleared. Please try signing in again.",
     });
+  };
+
+  const getAuthErrorSeverity = () => {
+    if (!authError) return 'low';
+    
+    switch (authError.type) {
+      case 'domain_unauthorized':
+      case 'initialization_failed':
+        return 'high';
+      case 'popup_blocked':
+      case 'network_error':
+        return 'medium';
+      default:
+        return 'low';
+    }
   };
 
   return (
@@ -104,7 +125,25 @@ const AdminLogin = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {error && <ErrorHandler error={error} />}
+            {authError && <ErrorHandler error={authError.message} />}
+
+            {/* Diagnostic Information */}
+            {authError && getAuthErrorSeverity() === 'high' && (
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <AlertTriangle className="w-4 h-4 text-yellow-600" />
+                  <span className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                    Configuration Issue Detected
+                  </span>
+                </div>
+                <p className="text-xs text-yellow-700 dark:text-yellow-300 mb-2">
+                  Current domain: <code className="bg-yellow-100 dark:bg-yellow-800 px-1 rounded">{diagnosticInfo.domain}</code>
+                </p>
+                <p className="text-xs text-yellow-700 dark:text-yellow-300">
+                  Ensure this domain is added to "Authorized JavaScript origins" in Google Cloud Console.
+                </p>
+              </div>
+            )}
 
             <div className="text-center space-y-3">
               <p className="text-sm text-muted-foreground mb-4">
@@ -129,7 +168,7 @@ const AdminLogin = () => {
                 )}
               </Button>
 
-              {error && (
+              {(error || authError) && (
                 <Button 
                   onClick={handleAlternativeSignIn}
                   disabled={isLoading || isAlternativeSignIn}
@@ -157,6 +196,34 @@ const AdminLogin = () => {
                 Having trouble? Try the alternative sign-in method or check the troubleshooting section below.
               </p>
             </div>
+
+            {/* Diagnostic Toggle */}
+            {authError && (
+              <div className="flex items-center justify-center">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowDiagnostics(!showDiagnostics)}
+                >
+                  <Info className="w-4 h-4 mr-1" />
+                  {showDiagnostics ? 'Hide' : 'Show'} Diagnostics
+                </Button>
+              </div>
+            )}
+
+            {/* Diagnostic Details */}
+            {showDiagnostics && (
+              <div className="bg-muted p-3 rounded-md text-xs">
+                <div className="font-medium mb-2">System Diagnostics:</div>
+                <div className="space-y-1 font-mono">
+                  <div>Domain: {diagnosticInfo.domain}</div>
+                  <div>Protocol: {diagnosticInfo.protocol}</div>
+                  <div>Google Available: {diagnosticInfo.googleAvailable ? 'Yes' : 'No'}</div>
+                  <div>Cookies Enabled: {diagnosticInfo.cookiesEnabled ? 'Yes' : 'No'}</div>
+                  <div>Third-party Storage: {diagnosticInfo.thirdPartyCookies ? 'Available' : 'Blocked'}</div>
+                </div>
+              </div>
+            )}
 
             <TroubleshootingSection
               debugInfo={debugInfo}
