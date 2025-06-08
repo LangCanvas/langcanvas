@@ -1,6 +1,7 @@
 
 import React, { useState, useRef } from 'react';
 import { EnhancedNode, NodeType } from '../../types/nodeTypes';
+import { useEnhancedAnalytics } from '../../hooks/useEnhancedAnalytics';
 
 interface DragDropHandlerProps {
   children: React.ReactNode;
@@ -11,6 +12,7 @@ const DragDropHandler: React.FC<DragDropHandlerProps> = ({ children, onAddNode }
   const [isDragOver, setIsDragOver] = useState(false);
   const dropZoneRef = useRef<HTMLDivElement>(null);
   const lastDropTimeRef = useRef<number>(0);
+  const analytics = useEnhancedAnalytics();
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -81,6 +83,14 @@ const DragDropHandler: React.FC<DragDropHandlerProps> = ({ children, onAddNode }
       const result = onAddNode(nodeType, x, y);
       if (result) {
         lastDropTimeRef.current = now;
+        
+        // Track drag and drop node creation
+        analytics.trackNodeCreated(nodeType);
+        analytics.trackFeatureUsage('node_created_drag_drop', {
+          nodeType,
+          position: { x, y },
+          method: 'drag_and_drop'
+        });
       }
     }
   };

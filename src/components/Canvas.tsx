@@ -4,6 +4,7 @@ import { EnhancedNode, NodeType } from '../types/nodeTypes';
 import { Edge } from '../hooks/useEdges';
 import { useNodeCreation } from '../hooks/useNodeCreation';
 import { useMobileDetection } from '../hooks/useMobileDetection';
+import { useEnhancedAnalytics } from '../hooks/useEnhancedAnalytics';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import DragDropHandler from './canvas/DragDropHandler';
 import EdgeCreationHandler from './canvas/EdgeCreationHandler';
@@ -59,14 +60,50 @@ const Canvas: React.FC<CanvasProps> = ({
   const canvasRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const isMobile = useMobileDetection();
+  const analytics = useEnhancedAnalytics();
   
   const { createNode } = useNodeCreation({ onAddNode });
+
+  // Enhanced createNode with analytics tracking
+  const createNodeWithAnalytics = (type: NodeType, x: number, y: number) => {
+    const result = createNode(type, x, y);
+    
+    // Track node creation
+    if (result) {
+      analytics.trackNodeCreated(type);
+      analytics.trackFeatureUsage('node_created_on_canvas', { 
+        nodeType: type, 
+        position: { x, y },
+        method: 'canvas_click'
+      });
+    }
+    
+    return result;
+  };
+
+  // Enhanced move handler with analytics
+  const handleMoveNode = (id: string, x: number, y: number) => {
+    onMoveNode(id, x, y);
+    
+    // Track node movement (throttled to avoid too many events)
+    if (analytics.isEnabled) {
+      const node = nodes.find(n => n.id === id);
+      analytics.trackFeatureUsage('node_moved', { 
+        nodeId: id, 
+        nodeType: node?.type,
+        newPosition: { x, y }
+      });
+    }
+  };
 
   // Clear selection helper function
   const clearAllSelections = () => {
     console.log('🔄 Clearing all selections');
     onSelectNode(null);
     onSelectEdge(null);
+    
+    // Track selection clearing
+    analytics.trackFeatureUsage('selections_cleared');
   };
 
   // Safe node selection that clears edge selection
@@ -113,7 +150,7 @@ const Canvas: React.FC<CanvasProps> = ({
         
         console.log(`🎯 Canvas click: placing ${nodeType} at (${x}, ${y})`);
         
-        const result = createNode(nodeType, x, y);
+        const result = createNodeWithAnalytics(nodeType, x, y);
         
         if (result && onClearPendingCreation) {
           onClearPendingCreation();
@@ -131,7 +168,7 @@ const Canvas: React.FC<CanvasProps> = ({
 
     canvas.addEventListener('click', handleClick, { capture: true });
     return () => canvas.removeEventListener('click', handleClick, { capture: true });
-  }, [onSelectNode, onSelectEdge, createNode, pendingNodeType, onClearPendingCreation]);
+  }, [onSelectNode, onSelectEdge, createNodeWithAnalytics, pendingNodeType, onClearPendingCreation, analytics]);
 
   // Debug logging for selection state changes
   useEffect(() => {
@@ -140,7 +177,7 @@ const Canvas: React.FC<CanvasProps> = ({
 
   return (
     <ScrollArea ref={scrollAreaRef} className="w-full h-full">
-      <DragDropHandler onAddNode={createNode}>
+      <DragDropHandler onAddNode={createNodeWithAnalytics}>
         <div
           ref={canvasRef}
           id="canvas"
@@ -215,7 +252,7 @@ const Canvas: React.FC<CanvasProps> = ({
                       isSelected={selectedNodeId === node.id}
                       canCreateEdge={canCreateEdge(node)}
                       onSelect={selectNodeSafely}
-                      onMove={onMoveNode}
+                      onMove={handleMoveNode}
                       onStartConnection={handleStartConnection}
                       validationClass={getNodeValidationClass?.(node.id) || ''}
                       validationTooltip={getNodeTooltip?.(node.id) || ''}

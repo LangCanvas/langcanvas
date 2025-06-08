@@ -1,13 +1,15 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { NodeType } from '../types/nodeTypes';
+import { useEnhancedAnalytics } from '../hooks/useEnhancedAnalytics';
 
 interface NodePaletteProps {
   onNodeTypeSelect?: (type: NodeType) => void;
 }
 
 const NodePalette: React.FC<NodePaletteProps> = ({ onNodeTypeSelect }) => {
+  const analytics = useEnhancedAnalytics();
+  
   const nodeTypes = [
     { type: 'start' as NodeType, label: 'Start', color: 'bg-green-100 border-green-300 text-green-800' },
     { type: 'agent' as NodeType, label: 'Agent', color: 'bg-green-100 border-green-300 text-green-800' },
@@ -93,6 +95,12 @@ const NodePalette: React.FC<NodePaletteProps> = ({ onNodeTypeSelect }) => {
   };
 
   const handleDragStart = (e: React.DragEvent, nodeType: NodeType, label: string) => {
+    // Track drag start
+    analytics.trackFeatureUsage('node_palette_drag_start', { 
+      nodeType, 
+      method: 'drag_and_drop' 
+    });
+
     // Create custom drag image
     const dragImage = createDragImage(nodeType, label);
     document.body.appendChild(dragImage);
@@ -125,6 +133,12 @@ const NodePalette: React.FC<NodePaletteProps> = ({ onNodeTypeSelect }) => {
     e.stopPropagation();
     
     console.log(`🎯 Node palette clicked: ${nodeType}`);
+    
+    // Track node type selection
+    analytics.trackFeatureUsage('node_palette_click', { 
+      nodeType, 
+      method: 'click_to_select' 
+    });
     
     if (onNodeTypeSelect) {
       onNodeTypeSelect(nodeType);
