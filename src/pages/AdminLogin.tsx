@@ -135,7 +135,7 @@ const AdminLogin = () => {
             />
 
             <div className="text-xs text-muted-foreground text-center space-y-2">
-              <p>Only bdevay@gmail.com is authorized to access this dashboard.</p>
+              <p>Only privileged admin is authorized to access this dashboard.</p>
               <p className="text-muted-foreground/60">
                 Having trouble? Try the alternative sign-in method or check the troubleshooting section below.
               </p>
