@@ -1,43 +1,40 @@
 # cloudbuild.yaml
 steps:
   # Step 1: Build the Docker image
-  # This uses the Dockerfile in your repository to build the image.
-  # The image is tagged with the current commit SHA and a 'latest' tag.
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'build'
       - '-t'
-      - 'europe-west4-docker.pkg.dev/${PROJECT_ID}/langcanvas-repo/langcanvas-app:${COMMIT_SHA}' # Tag for Artifact Registry
+      - 'europe-west4-docker.pkg.dev/${PROJECT_ID}/langcanvas-repo/langcanvas-app:${COMMIT_SHA}' # Updated region for Artifact Registry
       - '-t'
-      - 'europe-west4-docker.pkg.dev/${PROJECT_ID}/langcanvas-repo/langcanvas-app:latest' # Latest tag
-      - '.' # Build context is the current directory (repository root)
+      - 'europe-west4-docker.pkg.dev/${PROJECT_ID}/langcanvas-repo/langcanvas-app:latest' # Updated region for Artifact Registry
+      - '.'
 
-  # Step 2: Push the Docker image to Google Artifact Registry (Recommended)
+  # Step 2: Push the Docker image to Google Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
-      - 'europe-west4-docker.pkg.dev/${PROJECT_ID}/langcanvas-repo/langcanvas-app:${COMMIT_SHA}'
+      - 'europe-west4-docker.pkg.dev/${PROJECT_ID}/langcanvas-repo/langcanvas-app:${COMMIT_SHA}' # Updated region for Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
-      - 'europe-west4-docker.pkg.dev/${PROJECT_ID}/langcanvas-repo/langcanvas-app:latest'
+      - 'europe-west4-docker.pkg.dev/${PROJECT_ID}/langcanvas-repo/langcanvas-app:latest' # Updated region for Artifact Registry
 
   # Step 3: Deploy the container image to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     args:
-      - 'gcloud'
       - 'run'
       - 'deploy'
       - 'langcanvas-app' # Name of your Cloud Run service
       - '--image'
-      - 'europe-west4-docker.pkg.dev/${PROJECT_ID}/langcanvas-repo/langcanvas-app:${COMMIT_SHA}'
+      - 'europe-west4-docker.pkg.dev/${PROJECT_ID}/langcanvas-repo/langcanvas-app:${COMMIT_SHA}' # Updated region for Artifact Registry
       - '--region'
-      - 'europe-west4' # e.g., europe-west1, us-central1
+      - 'europe-west4' # Updated Cloud Run region
       - '--platform'
       - 'managed'
-      - '--allow-unauthenticated' # Your SPA needs to be publicly accessible
-      - '--port=8080' # Matches Nginx listen port in Dockerfile
+      - '--allow-unauthenticated'
+      - '--port=8080'
     entrypoint: gcloud
 
 options:
-  logging: CLOUD_LOGGING_ONLY # To reduce costs and improve performance
+  logging: CLOUD_LOGGING_ONLY
