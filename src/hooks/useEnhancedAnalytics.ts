@@ -3,8 +3,7 @@ import { useCallback, useEffect } from 'react';
 import { useConsent } from '@/contexts/ConsentContext';
 import { useLocation } from 'react-router-dom';
 import { UserIdentificationManager } from '@/utils/userIdentification';
-import { AnalyticsEvent } from '@/utils/analyticsStorage';
-import { firestoreAnalytics } from '@/utils/firestoreAnalytics';
+import { unifiedAnalytics, UnifiedAnalyticsEvent } from '@/services/unifiedAnalyticsService';
 import { googleAnalytics } from '@/utils/googleAnalytics';
 
 export const useEnhancedAnalytics = () => {
@@ -32,10 +31,10 @@ export const useEnhancedAnalytics = () => {
   }, []);
 
   const createEvent = useCallback((
-    type: AnalyticsEvent['type'],
+    type: UnifiedAnalyticsEvent['type'],
     data: Record<string, any> = {},
     route?: string
-  ): AnalyticsEvent | null => {
+  ): UnifiedAnalyticsEvent | null => {
     if (!consent.analytics || !consent.hasConsented) return null;
 
     const session = UserIdentificationManager.getCurrentSession();
@@ -52,16 +51,12 @@ export const useEnhancedAnalytics = () => {
     };
   }, [consent.analytics, consent.hasConsented, location.pathname]);
 
-  const trackEvent = useCallback(async (event: AnalyticsEvent | null) => {
+  const trackEvent = useCallback(async (event: UnifiedAnalyticsEvent | null) => {
     if (!event) return;
 
     try {
-      // Store in both Firestore and send to Google Analytics
-      await Promise.all([
-        firestoreAnalytics.storeEvent(event),
-        // Note: Google Analytics events are sent in the specific track methods below
-      ]);
-      
+      // Store using unified analytics service
+      await unifiedAnalytics.storeEvent(event);
       UserIdentificationManager.updateSession();
     } catch (error) {
       console.warn('Failed to track analytics event:', error);

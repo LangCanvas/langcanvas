@@ -1,12 +1,12 @@
-
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Users, Activity, Eye, TrendingUp, Download, LogOut } from 'lucide-react';
+import { ArrowLeft, Users, Activity, Eye, TrendingUp, Download, LogOut, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { analyticsStorage, AggregatedStats } from '@/utils/analyticsStorage';
+import { unifiedAnalytics } from '@/services/unifiedAnalyticsService';
+import { AggregatedStats } from '@/utils/analyticsStorage';
 import { useToast } from '@/hooks/use-toast';
 
 const AdminDashboard = () => {
@@ -15,6 +15,7 @@ const AdminDashboard = () => {
   const { toast } = useToast();
   const [stats, setStats] = useState<AggregatedStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isMigrating, setIsMigrating] = useState(false);
 
   useEffect(() => {
     if (!isAdmin) {
@@ -28,7 +29,7 @@ const AdminDashboard = () => {
   const loadAnalytics = async () => {
     try {
       setIsLoading(true);
-      const analyticsStats = await analyticsStorage.getAggregatedStats();
+      const analyticsStats = await unifiedAnalytics.getAggregatedStats();
       setStats(analyticsStats);
     } catch (error) {
       console.error('Failed to load analytics:', error);
@@ -42,13 +43,36 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleMigrateData = async () => {
+    try {
+      setIsMigrating(true);
+      await unifiedAnalytics.migrateLocalToRemote();
+      
+      toast({
+        title: "Migration Successful",
+        description: "Local analytics data migrated to Firestore successfully.",
+      });
+      
+      // Reload data after migration
+      await loadAnalytics();
+    } catch (error) {
+      console.error('Migration failed:', error);
+      toast({
+        title: "Migration Failed",
+        description: "Failed to migrate analytics data.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsMigrating(false);
+    }
+  };
+
   const handleExportData = async () => {
     try {
-      const events = await analyticsStorage.getEvents();
       const exportData = {
         stats,
-        events,
         exportDate: new Date().toISOString(),
+        source: 'unified_analytics_service'
       };
 
       const blob = new Blob([JSON.stringify(exportData, null, 2)], { 
@@ -83,6 +107,24 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleCleanup = async () => {
+    try {
+      await unifiedAnalytics.cleanup();
+      toast({
+        title: "Cleanup Successful",
+        description: "Old analytics data cleaned up successfully.",
+      });
+      await loadAnalytics();
+    } catch (error) {
+      console.error('Cleanup failed:', error);
+      toast({
+        title: "Cleanup Failed",
+        description: "Failed to cleanup analytics data.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSignOut = () => {
     signOut();
     navigate('/');
@@ -112,7 +154,7 @@ const AdminDashboard = () => {
             </Button>
             <div>
               <h1 className="text-3xl font-bold text-foreground">Admin Dashboard</h1>
-              <p className="text-muted-foreground">Analytics and user insights</p>
+              <p className="text-muted-foreground">Unified analytics and user insights</p>
             </div>
           </div>
           
@@ -197,7 +239,7 @@ const AdminDashboard = () => {
               </Card>
             </div>
 
-            {/* Feature Usage */}
+            {/* Feature Usage and Daily Stats */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
               <Card>
                 <CardHeader>
@@ -253,13 +295,31 @@ const AdminDashboard = () => {
             </div>
 
             {/* Actions */}
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div className="text-sm text-muted-foreground">
                 Last updated: {stats?.lastUpdated ? new Date(stats.lastUpdated).toLocaleString() : 'Never'}
               </div>
-              <div className="space-x-4">
-                <Button variant="outline" onClick={loadAnalytics}>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="outline" onClick={loadAnalytics} disabled={isLoading}>
+                  <RefreshCw className="w-4 h-4 mr-2" />
                   Refresh Data
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={handleMigrateData} 
+                  disabled={isMigrating}
+                >
+                  {isMigrating ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      Migrating...
+                    </>
+                  ) : (
+                    'Migrate Local Data'
+                  )}
+                </Button>
+                <Button variant="outline" onClick={handleCleanup}>
+                  Cleanup Old Data
                 </Button>
                 <Button onClick={handleExportData}>
                   <Download className="w-4 h-4 mr-2" />
