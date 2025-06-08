@@ -1,4 +1,3 @@
-```dockerfile
 # Stage 1: Build the React application
 FROM node:20-alpine as build-stage
 
@@ -24,4 +23,3 @@ COPY --from=build-stage /app/dist /usr/share/nginx/html
 EXPOSE 8080
 
 CMD ["nginx", "-g", "daemon off;"]
-```
