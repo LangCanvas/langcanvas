@@ -13,6 +13,16 @@ export interface AuthenticationError {
   details?: string;
 }
 
+interface GoogleAuthConfig {
+  client_id: string;
+  callback: (response: any) => void;
+  auto_select: boolean;
+  cancel_on_tap_outside: boolean;
+  use_fedcm_for_prompt: boolean;
+  ux_mode: string;
+  redirect_uri?: string;
+}
+
 export class GoogleAuthService {
   private static isInitialized = false;
   private static initializationPromise: Promise<void> | null = null;
@@ -31,7 +41,7 @@ export class GoogleAuthService {
     await this.initializationPromise;
     
     // Try popup mode first, fallback to redirect on domain issues
-    const config = {
+    const config: GoogleAuthConfig = {
       client_id: GOOGLE_CLIENT_ID,
       callback: this.callbackHandler || this.defaultCallback,
       auto_select: false,
