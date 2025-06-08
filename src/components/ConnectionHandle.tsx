@@ -44,20 +44,20 @@ const ConnectionHandle: React.FC<ConnectionHandleProps> = ({ node, canCreateEdge
   // Special positioning for diamond-shaped conditional nodes
   const handleStyle = node.type === 'conditional' ? {
     position: 'absolute' as const,
-    right: '-28px', // Moved further out to be visible outside the diamond clip
+    right: '-40px', // Moved much further out to ensure visibility outside the diamond
     top: '50%',
     transform: 'translateY(-50%)',
-    width: '20px', // Slightly larger for better visibility
-    height: '20px',
+    width: '22px', // Larger for better visibility and easier interaction
+    height: '22px',
     borderRadius: '50%',
     backgroundColor: canCreateEdge ? (isHovered ? '#3b82f6' : '#10b981') : '#d1d5db',
     border: '3px solid white',
     cursor: canCreateEdge ? 'crosshair' : 'not-allowed',
-    zIndex: 30, // Higher z-index to ensure visibility
+    zIndex: 50, // Very high z-index to ensure it's always visible
     opacity: canCreateEdge ? 1 : 0.5,
     transition: 'all 0.2s ease',
     touchAction: 'none',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.15)', // Enhanced shadow for better visibility
+    boxShadow: '0 4px 12px rgba(0,0,0,0.2)', // More prominent shadow
   } : {
     position: 'absolute' as const,
     right: '-9px',
