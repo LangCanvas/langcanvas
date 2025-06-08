@@ -2,19 +2,25 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { firestoreAnalytics } from '@/utils/firestoreAnalytics';
 import { UserIdentificationManager } from '@/utils/userIdentification';
+import { DoNotTrackDetector } from '@/utils/doNotTrackDetection';
 
 interface ConsentState {
   analytics: boolean;
   marketing: boolean;
   hasConsented: boolean;
   consentDate?: string;
+  doNotTrack: boolean;
+  globalPrivacyControl: boolean;
+  optedOut: boolean;
 }
 
 interface ConsentContextType {
   consent: ConsentState;
-  updateConsent: (category: keyof Omit<ConsentState, 'hasConsented' | 'consentDate'>, value: boolean) => void;
+  updateConsent: (category: keyof Omit<ConsentState, 'hasConsented' | 'consentDate' | 'doNotTrack' | 'globalPrivacyControl' | 'optedOut'>, value: boolean) => void;
   acceptAll: () => void;
   rejectAll: () => void;
+  globalOptOut: () => void;
+  optBackIn: () => void;
   showBanner: boolean;
   hideBanner: () => void;
 }
@@ -38,33 +44,64 @@ export const ConsentProvider: React.FC<ConsentProviderProps> = ({ children }) =>
     analytics: false,
     marketing: false,
     hasConsented: false,
+    doNotTrack: false,
+    globalPrivacyControl: false,
+    optedOut: false,
   });
   const [showBanner, setShowBanner] = useState(false);
 
   useEffect(() => {
+    // Get privacy signals
+    const privacyStatus = UserIdentificationManager.getPrivacyStatus();
+    
     // Load consent from localStorage
     const storedConsent = localStorage.getItem('langcanvas-consent');
     if (storedConsent) {
       try {
         const parsed = JSON.parse(storedConsent);
-        setConsent(parsed);
-        setShowBanner(false);
+        const updatedConsent = {
+          ...parsed,
+          doNotTrack: privacyStatus.doNotTrack,
+          globalPrivacyControl: privacyStatus.globalPrivacyControl,
+          optedOut: privacyStatus.optedOut,
+        };
+        setConsent(updatedConsent);
         
-        // Start analytics session if consent is granted
-        if (parsed.analytics && parsed.hasConsented) {
+        // Don't show banner if DNT is enabled or user opted out
+        if (privacyStatus.shouldDisableTracking || privacyStatus.optedOut) {
+          setShowBanner(false);
+        } else {
+          setShowBanner(false);
+        }
+        
+        // Start analytics session if consent is granted and tracking is allowed
+        if (parsed.analytics && parsed.hasConsented && privacyStatus.trackingAllowed) {
           UserIdentificationManager.startSession(true);
         }
       } catch (error) {
         console.error('Error parsing stored consent:', error);
-        setShowBanner(true);
+        // Show banner only if tracking is allowed
+        setShowBanner(privacyStatus.trackingAllowed);
       }
     } else {
-      // No consent found, show banner
-      setShowBanner(true);
+      // No consent found, show banner only if tracking is allowed
+      setConsent(prev => ({
+        ...prev,
+        doNotTrack: privacyStatus.doNotTrack,
+        globalPrivacyControl: privacyStatus.globalPrivacyControl,
+        optedOut: privacyStatus.optedOut,
+      }));
+      setShowBanner(privacyStatus.trackingAllowed);
     }
   }, []);
 
   const saveConsent = async (newConsent: ConsentState) => {
+    // Respect DNT and privacy signals
+    if (!UserIdentificationManager.shouldAllowTracking()) {
+      console.log('🔒 Tracking blocked by privacy settings');
+      return;
+    }
+
     const consentWithDate = {
       ...newConsent,
       consentDate: new Date().toISOString(),
@@ -85,9 +122,9 @@ export const ConsentProvider: React.FC<ConsentProviderProps> = ({ children }) =>
         userId,
         hasConsented: true,
         analytics: newConsent.analytics,
-        functional: true, // Always true for essential functionality
+        functional: true,
         marketing: newConsent.marketing,
-        ipHash: await hashIP(), // Optional: hash IP for privacy
+        ipHash: await hashIP(),
         userAgent: navigator.userAgent
       });
 
@@ -102,11 +139,8 @@ export const ConsentProvider: React.FC<ConsentProviderProps> = ({ children }) =>
     }
   };
 
-  // Simple IP hashing for privacy compliance
   const hashIP = async (): Promise<string> => {
     try {
-      // Get user's IP (in a real app, this would come from a server endpoint)
-      // For privacy, we're just creating a simple hash of browser fingerprint
       const fingerprint = navigator.userAgent + navigator.language + screen.width + screen.height;
       const encoder = new TextEncoder();
       const data = encoder.encode(fingerprint);
@@ -119,7 +153,7 @@ export const ConsentProvider: React.FC<ConsentProviderProps> = ({ children }) =>
     }
   };
 
-  const updateConsent = (category: keyof Omit<ConsentState, 'hasConsented' | 'consentDate'>, value: boolean) => {
+  const updateConsent = (category: keyof Omit<ConsentState, 'hasConsented' | 'consentDate' | 'doNotTrack' | 'globalPrivacyControl' | 'optedOut'>, value: boolean) => {
     const newConsent = {
       ...consent,
       [category]: value,
@@ -130,8 +164,11 @@ export const ConsentProvider: React.FC<ConsentProviderProps> = ({ children }) =>
   const acceptAll = () => {
     const newConsent = {
       analytics: true,
-      marketing: false, // We don't have marketing cookies yet
+      marketing: false,
       hasConsented: true,
+      doNotTrack: consent.doNotTrack,
+      globalPrivacyControl: consent.globalPrivacyControl,
+      optedOut: consent.optedOut,
     };
     saveConsent(newConsent);
     setShowBanner(false);
@@ -142,9 +179,36 @@ export const ConsentProvider: React.FC<ConsentProviderProps> = ({ children }) =>
       analytics: false,
       marketing: false,
       hasConsented: true,
+      doNotTrack: consent.doNotTrack,
+      globalPrivacyControl: consent.globalPrivacyControl,
+      optedOut: consent.optedOut,
     };
     saveConsent(newConsent);
     setShowBanner(false);
+  };
+
+  const globalOptOut = async () => {
+    await UserIdentificationManager.globalOptOut();
+    setConsent(prev => ({
+      ...prev,
+      analytics: false,
+      marketing: false,
+      hasConsented: true,
+      optedOut: true,
+    }));
+    setShowBanner(false);
+  };
+
+  const optBackIn = async () => {
+    await UserIdentificationManager.optBackIn();
+    setConsent(prev => ({
+      ...prev,
+      optedOut: false,
+    }));
+    // Show banner again for consent choice
+    if (UserIdentificationManager.shouldAllowTracking()) {
+      setShowBanner(true);
+    }
   };
 
   const hideBanner = () => {
@@ -157,6 +221,8 @@ export const ConsentProvider: React.FC<ConsentProviderProps> = ({ children }) =>
       updateConsent,
       acceptAll,
       rejectAll,
+      globalOptOut,
+      optBackIn,
       showBanner,
       hideBanner,
     }}>
