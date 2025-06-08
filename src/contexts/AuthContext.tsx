@@ -21,7 +21,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const ADMIN_EMAIL = 'bdevay@gmail.com';
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+const GOOGLE_CLIENT_ID = '1060424535135-t42df26dlsljoa1c68qqj3p267aeb0mf.apps.googleusercontent.com';
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -54,14 +54,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     console.log('🔐 Initializing Google Auth...');
     
     try {
-      if (!GOOGLE_CLIENT_ID) {
-        console.warn('⚠️ Google Client ID not configured - set VITE_GOOGLE_CLIENT_ID');
-        setError('Google authentication is not configured. Please contact the administrator.');
-        setIsLoading(false);
-        return;
-      }
-
-      console.log('🔐 Google Client ID found:', GOOGLE_CLIENT_ID.substring(0, 20) + '...');
+      console.log('🔐 Using Google Client ID:', GOOGLE_CLIENT_ID.substring(0, 20) + '...');
 
       // Load Google Identity Services
       await loadGoogleIdentityServices();
