@@ -1,5 +1,11 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { 
   Download, 
   Upload, 
@@ -7,8 +13,11 @@ import {
   Menu,
   X,
   AlertTriangle,
-  CheckCircle
+  CheckCircle,
+  Scale,
+  ChevronDown
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { ValidationResult } from '../../utils/graphValidation';
 
 interface ToolbarProps {
@@ -30,6 +39,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
   hasNodes,
   validationResult
 }) => {
+  const navigate = useNavigate();
+
   const handleNewClick = () => {
     console.log("🔴 New button clicked in Toolbar");
     console.log("🔴 onNewProject function:", onNewProject);
@@ -139,6 +150,38 @@ const Toolbar: React.FC<ToolbarProps> = ({
             <span className="hidden md:inline">Export</span>
           </Button>
         </div>
+      </div>
+
+      {/* Legal Menu */}
+      <div className="flex items-center space-x-2">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              className="text-gray-600 hover:text-gray-800 touch-manipulation"
+              style={{ minHeight: '44px' }}
+            >
+              <Scale className="w-4 h-4 mr-1" />
+              <span className="hidden md:inline">Legal</span>
+              <ChevronDown className="w-3 h-3 ml-1" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem onClick={() => navigate('/license')}>
+              License (MIT)
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate('/terms')}>
+              Terms & Conditions
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate('/privacy')}>
+              Privacy Policy
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate('/privacy-dashboard')}>
+              Privacy Dashboard
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );
