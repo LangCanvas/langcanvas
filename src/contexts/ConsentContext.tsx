@@ -1,28 +1,9 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { firestoreAnalytics } from '@/utils/firestoreAnalytics';
+import { ConsentState, ConsentContextType } from '@/types/consent';
+import { ConsentStorage } from '@/utils/consentStorage';
 import { UserIdentificationManager } from '@/utils/userIdentification';
-import { DoNotTrackDetector } from '@/utils/doNotTrackDetection';
-
-interface ConsentState {
-  analytics: boolean;
-  marketing: boolean;
-  hasConsented: boolean;
-  consentDate?: string;
-  doNotTrack: boolean;
-  globalPrivacyControl: boolean;
-  optedOut: boolean;
-}
-
-interface ConsentContextType {
-  consent: ConsentState;
-  updateConsent: (category: keyof Omit<ConsentState, 'hasConsented' | 'consentDate' | 'doNotTrack' | 'globalPrivacyControl' | 'optedOut'>, value: boolean) => void;
-  acceptAll: () => void;
-  rejectAll: () => void;
-  globalOptOut: () => void;
-  optBackIn: () => void;
-  showBanner: boolean;
-  hideBanner: () => void;
-}
+import { usePrivacySignals } from '@/hooks/usePrivacySignals';
 
 const ConsentContext = createContext<ConsentContextType | undefined>(undefined);
 
@@ -48,39 +29,31 @@ export const ConsentProvider: React.FC<ConsentProviderProps> = ({ children }) =>
     optedOut: false,
   });
   const [showBanner, setShowBanner] = useState(false);
+  const privacyStatus = usePrivacySignals();
 
   useEffect(() => {
-    // Get privacy signals
-    const privacyStatus = UserIdentificationManager.getPrivacyStatus();
-    
     // Load consent from localStorage
-    const storedConsent = localStorage.getItem('langcanvas-consent');
+    const storedConsent = ConsentStorage.loadConsent();
+    
     if (storedConsent) {
-      try {
-        const parsed = JSON.parse(storedConsent);
-        const updatedConsent = {
-          ...parsed,
-          doNotTrack: privacyStatus.doNotTrack,
-          globalPrivacyControl: privacyStatus.globalPrivacyControl,
-          optedOut: privacyStatus.optedOut,
-        };
-        setConsent(updatedConsent);
-        
-        // Don't show banner if DNT is enabled or user opted out
-        if (!privacyStatus.trackingAllowed || privacyStatus.optedOut) {
-          setShowBanner(false);
-        } else {
-          setShowBanner(false);
-        }
-        
-        // Start analytics session if consent is granted and tracking is allowed
-        if (parsed.analytics && parsed.hasConsented && privacyStatus.trackingAllowed) {
-          UserIdentificationManager.startSession(true);
-        }
-      } catch (error) {
-        console.error('Error parsing stored consent:', error);
-        // Show banner only if tracking is allowed
-        setShowBanner(privacyStatus.trackingAllowed);
+      const updatedConsent = {
+        ...storedConsent,
+        doNotTrack: privacyStatus.doNotTrack,
+        globalPrivacyControl: privacyStatus.globalPrivacyControl,
+        optedOut: privacyStatus.optedOut,
+      };
+      setConsent(updatedConsent);
+      
+      // Don't show banner if DNT is enabled or user opted out
+      if (!privacyStatus.trackingAllowed || privacyStatus.optedOut) {
+        setShowBanner(false);
+      } else {
+        setShowBanner(false);
+      }
+      
+      // Start analytics session if consent is granted and tracking is allowed
+      if (storedConsent.analytics && storedConsent.hasConsented && privacyStatus.trackingAllowed) {
+        UserIdentificationManager.startSession(true);
       }
     } else {
       // No consent found, show banner only if tracking is allowed
@@ -92,64 +65,11 @@ export const ConsentProvider: React.FC<ConsentProviderProps> = ({ children }) =>
       }));
       setShowBanner(privacyStatus.trackingAllowed);
     }
-  }, []);
+  }, [privacyStatus]);
 
   const saveConsent = async (newConsent: ConsentState) => {
-    // Respect DNT and privacy signals
-    if (!UserIdentificationManager.shouldAllowTracking()) {
-      console.log('🔒 Tracking blocked by privacy settings');
-      return;
-    }
-
-    const consentWithDate = {
-      ...newConsent,
-      consentDate: new Date().toISOString(),
-      hasConsented: true,
-    };
-    
-    localStorage.setItem('langcanvas-consent', JSON.stringify(consentWithDate));
-    setConsent(consentWithDate);
-
-    // Store consent record in Firestore
-    try {
-      const userId = UserIdentificationManager.getUserId() || UserIdentificationManager.generateUserId();
-      if (!UserIdentificationManager.getUserId()) {
-        UserIdentificationManager.setUserId(userId);
-      }
-
-      await firestoreAnalytics.storeConsentRecord({
-        userId,
-        hasConsented: true,
-        analytics: newConsent.analytics,
-        functional: true,
-        marketing: newConsent.marketing,
-        ipHash: await hashIP(),
-        userAgent: navigator.userAgent
-      });
-
-      // Start or end analytics session based on consent
-      if (newConsent.analytics) {
-        await UserIdentificationManager.startSession(true);
-      } else {
-        await UserIdentificationManager.endSession();
-      }
-    } catch (error) {
-      console.warn('Failed to store consent record:', error);
-    }
-  };
-
-  const hashIP = async (): Promise<string> => {
-    try {
-      const fingerprint = navigator.userAgent + navigator.language + screen.width + screen.height;
-      const encoder = new TextEncoder();
-      const data = encoder.encode(fingerprint);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 16);
-    } catch (error) {
-      console.warn('Failed to create privacy hash:', error);
-      return 'unknown';
-    }
+    const savedConsent = await ConsentStorage.saveConsent(newConsent);
+    setConsent(savedConsent);
   };
 
   const updateConsent = (category: keyof Omit<ConsentState, 'hasConsented' | 'consentDate' | 'doNotTrack' | 'globalPrivacyControl' | 'optedOut'>, value: boolean) => {
