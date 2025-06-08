@@ -4,6 +4,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { 
@@ -15,9 +16,11 @@ import {
   AlertTriangle,
   CheckCircle,
   Scale,
-  ChevronDown
+  ChevronDown,
+  Shield
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import { ValidationResult } from '../../utils/graphValidation';
 
 interface ToolbarProps {
@@ -40,6 +43,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   validationResult
 }) => {
   const navigate = useNavigate();
+  const { isAdmin } = useAuth();
 
   const handleNewClick = () => {
     console.log("🔴 New button clicked in Toolbar");
@@ -180,6 +184,24 @@ const Toolbar: React.FC<ToolbarProps> = ({
             <DropdownMenuItem onClick={() => navigate('/privacy-dashboard')}>
               Privacy Dashboard
             </DropdownMenuItem>
+            {isAdmin && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate('/admin')}>
+                  <Shield className="w-4 h-4 mr-2" />
+                  Admin Dashboard
+                </DropdownMenuItem>
+              </>
+            )}
+            {!isAdmin && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate('/admin-login')}>
+                  <Shield className="w-4 h-4 mr-2" />
+                  Admin Login
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

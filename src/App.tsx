@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ConsentProvider } from "@/contexts/ConsentContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 import CookieBanner from "@/components/CookieBanner";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -12,6 +13,8 @@ import License from "./pages/License";
 import TermsAndConditions from "./pages/TermsAndConditions";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import PrivacyDashboard from "./pages/PrivacyDashboard";
+import AdminLogin from "./pages/AdminLogin";
+import AdminDashboard from "./pages/AdminDashboard";
 
 const queryClient = new QueryClient();
 
@@ -21,21 +24,25 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <ConsentProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/license" element={<License />} />
-              <Route path="/terms" element={<TermsAndConditions />} />
-              <Route path="/privacy" element={<PrivacyPolicy />} />
-              <Route path="/privacy-dashboard" element={<PrivacyDashboard />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            <CookieBanner />
-          </BrowserRouter>
-        </TooltipProvider>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/license" element={<License />} />
+                <Route path="/terms" element={<TermsAndConditions />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/privacy-dashboard" element={<PrivacyDashboard />} />
+                <Route path="/admin-login" element={<AdminLogin />} />
+                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+              <CookieBanner />
+            </BrowserRouter>
+          </TooltipProvider>
+        </AuthProvider>
       </ConsentProvider>
     </QueryClientProvider>
   );

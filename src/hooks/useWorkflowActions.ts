@@ -1,5 +1,6 @@
 
 import { useToast } from '@/hooks/use-toast';
+import { useEnhancedAnalytics } from '@/hooks/useEnhancedAnalytics';
 import { ValidationResult } from '../utils/graphValidation';
 
 interface UseWorkflowActionsProps {
@@ -20,6 +21,7 @@ export const useWorkflowActions = ({
   validationResult
 }: UseWorkflowActionsProps) => {
   const { toast } = useToast();
+  const { trackFeatureUsage, trackWorkflowExported, trackWorkflowImported } = useEnhancedAnalytics();
 
   const handleNewProject = () => {
     console.log("🟢 REAL handleNewProject called - UPDATED VERSION");
@@ -28,12 +30,14 @@ export const useWorkflowActions = ({
       if (nodes.length > 0) {
         if (confirm('Are you sure you want to start a new project? All current work will be lost.')) {
           clearWorkflow();
+          trackFeatureUsage('new_project');
           toast({
             title: "New Project",
             description: "Started a new project successfully.",
           });
         }
       } else {
+        trackFeatureUsage('new_project_empty');
         toast({
           title: "New Project",
           description: "Already working on a new project.",
@@ -69,6 +73,7 @@ export const useWorkflowActions = ({
               const validation = validateWorkflow(jsonString);
               
               if (!validation.valid) {
+                trackFeatureUsage('import_failed', { reason: 'validation_error' });
                 toast({
                   title: "Import Failed",
                   description: `Invalid file format: ${validation.errors.join(', ')}`,
@@ -80,6 +85,14 @@ export const useWorkflowActions = ({
               const result = importWorkflow(jsonString);
               
               if (result.success) {
+                // Count imported nodes and edges for analytics
+                const importedData = JSON.parse(jsonString);
+                const nodeCount = importedData.nodes?.length || 0;
+                const edgeCount = importedData.edges?.length || 0;
+                
+                trackWorkflowImported(nodeCount, edgeCount);
+                trackFeatureUsage('import_success', { nodeCount, edgeCount });
+                
                 toast({
                   title: "Import Successful",
                   description: result.errors.length > 0 
@@ -87,6 +100,7 @@ export const useWorkflowActions = ({
                     : "Workflow imported successfully.",
                 });
               } else {
+                trackFeatureUsage('import_failed', { reason: 'processing_error' });
                 toast({
                   title: "Import Failed",
                   description: result.errors.join(', '),
@@ -95,6 +109,7 @@ export const useWorkflowActions = ({
               }
             } catch (error) {
               console.error("🟡 Error reading file:", error);
+              trackFeatureUsage('import_failed', { reason: 'file_read_error' });
               toast({
                 title: "Import Failed",
                 description: "Failed to read or parse the file.",
@@ -108,6 +123,7 @@ export const useWorkflowActions = ({
       };
       
       input.click();
+      trackFeatureUsage('import_initiated');
     } catch (error) {
       console.error("🟡 Error in handleImport:", error);
       toast({
@@ -135,6 +151,7 @@ export const useWorkflowActions = ({
         );
         
         if (!proceed) {
+          trackFeatureUsage('export_cancelled', { reason: 'validation_errors' });
           toast({
             title: "Export Cancelled",
             description: "Please fix the errors and try again.",
@@ -174,6 +191,15 @@ export const useWorkflowActions = ({
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
       }, 100);
+
+      // Track export with node/edge counts
+      const edgeCount = (JSON.parse(workflowJson).edges || []).length;
+      trackWorkflowExported(nodes.length, edgeCount);
+      trackFeatureUsage('export_success', { 
+        nodeCount: nodes.length, 
+        edgeCount,
+        hasValidationErrors: (validationResult?.errorCount || 0) > 0 
+      });
       
       toast({
         title: "Export Successful",
@@ -181,6 +207,7 @@ export const useWorkflowActions = ({
       });
     } catch (error) {
       console.error("🔵 Export error:", error);
+      trackFeatureUsage('export_failed');
       toast({
         title: "Export Failed",
         description: "Failed to export workflow.",
