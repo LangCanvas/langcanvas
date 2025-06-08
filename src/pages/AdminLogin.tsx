@@ -10,7 +10,20 @@ import { ErrorHandler } from '@/components/admin/ErrorHandler';
 import { TroubleshootingSection } from '@/components/admin/TroubleshootingSection';
 
 const AdminLogin = () => {
-  const { signIn, signInWithButton, isLoading, error, authError, clearError, isAuthenticated, isAdmin, debugInfo, clearCache, diagnosticInfo } = useAuth();
+  const { 
+    signIn, 
+    signInWithButton, 
+    isLoading, 
+    error, 
+    authError, 
+    clearError, 
+    isAuthenticated, 
+    isAdmin, 
+    debugInfo, 
+    clearCache, 
+    diagnosticInfo,
+    domainConfig
+  } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [showDebug, setShowDebug] = useState(false);
@@ -40,7 +53,6 @@ const AdminLogin = () => {
     } catch (error) {
       console.error('🔐 Enhanced admin login failed:', error);
       
-      // Don't show toast for auth errors as they're handled by ErrorHandler
       if (!authError) {
         toast({
           title: "Sign In Failed",
@@ -100,6 +112,9 @@ const AdminLogin = () => {
     }
   };
 
+  const isDomainIssue = authError?.type === 'domain_unauthorized' || 
+                        (authError?.message.includes('domain') && authError?.message.includes('unauthorized'));
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="max-w-md w-full">
@@ -125,22 +140,19 @@ const AdminLogin = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {authError && <ErrorHandler error={authError.message} />}
+            {authError && <ErrorHandler error={authError.message} domainConfig={domainConfig} />}
 
-            {/* Diagnostic Information */}
-            {authError && getAuthErrorSeverity() === 'high' && (
-              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
+            {/* Domain Configuration Warning */}
+            {isDomainIssue && (
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
                 <div className="flex items-center gap-2 mb-2">
-                  <AlertTriangle className="w-4 h-4 text-yellow-600" />
-                  <span className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                    Configuration Issue Detected
+                  <AlertTriangle className="w-4 h-4 text-red-600" />
+                  <span className="text-sm font-medium text-red-800 dark:text-red-200">
+                    Domain Authorization Required
                   </span>
                 </div>
-                <p className="text-xs text-yellow-700 dark:text-yellow-300 mb-2">
-                  Current domain: <code className="bg-yellow-100 dark:bg-yellow-800 px-1 rounded">{diagnosticInfo.domain}</code>
-                </p>
-                <p className="text-xs text-yellow-700 dark:text-yellow-300">
-                  Ensure this domain is added to "Authorized JavaScript origins" in Google Cloud Console.
+                <p className="text-xs text-red-700 dark:text-red-300">
+                  The administrator must add this domain to the Google Cloud Console OAuth configuration before login will work.
                 </p>
               </div>
             )}
@@ -152,7 +164,7 @@ const AdminLogin = () => {
               
               <Button 
                 onClick={handleSignIn}
-                disabled={isLoading}
+                disabled={isLoading || isDomainIssue}
                 className="w-full"
               >
                 {isLoading ? (
@@ -168,7 +180,7 @@ const AdminLogin = () => {
                 )}
               </Button>
 
-              {(error || authError) && (
+              {(error || authError) && !isDomainIssue && (
                 <Button 
                   onClick={handleAlternativeSignIn}
                   disabled={isLoading || isAlternativeSignIn}

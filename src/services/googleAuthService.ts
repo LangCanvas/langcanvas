@@ -17,6 +17,7 @@ export class GoogleAuthService {
   private static isInitialized = false;
   private static initializationPromise: Promise<void> | null = null;
   private static callbackHandler: ((response: any) => void) | null = null;
+  private static fallbackMode = false;
 
   static async initialize(callbackHandler?: (response: any) => void): Promise<void> {
     if (this.isInitialized && !callbackHandler) return;
@@ -29,19 +30,31 @@ export class GoogleAuthService {
     this.initializationPromise = this.loadGoogleIdentityServices();
     await this.initializationPromise;
     
-    // Initialize with redirect mode for better compatibility
-    window.google?.accounts.id.initialize({
+    // Try popup mode first, fallback to redirect on domain issues
+    const config = {
       client_id: GOOGLE_CLIENT_ID,
       callback: this.callbackHandler || this.defaultCallback,
       auto_select: false,
       cancel_on_tap_outside: false,
       use_fedcm_for_prompt: false,
-      ux_mode: 'redirect',
-      redirect_uri: window.location.origin + '/admin/login'
-    });
+      ux_mode: this.fallbackMode ? 'redirect' : 'popup'
+    };
+
+    // Only add redirect_uri if in redirect mode
+    if (this.fallbackMode) {
+      config.redirect_uri = window.location.origin + '/admin-login';
+    }
+
+    window.google?.accounts.id.initialize(config);
 
     this.isInitialized = true;
-    console.log('🔐 Google Identity Services initialized successfully');
+    console.log(`🔐 Google Identity Services initialized (${config.ux_mode} mode)`);
+  }
+
+  static enableFallbackMode(): void {
+    this.fallbackMode = true;
+    this.isInitialized = false;
+    this.initializationPromise = null;
   }
 
   private static defaultCallback(response: any): void {
@@ -61,7 +74,6 @@ export class GoogleAuthService {
       script.defer = true;
       
       script.onload = () => {
-        // Wait a bit longer for the API to be fully available
         const checkInterval = setInterval(() => {
           if (window.google?.accounts?.id) {
             clearInterval(checkInterval);
@@ -69,7 +81,6 @@ export class GoogleAuthService {
           }
         }, 100);
 
-        // Timeout after 10 seconds
         setTimeout(() => {
           clearInterval(checkInterval);
           if (!window.google?.accounts?.id) {
@@ -104,10 +115,15 @@ export class GoogleAuthService {
             const reason = notification.getNotDisplayedReason();
             console.log('🔐 Sign-in not displayed, reason:', reason);
             
-            if (reason?.includes('suppressed_by_user') || reason?.includes('browser_not_supported')) {
+            if (reason?.includes('invalid_client') || reason?.includes('unauthorized_domain')) {
+              const domainError = this.createAuthError(
+                'domain_unauthorized', 
+                `Domain '${window.location.hostname}' is not authorized in Google Cloud Console`,
+                `Add '${window.location.origin}' to Authorized JavaScript origins`
+              );
+              reject(domainError);
+            } else if (reason?.includes('suppressed_by_user') || reason?.includes('browser_not_supported')) {
               reject(this.createAuthError('popup_blocked', 'Sign-in popup was blocked by browser settings'));
-            } else if (reason?.includes('invalid_client') || reason?.includes('unauthorized_domain')) {
-              reject(this.createAuthError('domain_unauthorized', 'Domain not authorized for OAuth'));
             } else {
               reject(this.createAuthError('unknown', `Sign-in could not be displayed: ${reason}`));
             }
@@ -131,7 +147,7 @@ export class GoogleAuthService {
       throw this.createAuthError('initialization_failed', 'Google Identity Services is not available');
     }
 
-    // If a custom callback is provided, reinitialize with it
+    // Always use popup mode for button rendering to avoid domain issues
     if (customCallback) {
       window.google.accounts.id.initialize({
         client_id: GOOGLE_CLIENT_ID,
@@ -178,15 +194,17 @@ export class GoogleAuthService {
     return {
       type,
       message,
-      details: details || `Domain: ${window.location.hostname}, User Agent: ${navigator.userAgent.substring(0, 100)}`
+      details: details || `Domain: ${window.location.hostname}, Protocol: ${window.location.protocol}`
     };
   }
 
   static getDiagnosticInfo(): Record<string, any> {
     return {
       isInitialized: this.isInitialized,
+      fallbackMode: this.fallbackMode,
       googleAvailable: !!window.google?.accounts?.id,
       domain: window.location.hostname,
+      origin: window.location.origin,
       protocol: window.location.protocol,
       userAgent: navigator.userAgent.substring(0, 100),
       cookiesEnabled: navigator.cookieEnabled,
@@ -202,5 +220,13 @@ export class GoogleAuthService {
     } catch {
       return false;
     }
+  }
+
+  static getRequiredDomainConfig(): { origins: string[], redirects: string[] } {
+    const origin = window.location.origin;
+    return {
+      origins: [origin, 'https://localhost:5173'],
+      redirects: [`${origin}/admin-login`, 'https://localhost:5173/admin-login']
+    };
   }
 }

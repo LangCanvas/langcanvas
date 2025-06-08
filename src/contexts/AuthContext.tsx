@@ -26,6 +26,7 @@ interface AuthContextType {
   csrfToken: string | null;
   validateSession: () => boolean;
   diagnosticInfo: Record<string, any>;
+  domainConfig: { origins: string[], redirects: string[] };
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -51,6 +52,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [authError, setAuthError] = useState<AuthenticationError | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [diagnosticInfo, setDiagnosticInfo] = useState<Record<string, any>>({});
+  const [domainConfig, setDomainConfig] = useState({ origins: [], redirects: [] });
 
   useEffect(() => {
     initializeAuth();
@@ -62,7 +64,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       await GoogleAuthService.initialize(handleCredentialResponse);
       setIsGoogleLoaded(true);
-      setDiagnosticInfo(GoogleAuthService.getDiagnosticInfo());
+      const diagnostics = GoogleAuthService.getDiagnosticInfo();
+      const config = GoogleAuthService.getRequiredDomainConfig();
+      setDiagnosticInfo(diagnostics);
+      setDomainConfig(config);
       debugLogger.addLog('Enhanced Google Identity Services initialized successfully');
       setAuthError(null);
     } catch (error) {
@@ -126,7 +131,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const isAuthError = error && typeof error === 'object' && 'type' in error;
       
       if (isAuthError) {
-        setAuthError(error as AuthenticationError);
+        const authErr = error as AuthenticationError;
+        setAuthError(authErr);
+        
+        // Enable fallback mode for domain authorization issues
+        if (authErr.type === 'domain_unauthorized' && retryCount < 2) {
+          debugLogger.addLog('Enabling fallback mode for domain authorization issues...');
+          GoogleAuthService.enableFallbackMode();
+          await initializeAuth();
+        }
       } else {
         const errorMessage = error instanceof Error ? error.message : 'Sign-in failed';
         setAuthError({
@@ -156,7 +169,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       await GoogleAuthService.renderButton(buttonContainer, handleCredentialResponse);
 
-      // Wait a bit for the button to render, then simulate click
       setTimeout(() => {
         const button = buttonContainer.querySelector('div[role="button"]') as HTMLElement;
         if (button) {
@@ -242,6 +254,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       csrfToken: secureAuth.getCSRFToken(),
       validateSession: secureAuth.validateSession,
       diagnosticInfo,
+      domainConfig,
     }}>
       {children}
     </AuthContext.Provider>
