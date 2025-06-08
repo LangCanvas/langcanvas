@@ -13,21 +13,31 @@ export const useAuthInitialization = (
   const [diagnosticInfo, setDiagnosticInfo] = useState<Record<string, any>>({});
   const [domainConfig, setDomainConfig] = useState({ origins: [], redirects: [] });
 
+  const updateDiagnostics = () => {
+    const diagnostics = GoogleAuthService.getDiagnosticInfo();
+    const config = GoogleAuthService.getRequiredDomainConfig();
+    setDiagnosticInfo(diagnostics);
+    setDomainConfig(config);
+    
+    debugLogger.addLog(`Diagnostics - Google Available: ${diagnostics.googleAvailable}, Domain: ${diagnostics.domain}`);
+  };
+
   const initializeAuth = async () => {
     debugLogger.addLog('Starting enhanced Google Auth initialization...');
     
     try {
       await GoogleAuthService.initialize(handleCredentialResponse);
       setIsGoogleLoaded(true);
-      const diagnostics = GoogleAuthService.getDiagnosticInfo();
-      const config = GoogleAuthService.getRequiredDomainConfig();
-      setDiagnosticInfo(diagnostics);
-      setDomainConfig(config);
+      updateDiagnostics();
       debugLogger.addLog('Enhanced Google Identity Services initialized successfully');
       setAuthError(null);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown initialization error';
       debugLogger.addLog(`Failed to initialize Google Auth: ${errorMsg}`);
+      
+      // Update diagnostics even on failure to help with debugging
+      updateDiagnostics();
+      
       setAuthError({
         type: 'initialization_failed',
         message: 'Failed to initialize authentication system',

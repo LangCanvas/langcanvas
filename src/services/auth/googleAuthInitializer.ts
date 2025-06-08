@@ -6,6 +6,8 @@ export class GoogleAuthInitializer {
   private static initializationPromise: Promise<void> | null = null;
   private static callbackHandler: ((response: any) => void) | null = null;
   private static fallbackMode = false;
+  private static retryCount = 0;
+  private static maxRetries = 3;
 
   static async initialize(callbackHandler?: (response: any) => void): Promise<void> {
     if (this.isInitialized && !callbackHandler) return;
@@ -15,9 +17,37 @@ export class GoogleAuthInitializer {
       this.callbackHandler = callbackHandler;
     }
 
-    this.initializationPromise = this.loadGoogleIdentityServices();
+    this.initializationPromise = this.initializeWithRetry();
     await this.initializationPromise;
-    
+  }
+
+  private static async initializeWithRetry(): Promise<void> {
+    while (this.retryCount < this.maxRetries) {
+      try {
+        await this.loadGoogleIdentityServices();
+        await this.configureGoogleAuth();
+        this.isInitialized = true;
+        console.log(`🔐 Google Identity Services initialized successfully (attempt ${this.retryCount + 1})`);
+        return;
+      } catch (error) {
+        this.retryCount++;
+        console.warn(`🔐 Initialization attempt ${this.retryCount} failed:`, error);
+        
+        if (this.retryCount >= this.maxRetries) {
+          throw new Error(`Failed to initialize Google Auth after ${this.maxRetries} attempts: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+        
+        // Wait before retrying (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, this.retryCount) * 1000));
+      }
+    }
+  }
+
+  private static async configureGoogleAuth(): Promise<void> {
+    if (!window.google?.accounts?.id) {
+      throw new Error('Google Identity Services not available');
+    }
+
     const config: GoogleAuthConfig = {
       client_id: GOOGLE_CLIENT_ID,
       callback: this.callbackHandler || this.defaultCallback,
@@ -31,15 +61,15 @@ export class GoogleAuthInitializer {
       config.redirect_uri = window.location.origin + '/admin-login';
     }
 
-    window.google?.accounts.id.initialize(config);
-    this.isInitialized = true;
-    console.log(`🔐 Google Identity Services initialized (${config.ux_mode} mode)`);
+    window.google.accounts.id.initialize(config);
+    console.log(`🔐 Google Auth configured (${config.ux_mode} mode)`);
   }
 
   static enableFallbackMode(): void {
     this.fallbackMode = true;
     this.isInitialized = false;
     this.initializationPromise = null;
+    this.retryCount = 0;
   }
 
   static get initialized(): boolean {

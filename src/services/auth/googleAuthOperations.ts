@@ -1,5 +1,5 @@
 
-import { GoogleAuthUser, AuthenticationError, AuthErrorHandler } from './googleAuthConfig';
+import { GOOGLE_CLIENT_ID, GoogleAuthUser, AuthenticationError, AuthErrorHandler } from './googleAuthConfig';
 
 export class GoogleAuthOperations {
   static async promptSignIn(): Promise<void> {
@@ -24,7 +24,7 @@ export class GoogleAuthOperations {
               const domainError = AuthErrorHandler.createAuthError(
                 'domain_unauthorized', 
                 `Domain '${window.location.hostname}' is not authorized in Google Cloud Console`,
-                `Add '${window.location.origin}' to Authorized JavaScript origins`
+                `Current origin: ${window.location.origin}`
               );
               reject(domainError);
             } else if (reason?.includes('suppressed_by_user') || reason?.includes('browser_not_supported')) {
@@ -54,7 +54,7 @@ export class GoogleAuthOperations {
 
     if (customCallback) {
       window.google.accounts.id.initialize({
-        client_id: 'GOOGLE_CLIENT_ID',
+        client_id: GOOGLE_CLIENT_ID,
         callback: customCallback,
         auto_select: false,
         cancel_on_tap_outside: false,

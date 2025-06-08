@@ -39,6 +39,7 @@ export class AuthErrorHandler {
       protocol: window.location.protocol,
       userAgent: navigator.userAgent.substring(0, 100),
       cookiesEnabled: navigator.cookieEnabled,
+      googleAvailable: !!window.google?.accounts?.id,
       thirdPartyCookies: this.checkThirdPartyCookies()
     };
   }
@@ -55,9 +56,19 @@ export class AuthErrorHandler {
 
   static getRequiredDomainConfig(): { origins: string[], redirects: string[] } {
     const origin = window.location.origin;
+    const isLocalhost = window.location.hostname === 'localhost';
+    
     return {
-      origins: [origin, 'https://localhost:5173'],
-      redirects: [`${origin}/admin-login`, 'https://localhost:5173/admin-login']
+      origins: [
+        origin,
+        'https://langcanvas.lovable.app',
+        ...(isLocalhost ? ['https://localhost:5173'] : [])
+      ],
+      redirects: [
+        `${origin}/admin-login`,
+        'https://langcanvas.lovable.app/admin-login',
+        ...(isLocalhost ? ['https://localhost:5173/admin-login'] : [])
+      ]
     };
   }
 }
