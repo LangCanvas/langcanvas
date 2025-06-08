@@ -1,8 +1,9 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useSecureAuth } from '@/hooks/useSecureAuth';
-import { GoogleAuthService, GoogleAuthUser, AuthenticationError } from '@/services/googleAuthService';
-import { DebugLogger } from '@/utils/debugLogger';
+import { useAuthHandlers } from '@/hooks/useAuthHandlers';
+import { useAuthInitialization } from '@/hooks/useAuthInitialization';
+import { useAuthOperations } from '@/hooks/useAuthOperations';
+import { AuthenticationError } from '@/services/googleAuthService';
 
 interface AuthUser {
   email: string;
@@ -31,8 +32,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const ADMIN_EMAIL = 'bdevay@gmail.com';
-
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
@@ -47,195 +46,19 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const secureAuth = useSecureAuth();
-  const [debugLogger] = useState(() => new DebugLogger());
-  const [isGoogleLoaded, setIsGoogleLoaded] = useState(false);
-  const [authError, setAuthError] = useState<AuthenticationError | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
-  const [diagnosticInfo, setDiagnosticInfo] = useState<Record<string, any>>({});
-  const [domainConfig, setDomainConfig] = useState({ origins: [], redirects: [] });
-
-  useEffect(() => {
-    initializeAuth();
-  }, []);
-
-  const initializeAuth = async () => {
-    debugLogger.addLog('Starting enhanced Google Auth initialization...');
-    
-    try {
-      await GoogleAuthService.initialize(handleCredentialResponse);
-      setIsGoogleLoaded(true);
-      const diagnostics = GoogleAuthService.getDiagnosticInfo();
-      const config = GoogleAuthService.getRequiredDomainConfig();
-      setDiagnosticInfo(diagnostics);
-      setDomainConfig(config);
-      debugLogger.addLog('Enhanced Google Identity Services initialized successfully');
-      setAuthError(null);
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : 'Unknown initialization error';
-      debugLogger.addLog(`Failed to initialize Google Auth: ${errorMsg}`);
-      setAuthError({
-        type: 'initialization_failed',
-        message: 'Failed to initialize authentication system',
-        details: errorMsg
-      });
-    }
-  };
-
-  const handleCredentialResponse = async (response: any) => {
-    debugLogger.addLog('Received credential response from Google');
-    
-    try {
-      if (!response.credential) {
-        throw new Error('No credential received from Google');
-      }
-
-      const userData: GoogleAuthUser = GoogleAuthService.parseCredential(response.credential);
-      debugLogger.addLog(`Decoded user info - Email: ${userData.email}`);
-      
-      if (userData.email !== ADMIN_EMAIL) {
-        debugLogger.addLog(`Access denied for user: ${userData.email}`);
-        throw new Error(`Access denied. Only ${ADMIN_EMAIL} is authorized to access the admin dashboard.`);
-      }
-
-      const sessionEstablished = secureAuth.establishSecureSession(userData);
-      if (!sessionEstablished) {
-        throw new Error('Failed to establish secure session');
-      }
-
-      setAuthError(null);
-      setRetryCount(0);
-      debugLogger.addLog(`Enhanced authentication successful for: ${userData.email}`);
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : 'Authentication failed';
-      debugLogger.addLog(`Authentication failed: ${errorMsg}`);
-      setAuthError({
-        type: 'unknown',
-        message: errorMsg,
-        details: `Attempt ${retryCount + 1}`
-      });
-      throw error;
-    }
-  };
-
-  const signIn = async (): Promise<void> => {
-    debugLogger.addLog(`Starting enhanced sign-in process (attempt ${retryCount + 1})...`);
-    setAuthError(null);
-    
-    try {
-      if (!isGoogleLoaded) {
-        throw new Error('Google Identity Services is not loaded. Please refresh the page.');
-      }
-
-      await GoogleAuthService.promptSignIn();
-    } catch (error) {
-      const isAuthError = error && typeof error === 'object' && 'type' in error;
-      
-      if (isAuthError) {
-        const authErr = error as AuthenticationError;
-        setAuthError(authErr);
-        
-        // Enable fallback mode for domain authorization issues
-        if (authErr.type === 'domain_unauthorized' && retryCount < 2) {
-          debugLogger.addLog('Enabling fallback mode for domain authorization issues...');
-          GoogleAuthService.enableFallbackMode();
-          await initializeAuth();
-        }
-      } else {
-        const errorMessage = error instanceof Error ? error.message : 'Sign-in failed';
-        setAuthError({
-          type: 'unknown',
-          message: errorMessage,
-          details: `Domain: ${window.location.hostname}, Attempt: ${retryCount + 1}`
-        });
-      }
-      
-      setRetryCount(prev => prev + 1);
-      debugLogger.addLog(`Sign-in failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      throw error;
-    }
-  };
-
-  const signInWithButton = async (): Promise<void> => {
-    debugLogger.addLog('Starting alternative button-based enhanced sign-in...');
-    setAuthError(null);
-    
-    try {
-      const buttonContainer = document.createElement('div');
-      buttonContainer.style.position = 'absolute';
-      buttonContainer.style.top = '-9999px';
-      buttonContainer.style.left = '-9999px';
-      buttonContainer.id = 'temp-google-signin-button';
-      document.body.appendChild(buttonContainer);
-
-      await GoogleAuthService.renderButton(buttonContainer, handleCredentialResponse);
-
-      setTimeout(() => {
-        const button = buttonContainer.querySelector('div[role="button"]') as HTMLElement;
-        if (button) {
-          debugLogger.addLog('Clicking alternative sign-in button...');
-          button.click();
-        } else {
-          debugLogger.addLog('Button not found in container');
-          throw new Error('Sign-in button could not be rendered');
-        }
-        
-        setTimeout(() => {
-          if (document.body.contains(buttonContainer)) {
-            document.body.removeChild(buttonContainer);
-          }
-        }, 2000);
-      }, 800);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Alternative sign-in failed';
-      debugLogger.addLog(`Alternative sign-in failed: ${errorMessage}`);
-      setAuthError({
-        type: 'unknown',
-        message: errorMessage,
-        details: 'Button-based authentication attempt'
-      });
-      throw new Error(errorMessage);
-    }
-  };
-
-  const signOut = () => {
-    debugLogger.addLog('Enhanced sign-out initiated...');
-    secureAuth.signOut();
-    setAuthError(null);
-    setRetryCount(0);
-    GoogleAuthService.disableAutoSelect();
-    debugLogger.addLog('Enhanced sign-out complete');
-  };
-
-  const clearError = () => {
-    setAuthError(null);
-    secureAuth.clearError();
-  };
-
-  const clearCache = () => {
-    debugLogger.addLog('Clearing authentication cache...');
-    secureAuth.signOut();
-    setAuthError(null);
-    setRetryCount(0);
-    setIsGoogleLoaded(false);
-    GoogleAuthService.disableAutoSelect();
-    
-    // Clear any stored Google session data
-    try {
-      document.cookie.split(";").forEach(cookie => {
-        const eqPos = cookie.indexOf("=");
-        const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
-        if (name.trim().includes('google') || name.trim().includes('oauth')) {
-          document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=${window.location.hostname}`;
-        }
-      });
-    } catch (error) {
-      debugLogger.addLog('Could not clear all cookies');
-    }
-    
-    setTimeout(() => {
-      initializeAuth();
-    }, 1000);
-  };
+  const authHandlers = useAuthHandlers();
+  const { isGoogleLoaded, diagnosticInfo, domainConfig, initializeAuth } = useAuthInitialization(
+    authHandlers.handleCredentialResponse,
+    authHandlers.debugLogger,
+    authHandlers.setAuthError
+  );
+  
+  const authOperations = useAuthOperations(
+    isGoogleLoaded,
+    authHandlers,
+    initializeAuth,
+    secureAuth
+  );
 
   return (
     <AuthContext.Provider value={{
@@ -243,14 +66,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       isAuthenticated: secureAuth.isAuthenticated,
       isAdmin: secureAuth.isAdmin,
       isLoading: secureAuth.isLoading,
-      error: authError?.message || secureAuth.error,
-      authError,
-      signIn,
-      signInWithButton,
-      signOut,
-      clearError,
-      debugInfo: debugLogger.getLogs(),
-      clearCache,
+      error: authHandlers.authError?.message || secureAuth.error,
+      authError: authHandlers.authError,
+      signIn: authOperations.signIn,
+      signInWithButton: authOperations.signInWithButton,
+      signOut: authOperations.signOut,
+      clearError: authOperations.clearError,
+      debugInfo: authHandlers.debugLogger.getLogs(),
+      clearCache: authOperations.clearCache,
       csrfToken: secureAuth.getCSRFToken(),
       validateSession: secureAuth.validateSession,
       diagnosticInfo,

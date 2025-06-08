@@ -1,13 +1,15 @@
 
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, LogIn, Shield, Loader2, RefreshCw, AlertTriangle, Info } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { ErrorHandler } from '@/components/admin/ErrorHandler';
 import { TroubleshootingSection } from '@/components/admin/TroubleshootingSection';
+import { AdminLoginHeader } from '@/components/admin/AdminLoginHeader';
+import { AdminLoginButtons } from '@/components/admin/AdminLoginButtons';
+import { AdminLoginDiagnostics } from '@/components/admin/AdminLoginDiagnostics';
 
 const AdminLogin = () => {
   const { 
@@ -97,52 +99,18 @@ const AdminLogin = () => {
     });
   };
 
-  const getAuthErrorSeverity = () => {
-    if (!authError) return 'low';
-    
-    switch (authError.type) {
-      case 'domain_unauthorized':
-      case 'initialization_failed':
-        return 'high';
-      case 'popup_blocked':
-      case 'network_error':
-        return 'medium';
-      default:
-        return 'low';
-    }
-  };
-
   const isDomainIssue = authError?.type === 'domain_unauthorized' || 
                         (authError?.message.includes('domain') && authError?.message.includes('unauthorized'));
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="max-w-md w-full">
-        <div className="mb-6">
-          <Button 
-            variant="ghost" 
-            onClick={() => navigate('/')}
-            className="mb-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to LangCanvas
-          </Button>
-        </div>
+        <AdminLoginHeader />
 
         <Card>
-          <CardHeader className="text-center">
-            <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-              <Shield className="w-6 h-6 text-primary" />
-            </div>
-            <CardTitle className="text-2xl">Admin Access</CardTitle>
-            <CardDescription>
-              Sign in to access the analytics dashboard
-            </CardDescription>
-          </CardHeader>
           <CardContent className="space-y-4">
             {authError && <ErrorHandler error={authError.message} domainConfig={domainConfig} />}
 
-            {/* Domain Configuration Warning */}
             {isDomainIssue && (
               <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
                 <div className="flex items-center gap-2 mb-2">
@@ -157,50 +125,14 @@ const AdminLogin = () => {
               </div>
             )}
 
-            <div className="text-center space-y-3">
-              <p className="text-sm text-muted-foreground mb-4">
-                This dashboard is restricted to authorized administrators only.
-              </p>
-              
-              <Button 
-                onClick={handleSignIn}
-                disabled={isLoading || isDomainIssue}
-                className="w-full"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Initializing...
-                  </>
-                ) : (
-                  <>
-                    <LogIn className="w-4 h-4 mr-2" />
-                    Sign in with Google
-                  </>
-                )}
-              </Button>
-
-              {(error || authError) && !isDomainIssue && (
-                <Button 
-                  onClick={handleAlternativeSignIn}
-                  disabled={isLoading || isAlternativeSignIn}
-                  variant="outline"
-                  className="w-full"
-                >
-                  {isAlternativeSignIn ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Trying Alternative...
-                    </>
-                  ) : (
-                    <>
-                      <RefreshCw className="w-4 h-4 mr-2" />
-                      Try Alternative Sign-in
-                    </>
-                  )}
-                </Button>
-              )}
-            </div>
+            <AdminLoginButtons
+              onSignIn={handleSignIn}
+              onAlternativeSignIn={handleAlternativeSignIn}
+              isLoading={isLoading}
+              isAlternativeSignIn={isAlternativeSignIn}
+              isDomainIssue={isDomainIssue}
+              hasError={!!(error || authError)}
+            />
 
             <div className="text-xs text-muted-foreground text-center space-y-2">
               <p>Only bdevay@gmail.com is authorized to access this dashboard.</p>
@@ -209,33 +141,12 @@ const AdminLogin = () => {
               </p>
             </div>
 
-            {/* Diagnostic Toggle */}
-            {authError && (
-              <div className="flex items-center justify-center">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowDiagnostics(!showDiagnostics)}
-                >
-                  <Info className="w-4 h-4 mr-1" />
-                  {showDiagnostics ? 'Hide' : 'Show'} Diagnostics
-                </Button>
-              </div>
-            )}
-
-            {/* Diagnostic Details */}
-            {showDiagnostics && (
-              <div className="bg-muted p-3 rounded-md text-xs">
-                <div className="font-medium mb-2">System Diagnostics:</div>
-                <div className="space-y-1 font-mono">
-                  <div>Domain: {diagnosticInfo.domain}</div>
-                  <div>Protocol: {diagnosticInfo.protocol}</div>
-                  <div>Google Available: {diagnosticInfo.googleAvailable ? 'Yes' : 'No'}</div>
-                  <div>Cookies Enabled: {diagnosticInfo.cookiesEnabled ? 'Yes' : 'No'}</div>
-                  <div>Third-party Storage: {diagnosticInfo.thirdPartyCookies ? 'Available' : 'Blocked'}</div>
-                </div>
-              </div>
-            )}
+            <AdminLoginDiagnostics
+              showDiagnostics={showDiagnostics}
+              onToggleDiagnostics={() => setShowDiagnostics(!showDiagnostics)}
+              diagnosticInfo={diagnosticInfo}
+              hasAuthError={!!authError}
+            />
 
             <TroubleshootingSection
               debugInfo={debugInfo}
