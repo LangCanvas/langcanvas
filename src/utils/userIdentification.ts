@@ -151,9 +151,12 @@ export class UserIdentificationManager {
     await firestoreAnalytics.storeUserSession(firestoreSession);
   }
 
-  private static getEnvironment(): string {
-    return typeof window !== 'undefined' && 
-           (window.location.hostname.includes('lovable.dev') || 
-            window.location.hostname === 'localhost') ? 'development' : 'production';
+  private static getEnvironment(): "development" | "production" {
+    if (typeof window !== 'undefined' && 
+        (window.location.hostname.includes('lovable.dev') || 
+         window.location.hostname === 'localhost')) {
+      return 'development';
+    }
+    return 'production';
   }
 }
