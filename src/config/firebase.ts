@@ -3,14 +3,15 @@ import { initializeApp } from 'firebase/app';
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { getAnalytics, isSupported } from 'firebase/analytics';
 
+// Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyBXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", // You'll need to replace this with your actual API key
-  authDomain: "your-project-id.firebaseapp.com", // Replace with your actual auth domain
-  projectId: "your-project-id", // Replace with your actual project ID
-  storageBucket: "your-project-id.appspot.com", // Replace with your actual storage bucket
-  messagingSenderId: "425198427847",
-  appId: "1:425198427847:web:your-app-id", // Replace with your actual app ID
-  measurementId: "G-XXXXXXXXXX" // Replace with your actual measurement ID
+  apiKey: "AIzaSyBpmUCou786tHZ2yJpDNzQL7-rIjobMTdE",
+  authDomain: "langcanvas.firebaseapp.com",
+  projectId: "langcanvas",
+  storageBucket: "langcanvas.firebasestorage.app",
+  messagingSenderId: "882832843852",
+  appId: "1:882832843852:web:ad7d4a261136ab7274c0e9",
+  measurementId: "G-KDTWVNE39J"
 };
 
 // Initialize Firebase
@@ -32,11 +33,12 @@ if (typeof window !== 'undefined') {
 export { analytics };
 
 // Environment detection
-export const isDevelopment = window.location.hostname.includes('lovable.dev') || 
-                            window.location.hostname === 'localhost';
+export const isDevelopment = typeof window !== 'undefined' && 
+                            (window.location.hostname.includes('lovable.dev') || 
+                             window.location.hostname === 'localhost');
 
 // Connect to emulator in development
-if (isDevelopment && !db._delegate._databaseId.projectId.includes('demo-')) {
+if (isDevelopment && typeof window !== 'undefined') {
   try {
     connectFirestoreEmulator(db, 'localhost', 8080);
   } catch (error) {

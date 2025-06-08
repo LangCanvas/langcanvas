@@ -93,8 +93,9 @@ export class UserIdentificationManager {
         lastActivity: Timestamp.fromMillis(now),
         pageViews: 0,
         isActive: true,
-        environment: window.location.hostname.includes('lovable.dev') || 
-                    window.location.hostname === 'localhost' ? 'development' : 'production'
+        environment: typeof window !== 'undefined' && 
+                    (window.location.hostname.includes('lovable.dev') || 
+                     window.location.hostname === 'localhost') ? 'development' : 'production'
       };
 
       await firestoreAnalytics.storeUserSession(firestoreSession);
@@ -127,8 +128,9 @@ export class UserIdentificationManager {
         lastActivity: Timestamp.fromMillis(now),
         pageViews: session.pageViews,
         isActive: true,
-        environment: window.location.hostname.includes('lovable.dev') || 
-                    window.location.hostname === 'localhost' ? 'development' : 'production'
+        environment: typeof window !== 'undefined' && 
+                    (window.location.hostname.includes('lovable.dev') || 
+                     window.location.hostname === 'localhost') ? 'development' : 'production'
       };
 
       await firestoreAnalytics.storeUserSession(firestoreSession);
@@ -164,8 +166,9 @@ export class UserIdentificationManager {
           lastActivity: Timestamp.fromMillis(session.lastActivity),
           pageViews: session.pageViews,
           isActive: false,
-          environment: window.location.hostname.includes('lovable.dev') || 
-                      window.location.hostname === 'localhost' ? 'development' : 'production'
+          environment: typeof window !== 'undefined' && 
+                      (window.location.hostname.includes('lovable.dev') || 
+                       window.location.hostname === 'localhost') ? 'development' : 'production'
         };
 
         await firestoreAnalytics.storeUserSession(firestoreSession);

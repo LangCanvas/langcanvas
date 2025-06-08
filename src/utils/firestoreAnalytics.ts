@@ -59,8 +59,9 @@ class FirestoreAnalyticsManager {
       const firestoreEvent: AnalyticsEvent = {
         ...event,
         timestamp: Timestamp.now(),
-        environment: window.location.hostname.includes('lovable.dev') || 
-                    window.location.hostname === 'localhost' ? 'development' : 'production'
+        environment: typeof window !== 'undefined' && 
+                    (window.location.hostname.includes('lovable.dev') || 
+                     window.location.hostname === 'localhost') ? 'development' : 'production'
       };
 
       await addDoc(collection(db, this.eventsCollection), firestoreEvent);
@@ -117,12 +118,12 @@ class FirestoreAnalyticsManager {
     }
   }
 
-  async getRecentEvents(limit: number = 100): Promise<AnalyticsEvent[]> {
+  async getRecentEvents(limitCount: number = 100): Promise<AnalyticsEvent[]> {
     try {
       const q = query(
         collection(db, this.eventsCollection),
         orderBy('timestamp', 'desc'),
-        limit(limit)
+        limit(limitCount)
       );
       
       const querySnapshot = await getDocs(q);
