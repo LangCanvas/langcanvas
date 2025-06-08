@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import NodePalette from '../components/NodePalette';
 import Canvas from '../components/Canvas';
 import EnhancedPropertiesPanel from '../components/EnhancedPropertiesPanel';
@@ -14,16 +14,11 @@ import { useNodeCreation } from '../hooks/useNodeCreation';
 import { useWorkflowSerializer } from '../hooks/useWorkflowSerializer';
 import { useWorkflowActions } from '../hooks/useWorkflowActions';
 import { useValidation } from '../hooks/useValidation';
-import { useEnhancedAnalytics } from '../hooks/useEnhancedAnalytics';
+import { useIndexHandlers } from '../hooks/useIndexHandlers';
+import { useIndexWorkflowHandlers } from '../hooks/useIndexWorkflowHandlers';
+import { useIndexMobileHandlers } from '../hooks/useIndexMobileHandlers';
 
 const Index = () => {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [activePanel, setActivePanel] = useState<'palette' | 'properties' | null>(null);
-  const [showValidationPanel, setShowValidationPanel] = useState(false);
-  
-  // Initialize analytics
-  const analytics = useEnhancedAnalytics();
-  
   const { 
     nodes, 
     selectedNode, 
@@ -48,7 +43,6 @@ const Index = () => {
     getNodeOutgoingEdges
   } = useEdges();
 
-  // Enhanced node creation with deduplication
   const {
     createNode,
     pendingNodeType,
@@ -75,7 +69,6 @@ const Index = () => {
     selectEdge
   });
 
-  // Add validation hook
   const {
     validationResult,
     getNodeTooltip,
@@ -83,9 +76,6 @@ const Index = () => {
     getNodeErrorClass,
     getEdgeErrorClass
   } = useValidation({ nodes, edges });
-
-  console.log("📍 Index component rendering");
-  console.log("📍 Validation result:", validationResult);
 
   const {
     handleNewProject,
@@ -100,117 +90,47 @@ const Index = () => {
     validationResult
   });
 
-  // Enhanced handlers with analytics tracking
-  const handleDeleteNode = (nodeId: string) => {
-    deleteEdgesForNode(nodeId);
-    deleteNode(nodeId);
-    
-    // Track node deletion
-    analytics.trackFeatureUsage('node_deleted', { nodeId });
-  };
+  const {
+    handleDeleteNode,
+    handleAddEdge,
+    handleSelectNode,
+    handleSelectEdge,
+    handleUpdateNodeProperties,
+    handleUpdateEdgeProperties,
+  } = useIndexHandlers({
+    nodes,
+    deleteEdgesForNode,
+    deleteNode,
+    deleteEdge,
+    addEdge,
+    selectNode,
+    selectEdge,
+    updateNodeProperties,
+    updateEdgeProperties,
+  });
 
-  const handleAddEdge = (sourceNode: any, targetNode: any) => {
-    const result = addEdge(sourceNode, targetNode);
-    
-    // Track edge creation
-    if (result.success) {
-      analytics.trackEdgeCreated(sourceNode.type, targetNode.type);
-    }
-    
-    return result;
-  };
+  const {
+    handleNewProjectWithAnalytics,
+    handleImportWithAnalytics,
+    handleExportWithAnalytics,
+  } = useIndexWorkflowHandlers({
+    handleNewProject,
+    handleImport,
+    handleExport,
+  });
 
-  const handleSelectNode = (nodeId: string | null) => {
-    selectNode(nodeId);
-    
-    // Track node selection
-    if (nodeId && analytics.isEnabled) {
-      const node = nodes.find(n => n.id === nodeId);
-      analytics.trackFeatureUsage('node_selected', { 
-        nodeId, 
-        nodeType: node?.type 
-      });
-    }
-  };
+  const {
+    isMobileMenuOpen,
+    activePanel,
+    showValidationPanel,
+    setShowValidationPanel,
+    handleMobileMenuToggle,
+    handlePanelToggle,
+    closePanels,
+  } = useIndexMobileHandlers(clearPendingCreation);
 
-  const handleSelectEdge = (edgeId: string | null) => {
-    selectEdge(edgeId);
-    
-    // Track edge selection
-    if (edgeId && analytics.isEnabled) {
-      analytics.trackFeatureUsage('edge_selected', { edgeId });
-    }
-  };
-
-  const handleUpdateNodeProperties = (nodeId: string, properties: any) => {
-    updateNodeProperties(nodeId, properties);
-    
-    // Track property changes
-    analytics.trackFeatureUsage('node_properties_updated', { 
-      nodeId, 
-      properties: Object.keys(properties) 
-    });
-  };
-
-  const handleUpdateEdgeProperties = (edgeId: string, properties: any) => {
-    updateEdgeProperties(edgeId, properties);
-    
-    // Track edge property changes
-    analytics.trackFeatureUsage('edge_properties_updated', { 
-      edgeId, 
-      properties: Object.keys(properties) 
-    });
-  };
-
-  // Enhanced workflow handlers with analytics
-  const handleNewProjectWithAnalytics = () => {
-    handleNewProject();
-    analytics.trackFeatureUsage('new_project_created');
-  };
-
-  const handleImportWithAnalytics = () => {
-    handleImport();
-    // Note: actual import tracking happens in useWorkflowActions when import succeeds
-  };
-
-  const handleExportWithAnalytics = () => {
-    handleExport();
-    // Note: actual export tracking happens in useWorkflowActions when export succeeds
-  };
-
-  const handleMobileMenuToggle = () => {
-    console.log("Mobile menu toggle clicked");
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-    setActivePanel(null);
-    
-    // Track mobile menu usage
-    analytics.trackFeatureUsage('mobile_menu_toggled', { 
-      isOpen: !isMobileMenuOpen 
-    });
-  };
-
-  const handlePanelToggle = (panel: 'palette' | 'properties') => {
-    console.log(`Panel toggle clicked: ${panel}`);
-    const newActivePanel = activePanel === panel ? null : panel;
-    setActivePanel(newActivePanel);
-    
-    // Track panel usage
-    analytics.trackFeatureUsage('panel_toggled', { 
-      panel, 
-      isOpen: newActivePanel === panel 
-    });
-  };
-
-  const closePanels = () => {
-    console.log("Closing panels");
-    setActivePanel(null);
-    setIsMobileMenuOpen(false);
-    setShowValidationPanel(false);
-    clearPendingCreation();
-    
-    // Track panel closure
-    analytics.trackFeatureUsage('panels_closed');
-  };
+  console.log("📍 Index component rendering");
+  console.log("📍 Validation result:", validationResult);
 
   const nodeOutgoingEdges = selectedNode ? getNodeOutgoingEdges(selectedNode.id) : [];
 
