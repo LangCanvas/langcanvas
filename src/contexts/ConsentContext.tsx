@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { firestoreAnalytics } from '@/utils/firestoreAnalytics';
 import { UserIdentificationManager } from '@/utils/userIdentification';
@@ -68,7 +67,7 @@ export const ConsentProvider: React.FC<ConsentProviderProps> = ({ children }) =>
         setConsent(updatedConsent);
         
         // Don't show banner if DNT is enabled or user opted out
-        if (privacyStatus.shouldDisableTracking || privacyStatus.optedOut) {
+        if (!privacyStatus.trackingAllowed || privacyStatus.optedOut) {
           setShowBanner(false);
         } else {
           setShowBanner(false);
