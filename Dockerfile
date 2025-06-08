@@ -4,7 +4,8 @@ FROM node:20-alpine as build-stage
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm install --omit=dev # Install only production dependencies
+# Install all dependencies, including devDependencies, so vite is available for the build
+RUN npm install
 
 COPY . .
 
