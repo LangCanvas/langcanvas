@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useSecureAuth } from '@/hooks/useSecureAuth';
 import { firestoreAnalytics } from '@/utils/firestoreAnalytics';
-import { googleAnalytics } from '@/utils/googleAnalytics';
 
 interface AuthUser {
   email: string;
@@ -20,6 +20,8 @@ interface AuthContextType {
   clearError: () => void;
   debugInfo: string[];
   clearCache: () => void;
+  csrfToken: string | null;
+  validateSession: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -40,15 +42,11 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const secureAuth = useSecureAuth();
   const [isGoogleLoaded, setIsGoogleLoaded] = useState(false);
   const [debugInfo, setDebugInfo] = useState<string[]>([]);
   const [retryCount, setRetryCount] = useState(0);
-
-  const isAuthenticated = !!user;
-  const isAdmin = user?.email === ADMIN_EMAIL;
+  const [googleError, setGoogleError] = useState<string | null>(null);
 
   const addDebugInfo = (message: string) => {
     const timestamp = new Date().toLocaleTimeString();
@@ -61,13 +59,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     initializeGoogleAuth();
   }, []);
 
-  const clearError = () => setError(null);
+  const clearError = () => {
+    setGoogleError(null);
+    secureAuth.clearError();
+  };
 
   const clearCache = () => {
     addDebugInfo('Clearing authentication cache...');
-    localStorage.removeItem('langcanvas_auth_user');
-    setUser(null);
-    setError(null);
+    secureAuth.signOut();
+    setGoogleError(null);
     setRetryCount(0);
     
     if (window.google?.accounts?.id) {
@@ -80,7 +80,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const initializeGoogleAuth = async () => {
-    addDebugInfo('Starting Google Auth initialization...');
+    addDebugInfo('Starting secure Google Auth initialization...');
     
     try {
       addDebugInfo(`Using Client ID: ${GOOGLE_CLIENT_ID.substring(0, 20)}...`);
@@ -89,16 +89,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       await loadGoogleIdentityServices();
       addDebugInfo('Google Identity Services loaded successfully');
-      
-      // Configure authorized domains for both development and production
-      const authorizedDomains = [
-        window.location.hostname,
-        'localhost',
-        '*.lovable.dev',
-        'your-production-domain.com' // Replace with your actual production domain
-      ];
-      
-      addDebugInfo(`Authorized domains configured: ${authorizedDomains.join(', ')}`);
 
       window.google?.accounts.id.initialize({
         client_id: GOOGLE_CLIENT_ID,
@@ -111,40 +101,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       });
 
       setIsGoogleLoaded(true);
-      addDebugInfo('Google Identity Services initialized successfully');
-
-      // Try to restore session from Firestore
-      const storedUser = localStorage.getItem('langcanvas_auth_user');
-      if (storedUser) {
-        try {
-          const userData = JSON.parse(storedUser);
-          addDebugInfo(`Attempting to restore session for: ${userData.email}`);
-          if (userData.email === ADMIN_EMAIL) {
-            setUser(userData);
-            
-            // Set user properties in Google Analytics
-            googleAnalytics.setUserId(userData.email);
-            googleAnalytics.setUserProperties({
-              user_type: 'admin',
-              user_email: userData.email
-            });
-            
-            addDebugInfo('User session restored successfully');
-          } else {
-            addDebugInfo('Stored user is not admin, clearing session');
-            localStorage.removeItem('langcanvas_auth_user');
-          }
-        } catch (error) {
-          addDebugInfo(`Failed to restore session: ${error}`);
-          localStorage.removeItem('langcanvas_auth_user');
-        }
-      }
+      addDebugInfo('Secure Google Identity Services initialized successfully');
     } catch (error) {
       const errorMsg = `Failed to initialize Google Auth: ${error}`;
       addDebugInfo(errorMsg);
-      setError('Failed to initialize authentication system. Please refresh the page and try again.');
-    } finally {
-      setIsLoading(false);
+      setGoogleError('Failed to initialize authentication system. Please refresh the page and try again.');
     }
   };
 
@@ -192,7 +153,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const handleCredentialResponse = async (response: any) => {
-    addDebugInfo('Received credential response from Google');
+    addDebugInfo('Received credential response from Google - establishing secure session');
     
     try {
       if (!response.credential) {
@@ -213,36 +174,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw new Error(`Access denied. Only ${ADMIN_EMAIL} is authorized to access the admin dashboard.`);
       }
 
-      setUser(userData);
-      localStorage.setItem('langcanvas_auth_user', JSON.stringify(userData));
-      
-      // Set user properties in Google Analytics
-      googleAnalytics.setUserId(userData.email);
-      googleAnalytics.setUserProperties({
-        user_type: 'admin',
-        user_email: userData.email
-      });
-      
-      // Track admin login event
-      googleAnalytics.trackCustomEvent('admin_login', {
-        method: 'google',
-        user_email: userData.email
-      });
-      
-      setError(null);
+      // Establish secure session instead of localStorage
+      const sessionEstablished = secureAuth.establishSecureSession(userData);
+      if (!sessionEstablished) {
+        throw new Error('Failed to establish secure session');
+      }
+
+      setGoogleError(null);
       setRetryCount(0);
-      addDebugInfo(`Authentication successful for: ${userData.email}`);
+      addDebugInfo(`Secure authentication successful for: ${userData.email}`);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Authentication failed';
       addDebugInfo(`Authentication failed: ${errorMsg}`);
-      setError(errorMsg);
+      setGoogleError(errorMsg);
       throw error;
     }
   };
 
   const signIn = async (): Promise<void> => {
-    addDebugInfo(`Starting sign-in process (attempt ${retryCount + 1})...`);
-    setError(null);
+    addDebugInfo(`Starting secure sign-in process (attempt ${retryCount + 1})...`);
+    setGoogleError(null);
     
     try {
       if (!isGoogleLoaded) {
@@ -285,15 +236,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Sign-in failed. Please try again.';
       addDebugInfo(`Sign-in failed: ${errorMessage}`);
-      setError(errorMessage);
+      setGoogleError(errorMessage);
       setRetryCount(prev => prev + 1);
       throw new Error(errorMessage);
     }
   };
 
   const signInWithButton = async (): Promise<void> => {
-    addDebugInfo('Starting alternative button-based sign-in...');
-    setError(null);
+    addDebugInfo('Starting alternative button-based secure sign-in...');
+    setGoogleError(null);
     
     try {
       if (!isGoogleLoaded || !window.google?.accounts?.id) {
@@ -346,42 +297,38 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Alternative sign-in failed';
       addDebugInfo(`Alternative sign-in failed: ${errorMessage}`);
-      setError(errorMessage);
+      setGoogleError(errorMessage);
       throw new Error(errorMessage);
     }
   };
 
   const signOut = () => {
-    addDebugInfo('Signing out...');
-    setUser(null);
-    setError(null);
+    addDebugInfo('Secure sign-out initiated...');
+    secureAuth.signOut();
+    setGoogleError(null);
     setRetryCount(0);
-    localStorage.removeItem('langcanvas_auth_user');
-    
-    // Track admin logout event
-    googleAnalytics.trackCustomEvent('admin_logout', {
-      method: 'manual'
-    });
     
     if (window.google?.accounts?.id) {
       window.google.accounts.id.disableAutoSelect();
     }
-    addDebugInfo('Sign-out complete');
+    addDebugInfo('Secure sign-out complete');
   };
 
   return (
     <AuthContext.Provider value={{
-      user,
-      isAuthenticated,
-      isAdmin,
-      isLoading,
-      error,
+      user: secureAuth.user,
+      isAuthenticated: secureAuth.isAuthenticated,
+      isAdmin: secureAuth.isAdmin,
+      isLoading: secureAuth.isLoading,
+      error: googleError || secureAuth.error,
       signIn,
       signInWithButton,
       signOut,
       clearError,
       debugInfo,
       clearCache,
+      csrfToken: secureAuth.getCSRFToken(),
+      validateSession: secureAuth.validateSession,
     }}>
       {children}
     </AuthContext.Provider>
