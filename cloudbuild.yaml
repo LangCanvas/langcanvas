@@ -1,0 +1,43 @@
+# cloudbuild.yaml
+steps:
+  # Step 1: Build the Docker image
+  # This uses the Dockerfile in your repository to build the image.
+  # The image is tagged with the current commit SHA and a 'latest' tag.
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'europe-west4-docker.pkg.dev/${PROJECT_ID}/langcanvas-repo/langcanvas-app:${COMMIT_SHA}' # Tag for Artifact Registry
+      - '-t'
+      - 'europe-west4-docker.pkg.dev/${PROJECT_ID}/langcanvas-repo/langcanvas-app:latest' # Latest tag
+      - '.' # Build context is the current directory (repository root)
+
+  # Step 2: Push the Docker image to Google Artifact Registry (Recommended)
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'europe-west4-docker.pkg.dev/${PROJECT_ID}/langcanvas-repo/langcanvas-app:${COMMIT_SHA}'
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'europe-west4-docker.pkg.dev/${PROJECT_ID}/langcanvas-repo/langcanvas-app:latest'
+
+  # Step 3: Deploy the container image to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    args:
+      - 'gcloud'
+      - 'run'
+      - 'deploy'
+      - 'langcanvas-app' # Name of your Cloud Run service
+      - '--image'
+      - 'europe-west4-docker.pkg.dev/${PROJECT_ID}/langcanvas-repo/langcanvas-app:${COMMIT_SHA}'
+      - '--region'
+      - 'europe-west4' # e.g., europe-west1, us-central1
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated' # Your SPA needs to be publicly accessible
+      - '--port=8080' # Matches Nginx listen port in Dockerfile
+    entrypoint: gcloud
+
+options:
+  logging: CLOUD_LOGGING_ONLY # To reduce costs and improve performance
