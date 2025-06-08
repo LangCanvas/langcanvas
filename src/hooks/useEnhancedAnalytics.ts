@@ -3,27 +3,26 @@ import { useCallback, useEffect } from 'react';
 import { useConsent } from '@/contexts/ConsentContext';
 import { useLocation } from 'react-router-dom';
 import { UserIdentificationManager } from '@/utils/userIdentification';
-import { analyticsStorage, AnalyticsEvent } from '@/utils/analyticsStorage';
+import { AnalyticsEvent } from '@/utils/analyticsStorage';
+import { firestoreAnalytics } from '@/utils/firestoreAnalytics';
+import { googleAnalytics } from '@/utils/googleAnalytics';
 
 export const useEnhancedAnalytics = () => {
   const { consent } = useConsent();
   const location = useLocation();
 
-  // Initialize session on mount
   useEffect(() => {
     if (consent.analytics && consent.hasConsented) {
       UserIdentificationManager.startSession(true);
     }
   }, [consent.analytics, consent.hasConsented]);
 
-  // Track page views
   useEffect(() => {
     if (consent.analytics && consent.hasConsented) {
       trackPageView(location.pathname);
     }
   }, [location.pathname, consent.analytics, consent.hasConsented]);
 
-  // Clean up on unmount
   useEffect(() => {
     return () => {
       if (consent.analytics) {
@@ -57,7 +56,12 @@ export const useEnhancedAnalytics = () => {
     if (!event) return;
 
     try {
-      await analyticsStorage.storeEvent(event);
+      // Store in both Firestore and send to Google Analytics
+      await Promise.all([
+        firestoreAnalytics.storeEvent(event),
+        // Note: Google Analytics events are sent in the specific track methods below
+      ]);
+      
       UserIdentificationManager.updateSession();
     } catch (error) {
       console.warn('Failed to track analytics event:', error);
@@ -67,31 +71,49 @@ export const useEnhancedAnalytics = () => {
   const trackPageView = useCallback(async (path: string) => {
     const event = createEvent('page_view', { path });
     await trackEvent(event);
+    
+    // Also send to Google Analytics
+    googleAnalytics.trackPageView(path);
   }, [createEvent, trackEvent]);
 
   const trackFeatureUsage = useCallback(async (feature: string, details: Record<string, any> = {}) => {
     const event = createEvent('feature_usage', { feature, ...details });
     await trackEvent(event);
+    
+    // Also send to Google Analytics
+    googleAnalytics.trackFeatureUsage(feature, details);
   }, [createEvent, trackEvent]);
 
   const trackNodeCreated = useCallback(async (nodeType: string) => {
     const event = createEvent('node_created', { nodeType });
     await trackEvent(event);
+    
+    // Also send to Google Analytics
+    googleAnalytics.trackNodeCreated(nodeType);
   }, [createEvent, trackEvent]);
 
   const trackEdgeCreated = useCallback(async (sourceType: string, targetType: string) => {
     const event = createEvent('edge_created', { sourceType, targetType });
     await trackEvent(event);
+    
+    // Also send to Google Analytics
+    googleAnalytics.trackEdgeCreated(sourceType, targetType);
   }, [createEvent, trackEvent]);
 
   const trackWorkflowExported = useCallback(async (nodeCount: number, edgeCount: number) => {
     const event = createEvent('workflow_exported', { nodeCount, edgeCount });
     await trackEvent(event);
+    
+    // Also send to Google Analytics
+    googleAnalytics.trackWorkflowExported(nodeCount, edgeCount);
   }, [createEvent, trackEvent]);
 
   const trackWorkflowImported = useCallback(async (nodeCount: number, edgeCount: number) => {
     const event = createEvent('workflow_imported', { nodeCount, edgeCount });
     await trackEvent(event);
+    
+    // Also send to Google Analytics
+    googleAnalytics.trackWorkflowImported(nodeCount, edgeCount);
   }, [createEvent, trackEvent]);
 
   return {

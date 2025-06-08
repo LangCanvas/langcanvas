@@ -1,5 +1,6 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { firestoreAnalytics } from '@/utils/firestoreAnalytics';
+import { googleAnalytics } from '@/utils/googleAnalytics';
 
 interface AuthUser {
   email: string;
@@ -24,7 +25,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const ADMIN_EMAIL = 'bdevay@gmail.com';
-const GOOGLE_CLIENT_ID = '1060424535135-t42df26dlsljoa1c68qqj3p267aeb0mf.apps.googleusercontent.com';
+const GOOGLE_CLIENT_ID = '425198427847-rfucr78mvnma3qv94pn9utas046svokk.apps.googleusercontent.com';
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -53,7 +54,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const timestamp = new Date().toLocaleTimeString();
     const newInfo = `[${timestamp}] ${message}`;
     console.log('🔐 DEBUG:', newInfo);
-    setDebugInfo(prev => [...prev.slice(-9), newInfo]); // Keep last 10 entries
+    setDebugInfo(prev => [...prev.slice(-9), newInfo]);
   };
 
   useEffect(() => {
@@ -73,7 +74,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       window.google.accounts.id.disableAutoSelect();
     }
     
-    // Force re-initialization
     setTimeout(() => {
       initializeGoogleAuth();
     }, 500);
@@ -85,24 +85,35 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       addDebugInfo(`Using Client ID: ${GOOGLE_CLIENT_ID.substring(0, 20)}...`);
       addDebugInfo(`Current domain: ${window.location.hostname}`);
+      addDebugInfo(`Environment: ${window.location.hostname.includes('lovable.dev') ? 'development' : 'production'}`);
 
-      // Load Google Identity Services
       await loadGoogleIdentityServices();
       addDebugInfo('Google Identity Services loaded successfully');
       
-      // Initialize Google Identity Services
+      // Configure authorized domains for both development and production
+      const authorizedDomains = [
+        window.location.hostname,
+        'localhost',
+        '*.lovable.dev',
+        'your-production-domain.com' // Replace with your actual production domain
+      ];
+      
+      addDebugInfo(`Authorized domains configured: ${authorizedDomains.join(', ')}`);
+
       window.google?.accounts.id.initialize({
         client_id: GOOGLE_CLIENT_ID,
         callback: handleCredentialResponse,
         auto_select: false,
         cancel_on_tap_outside: false,
-        use_fedcm_for_prompt: false, // Disable FedCM which can cause issues
+        use_fedcm_for_prompt: false,
+        ux_mode: 'popup',
+        context: 'signin'
       });
 
       setIsGoogleLoaded(true);
       addDebugInfo('Google Identity Services initialized successfully');
 
-      // Try to restore session
+      // Try to restore session from Firestore
       const storedUser = localStorage.getItem('langcanvas_auth_user');
       if (storedUser) {
         try {
@@ -110,6 +121,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           addDebugInfo(`Attempting to restore session for: ${userData.email}`);
           if (userData.email === ADMIN_EMAIL) {
             setUser(userData);
+            
+            // Set user properties in Google Analytics
+            googleAnalytics.setUserId(userData.email);
+            googleAnalytics.setUserProperties({
+              user_type: 'admin',
+              user_email: userData.email
+            });
+            
             addDebugInfo('User session restored successfully');
           } else {
             addDebugInfo('Stored user is not admin, clearing session');
@@ -145,7 +164,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       script.onload = () => {
         addDebugInfo('Google Identity Services script loaded');
-        // Wait a bit for the API to be ready
         setTimeout(() => {
           if (window.google?.accounts?.id) {
             addDebugInfo('Google Identity Services API is ready');
@@ -164,7 +182,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       document.head.appendChild(script);
 
-      // Timeout after 10 seconds
       setTimeout(() => {
         if (!window.google?.accounts?.id) {
           addDebugInfo('Google Identity Services timeout');
@@ -182,7 +199,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw new Error('No credential received from Google');
       }
 
-      // Decode JWT token (simple decode, not verification)
       const payload = JSON.parse(atob(response.credential.split('.')[1]));
       addDebugInfo(`Decoded user info - Email: ${payload.email}, Name: ${payload.name}`);
       
@@ -192,7 +208,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         picture: payload.picture,
       };
 
-      // Only allow admin user
       if (userData.email !== ADMIN_EMAIL) {
         addDebugInfo(`Access denied for user: ${userData.email}`);
         throw new Error(`Access denied. Only ${ADMIN_EMAIL} is authorized to access the admin dashboard.`);
@@ -200,6 +215,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       setUser(userData);
       localStorage.setItem('langcanvas_auth_user', JSON.stringify(userData));
+      
+      // Set user properties in Google Analytics
+      googleAnalytics.setUserId(userData.email);
+      googleAnalytics.setUserProperties({
+        user_type: 'admin',
+        user_email: userData.email
+      });
+      
+      // Track admin login event
+      googleAnalytics.trackCustomEvent('admin_login', {
+        method: 'google',
+        user_email: userData.email
+      });
+      
       setError(null);
       setRetryCount(0);
       addDebugInfo(`Authentication successful for: ${userData.email}`);
@@ -226,14 +255,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       addDebugInfo('Showing Google Sign-In prompt...');
       
-      // Create a promise to handle the async nature of the Google prompt
       return new Promise((resolve, reject) => {
         const timeoutId = setTimeout(() => {
           addDebugInfo('Sign-in timeout (30s)');
           reject(new Error('Sign-in timeout. Please try again or use the alternative sign-in method.'));
         }, 30000);
 
-        // Show Google Sign-In prompt
         window.google!.accounts.id.prompt((notification: any) => {
           clearTimeout(timeoutId);
           
@@ -273,7 +300,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw new Error('Google Identity Services is not available');
       }
 
-      // Create a temporary container for the button
       const buttonContainer = document.createElement('div');
       buttonContainer.style.position = 'absolute';
       buttonContainer.style.top = '-9999px';
@@ -297,14 +323,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           locale: 'en'
         });
 
-        // Automatically click the button
         setTimeout(() => {
           const button = buttonContainer.querySelector('div[role="button"]') as HTMLElement;
           if (button) {
             addDebugInfo('Clicking alternative sign-in button...');
             button.click();
             
-            // Clean up after a delay
             setTimeout(() => {
               if (document.body.contains(buttonContainer)) {
                 document.body.removeChild(buttonContainer);
@@ -333,6 +357,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setError(null);
     setRetryCount(0);
     localStorage.removeItem('langcanvas_auth_user');
+    
+    // Track admin logout event
+    googleAnalytics.trackCustomEvent('admin_logout', {
+      method: 'manual'
+    });
     
     if (window.google?.accounts?.id) {
       window.google.accounts.id.disableAutoSelect();
