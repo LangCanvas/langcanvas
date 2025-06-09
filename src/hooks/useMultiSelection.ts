@@ -14,7 +14,7 @@ export const useMultiSelection = (canvasRef: React.RefObject<HTMLDivElement>) =>
   const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
   const [isSelecting, setIsSelecting] = useState(false);
   const [selectionRect, setSelectionRect] = useState<SelectionRectangle | null>(null);
-  const selectionRectRef = useRef<SelectionRectangle | null>(null);
+  const selectionStartRef = useRef<{ x: number; y: number } | null>(null);
   const lastSelectedNodeRef = useRef<string | null>(null);
 
   const selectSingleNode = useCallback((nodeId: string | null) => {
@@ -41,7 +41,7 @@ export const useMultiSelection = (canvasRef: React.RefObject<HTMLDivElement>) =>
     lastSelectedNodeRef.current = null;
     setIsSelecting(false);
     setSelectionRect(null);
-    selectionRectRef.current = null;
+    selectionStartRef.current = null;
   }, []);
 
   const toggleNodeSelection = useCallback((nodeId: string, isCtrlPressed: boolean, isShiftPressed: boolean = false, nodes: EnhancedNode[] = []) => {
@@ -132,36 +132,53 @@ export const useMultiSelection = (canvasRef: React.RefObject<HTMLDivElement>) =>
 
   const startRectangleSelection = useCallback((x: number, y: number) => {
     console.log('🔲 Starting rectangle selection at:', { x, y });
-    const rect = { startX: x, startY: y, endX: x, endY: y };
+    // Only set isSelecting and store start coordinates - don't create rectangle yet
     setIsSelecting(true);
-    setSelectionRect(rect);
-    selectionRectRef.current = rect;
+    selectionStartRef.current = { x, y };
+    setSelectionRect(null); // Ensure no rectangle is shown initially
   }, []);
 
   const updateRectangleSelection = useCallback((x: number, y: number) => {
-    if (!selectionRectRef.current) {
-      console.warn('🚨 updateRectangleSelection called with no active selection');
+    const startCoords = selectionStartRef.current;
+    if (!startCoords) {
+      console.warn('🚨 updateRectangleSelection called with no start coordinates');
       return;
     }
     
     console.log('🔲 Updating rectangle selection to:', { x, y });
-    const newRect = { ...selectionRectRef.current, endX: x, endY: y };
     
-    setSelectionRect(newRect);
-    selectionRectRef.current = newRect;
+    // Calculate rectangle dimensions
+    const width = Math.abs(x - startCoords.x);
+    const height = Math.abs(y - startCoords.y);
+    
+    // Only show rectangle if it's larger than minimum threshold (10px)
+    if (width > 10 || height > 10) {
+      const newRect = { 
+        startX: startCoords.x, 
+        startY: startCoords.y, 
+        endX: x, 
+        endY: y 
+      };
+      setSelectionRect(newRect);
+    } else {
+      // Don't show rectangle for small movements
+      setSelectionRect(null);
+    }
   }, []);
 
   const endRectangleSelection = useCallback((nodes: EnhancedNode[]) => {
-    const currentRect = selectionRectRef.current;
-    console.log('🔲 Ending rectangle selection with current rect:', currentRect);
+    const startCoords = selectionStartRef.current;
+    const currentRect = selectionRect;
     
-    if (currentRect) {
+    console.log('🔲 Ending rectangle selection with:', { startCoords, currentRect });
+    
+    if (currentRect && startCoords) {
       const width = Math.abs(currentRect.endX - currentRect.startX);
       const height = Math.abs(currentRect.endY - currentRect.startY);
       
       console.log('🔲 Selection rectangle size:', { width, height });
       
-      if (width > 5 || height > 5) {
+      if (width > 10 || height > 10) {
         selectNodesInRectangle(nodes, currentRect);
       } else {
         console.log('🔲 Rectangle too small, clearing selection instead');
@@ -172,10 +189,11 @@ export const useMultiSelection = (canvasRef: React.RefObject<HTMLDivElement>) =>
       clearSelection();
     }
     
+    // Reset all selection state
     setSelectionRect(null);
-    selectionRectRef.current = null;
+    selectionStartRef.current = null;
     setIsSelecting(false);
-  }, [selectNodesInRectangle, clearSelection]);
+  }, [selectionRect, selectNodesInRectangle, clearSelection]);
 
   return {
     selectedNodeIds,

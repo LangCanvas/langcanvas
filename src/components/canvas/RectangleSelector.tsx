@@ -11,6 +11,7 @@ const RectangleSelector: React.FC<RectangleSelectorProps> = ({
   selectionRect,
   isSelecting
 }) => {
+  // Only render if we have a valid rectangle and are actively selecting
   if (!isSelecting || !selectionRect) {
     return null;
   }
@@ -19,6 +20,11 @@ const RectangleSelector: React.FC<RectangleSelectorProps> = ({
   const top = Math.min(selectionRect.startY, selectionRect.endY);
   const width = Math.abs(selectionRect.endX - selectionRect.startX);
   const height = Math.abs(selectionRect.endY - selectionRect.startY);
+
+  // Additional safety check - don't render very small rectangles
+  if (width < 10 && height < 10) {
+    return null;
+  }
 
   return (
     <div
