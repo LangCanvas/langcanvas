@@ -1,5 +1,6 @@
 import { EnhancedNode } from '../types/nodeTypes';
 import { Edge } from '../hooks/useEdges';
+import { sanitizeNodeLabel } from './security';
 
 export interface WorkflowJSON {
   nodes: Array<{
@@ -105,7 +106,6 @@ export const importFromJSON = (
   const errors: string[] = [];
   
   try {
-    // Parse JSON if it's a string
     let workflow: WorkflowJSON;
     if (typeof jsonData === 'string') {
       workflow = JSON.parse(jsonData);
@@ -113,7 +113,6 @@ export const importFromJSON = (
       workflow = jsonData;
     }
 
-    // Validate basic structure
     if (!workflow.nodes || !Array.isArray(workflow.nodes)) {
       throw new Error('Invalid JSON: missing or invalid nodes array');
     }
@@ -122,55 +121,54 @@ export const importFromJSON = (
       throw new Error('Invalid JSON: missing or invalid edges array');
     }
 
-    // Clear current workflow
     clearWorkflow();
 
-    // Track created nodes by label for edge creation
     const nodesByLabel = new Map<string, EnhancedNode>();
     const nodeLabels = new Set<string>();
 
-    // Create nodes
+    // Create nodes with sanitized labels
     for (const jsonNode of workflow.nodes) {
-      // Validate required fields
       if (!jsonNode.label || !jsonNode.type || typeof jsonNode.position?.x !== 'number' || typeof jsonNode.position?.y !== 'number') {
         errors.push(`Skipping invalid node: ${jsonNode.label || 'unnamed'}`);
         continue;
       }
 
-      // Check for duplicate labels
-      if (nodeLabels.has(jsonNode.label)) {
-        errors.push(`Duplicate node label: ${jsonNode.label} - skipping duplicate`);
+      // Sanitize the label before processing
+      const sanitizedLabel = sanitizeNodeLabel(jsonNode.label);
+      if (!sanitizedLabel) {
+        errors.push(`Skipping node with invalid label: ${jsonNode.label}`);
         continue;
       }
 
-      // Validate node type
+      if (nodeLabels.has(sanitizedLabel)) {
+        errors.push(`Duplicate node label: ${sanitizedLabel} - skipping duplicate`);
+        continue;
+      }
+
       if (!['start', 'agent', 'tool', 'function', 'conditional', 'parallel', 'end'].includes(jsonNode.type)) {
-        errors.push(`Unknown node type: ${jsonNode.type} for node ${jsonNode.label} - treating as tool`);
+        errors.push(`Unknown node type: ${jsonNode.type} for node ${sanitizedLabel} - treating as tool`);
         jsonNode.type = 'tool' as any;
       }
 
-      // Check for multiple agent nodes
       if (jsonNode.type === 'agent' && Array.from(nodeLabels).some(label => {
-        const existingNode = workflow.nodes.find(n => n.label === label);
+        const existingNode = workflow.nodes.find(n => sanitizeNodeLabel(n.label) === label);
         return existingNode?.type === 'agent';
       })) {
-        errors.push(`Multiple agent nodes found - converting ${jsonNode.label} to tool node`);
+        errors.push(`Multiple agent nodes found - converting ${sanitizedLabel} to tool node`);
         jsonNode.type = 'tool' as any;
       }
 
-      // Create the node
       const createdNode = addNode(jsonNode.type, jsonNode.position.x, jsonNode.position.y);
       if (!createdNode) {
-        errors.push(`Failed to create node: ${jsonNode.label}`);
+        errors.push(`Failed to create node: ${sanitizedLabel}`);
         continue;
       }
 
-      nodeLabels.add(jsonNode.label);
-      nodesByLabel.set(jsonNode.label, createdNode);
+      nodeLabels.add(sanitizedLabel);
+      nodesByLabel.set(sanitizedLabel, createdNode);
 
-      // Update node properties
       const updates: Partial<EnhancedNode> = {
-        label: jsonNode.label
+        label: sanitizedLabel // Use sanitized label
       };
 
       if (jsonNode.function) {
@@ -188,24 +186,27 @@ export const importFromJSON = (
       updateNodeProperties(createdNode.id, updates);
     }
 
-    // Create edges
+    // Create edges with sanitized node references
     for (const jsonEdge of workflow.edges) {
-      const sourceNode = nodesByLabel.get(jsonEdge.source);
-      const targetNode = nodesByLabel.get(jsonEdge.target);
+      const sanitizedSource = sanitizeNodeLabel(jsonEdge.source);
+      const sanitizedTarget = sanitizeNodeLabel(jsonEdge.target);
+      
+      const sourceNode = nodesByLabel.get(sanitizedSource);
+      const targetNode = nodesByLabel.get(sanitizedTarget);
 
       if (!sourceNode) {
-        errors.push(`Edge source node not found: ${jsonEdge.source}`);
+        errors.push(`Edge source node not found: ${sanitizedSource}`);
         continue;
       }
 
       if (!targetNode) {
-        errors.push(`Edge target node not found: ${jsonEdge.target}`);
+        errors.push(`Edge target node not found: ${sanitizedTarget}`);
         continue;
       }
 
       const result = addEdge(sourceNode, targetNode);
       if (!result.success) {
-        errors.push(`Failed to create edge from ${jsonEdge.source} to ${jsonEdge.target}: ${result.error}`);
+        errors.push(`Failed to create edge from ${sanitizedSource} to ${sanitizedTarget}: ${result.error}`);
         continue;
       }
     }

@@ -2,6 +2,7 @@
 import React, { useState, useRef } from 'react';
 import { EnhancedNode } from '../types/nodeTypes';
 import { usePointerEvents } from '../hooks/usePointerEvents';
+import { sanitizeNodeLabel } from '../utils/security';
 import ConnectionHandle from './ConnectionHandle';
 
 interface NodeComponentProps {
@@ -31,6 +32,9 @@ const NodeComponent: React.FC<NodeComponentProps> = ({
   const nodeRef = useRef<HTMLDivElement>(null);
   const { getPointerEvent, addPointerEventListeners } = usePointerEvents();
 
+  // Sanitize the node label to prevent XSS
+  const sanitizedLabel = sanitizeNodeLabel(node.label);
+
   const handlePointerDown = (e: React.MouseEvent | React.TouchEvent) => {
     const pointerEvent = getPointerEvent(e);
     pointerEvent.preventDefault();
@@ -45,10 +49,8 @@ const NodeComponent: React.FC<NodeComponentProps> = ({
       const scrollLeft = scrollContainer.scrollLeft || 0;
       const scrollTop = scrollContainer.scrollTop || 0;
       
-      // Store initial scroll position
       setInitialScrollPosition({ x: scrollLeft, y: scrollTop });
       
-      // Calculate drag offset relative to the canvas coordinate system
       const canvasX = pointerEvent.clientX - canvasRect.left + scrollLeft;
       const canvasY = pointerEvent.clientY - canvasRect.top + scrollTop;
       
@@ -72,17 +74,16 @@ const NodeComponent: React.FC<NodeComponentProps> = ({
         const scrollLeft = scrollContainer.scrollLeft || 0;
         const scrollTop = scrollContainer.scrollTop || 0;
         
-        // Calculate new position relative to canvas coordinate system
         const canvasX = pointerEvent.clientX - canvasRect.left + scrollLeft;
         const canvasY = pointerEvent.clientY - canvasRect.top + scrollTop;
         
         const newX = Math.max(0, Math.min(
           canvasX - dragOffset.x,
-          3000 - 120 // Canvas width minus node width
+          3000 - 120
         ));
         const newY = Math.max(0, Math.min(
           canvasY - dragOffset.y,
-          3000 - 60 // Canvas height minus node height
+          3000 - 60
         ));
         
         onMove(node.id, newX, newY);
@@ -111,10 +112,9 @@ const NodeComponent: React.FC<NodeComponentProps> = ({
       fontWeight: '500',
       boxShadow: isDragging ? '0 4px 12px rgba(0,0,0,0.15)' : '0 2px 4px rgba(0,0,0,0.1)',
       zIndex: isSelected ? 10 : 5,
-      touchAction: 'none', // Prevent default touch behaviors
+      touchAction: 'none',
     };
 
-    // Special handling for conditional node (diamond shape) with improved contrast
     if (node.type === 'conditional') {
       return {
         ...baseStyle,
@@ -130,7 +130,6 @@ const NodeComponent: React.FC<NodeComponentProps> = ({
       };
     }
 
-    // Regular node styles
     const regularStyle = {
       ...baseStyle,
       width: '120px',
@@ -146,7 +145,7 @@ const NodeComponent: React.FC<NodeComponentProps> = ({
           backgroundColor: '#f0fdf4',
           borderColor: isSelected ? '#16a34a' : '#22c55e',
           color: '#15803d',
-          borderRadius: '30px', // Circular for start node
+          borderRadius: '30px',
         };
       case 'agent':
         return {
@@ -189,7 +188,6 @@ const NodeComponent: React.FC<NodeComponentProps> = ({
     }
   };
 
-  // Combine validation tooltip with any existing title
   const tooltipText = validationTooltip || undefined;
 
   return (
@@ -204,10 +202,9 @@ const NodeComponent: React.FC<NodeComponentProps> = ({
       title={tooltipText}
     >
       <span>
-        {node.label}
+        {sanitizedLabel}
       </span>
       
-      {/* Connection Handle */}
       <ConnectionHandle
         node={node}
         canCreateEdge={canCreateEdge}

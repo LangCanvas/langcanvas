@@ -1,7 +1,6 @@
 
-import { useEnhancedAnalytics } from './useEnhancedAnalytics';
 import { EnhancedNode } from '../types/nodeTypes';
-import { Edge } from './useEdges';
+import { EnhancedEdge } from '../types/edgeTypes';
 
 interface UseIndexHandlersProps {
   nodes: EnhancedNode[];
@@ -11,8 +10,8 @@ interface UseIndexHandlersProps {
   addEdge: (sourceNode: EnhancedNode, targetNode: EnhancedNode) => { success: boolean; error?: string };
   selectNode: (nodeId: string | null) => void;
   selectEdge: (edgeId: string | null) => void;
-  updateNodeProperties: (nodeId: string, properties: any) => void;
-  updateEdgeProperties: (edgeId: string, properties: any) => void;
+  updateNodeProperties: (nodeId: string, updates: Partial<EnhancedNode>) => void;
+  updateEdgeProperties: (edgeId: string, updates: Partial<EnhancedEdge>) => void;
 }
 
 export const useIndexHandlers = ({
@@ -26,67 +25,38 @@ export const useIndexHandlers = ({
   updateNodeProperties,
   updateEdgeProperties,
 }: UseIndexHandlersProps) => {
-  const analytics = useEnhancedAnalytics();
 
   const handleDeleteNode = (nodeId: string) => {
+    console.log(`Deleting node: ${nodeId}`);
     deleteEdgesForNode(nodeId);
     deleteNode(nodeId);
-    
-    // Track node deletion
-    analytics.trackFeatureUsage('node_deleted', { nodeId });
   };
 
   const handleAddEdge = (sourceNode: EnhancedNode, targetNode: EnhancedNode) => {
-    const result = addEdge(sourceNode, targetNode);
-    
-    // Track edge creation
-    if (result.success) {
-      analytics.trackEdgeCreated(sourceNode.type, targetNode.type);
-    }
-    
-    return result;
+    console.log(`Adding edge from ${sourceNode.id} to ${targetNode.id}`);
+    return addEdge(sourceNode, targetNode);
   };
 
   const handleSelectNode = (nodeId: string | null) => {
+    console.log(`Selecting node: ${nodeId}`);
     selectNode(nodeId);
-    
-    // Track node selection
-    if (nodeId && analytics.isEnabled) {
-      const node = nodes.find(n => n.id === nodeId);
-      analytics.trackFeatureUsage('node_selected', { 
-        nodeId, 
-        nodeType: node?.type 
-      });
-    }
+    selectEdge(null);
   };
 
   const handleSelectEdge = (edgeId: string | null) => {
+    console.log(`Selecting edge: ${edgeId}`);
     selectEdge(edgeId);
-    
-    // Track edge selection
-    if (edgeId && analytics.isEnabled) {
-      analytics.trackFeatureUsage('edge_selected', { edgeId });
-    }
+    selectNode(null);
   };
 
-  const handleUpdateNodeProperties = (nodeId: string, properties: any) => {
-    updateNodeProperties(nodeId, properties);
-    
-    // Track property changes
-    analytics.trackFeatureUsage('node_properties_updated', { 
-      nodeId, 
-      properties: Object.keys(properties) 
-    });
+  const handleUpdateNodeProperties = (nodeId: string, updates: Partial<EnhancedNode>) => {
+    console.log(`Updating node ${nodeId} properties:`, updates);
+    updateNodeProperties(nodeId, updates);
   };
 
-  const handleUpdateEdgeProperties = (edgeId: string, properties: any) => {
-    updateEdgeProperties(edgeId, properties);
-    
-    // Track edge property changes
-    analytics.trackFeatureUsage('edge_properties_updated', { 
-      edgeId, 
-      properties: Object.keys(properties) 
-    });
+  const handleUpdateEdgeProperties = (edgeId: string, updates: Partial<EnhancedEdge>) => {
+    console.log(`Updating edge ${edgeId} properties:`, updates);
+    updateEdgeProperties(edgeId, updates);
   };
 
   return {

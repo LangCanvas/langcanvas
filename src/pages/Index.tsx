@@ -2,213 +2,124 @@
 import React from 'react';
 import Canvas from '../components/Canvas';
 import MainApplicationLayout from '../components/layout/MainApplicationLayout';
-import { useEnhancedNodes } from '../hooks/useEnhancedNodes';
-import { useEnhancedEdges } from '../hooks/useEnhancedEdges';
-import { useNodeCreation } from '../hooks/useNodeCreation';
-import { useWorkflowSerializer } from '../hooks/useWorkflowSerializer';
 import { useWorkflowActions } from '../hooks/useWorkflowActions';
-import { useValidation } from '../hooks/useValidation';
 import { useIndexHandlers } from '../hooks/useIndexHandlers';
 import { useIndexWorkflowHandlers } from '../hooks/useIndexWorkflowHandlers';
 import { useIndexPanelHandlers } from '../hooks/useIndexPanelHandlers';
+import { useIndexState } from '../hooks/useIndexState';
 import { EnhancedEdge } from '../types/edgeTypes';
 
 const Index = () => {
-  const { 
-    nodes, 
-    selectedNode, 
-    selectedNodeId, 
-    addNode, 
-    updateNodePosition, 
-    updateNodeProperties,
-    deleteNode, 
-    selectNode 
-  } = useEnhancedNodes();
-
   const {
-    edges,
-    selectedEdge,
-    selectedEdgeId,
-    addEdge,
-    updateEdgeProperties,
-    updateEdgeCondition,
-    reorderConditionalEdges,
-    deleteEdge,
-    deleteEdgesForNode,
-    selectEdge,
-    canCreateEdge,
-    getNodeOutgoingEdges,
-    getConditionalNodeEdges,
-    validatePriorityConflicts
-  } = useEnhancedEdges();
+    nodeState,
+    edgeState,
+    nodeCreation,
+    workflowSerializer,
+    validation
+  } = useIndexState();
 
-  const {
-    createNode,
-    pendingNodeType,
-    setPendingCreation,
-    clearPendingCreation
-  } = useNodeCreation({ onAddNode: addNode });
-
-  const {
-    exportWorkflow,
-    exportWorkflowAsString,
-    importWorkflow,
-    validateWorkflow,
-    clearWorkflow
-  } = useWorkflowSerializer({
-    nodes,
-    edges,
-    addNode,
-    addEdge,
-    updateNodeProperties,
-    updateEdgeProperties,
-    deleteNode,
-    deleteEdge,
-    selectNode,
-    selectEdge
+  const workflowActions = useWorkflowActions({
+    nodes: nodeState.nodes,
+    exportWorkflowAsString: workflowSerializer.exportWorkflowAsString,
+    importWorkflow: workflowSerializer.importWorkflow,
+    validateWorkflow: workflowSerializer.validateWorkflow,
+    clearWorkflow: workflowSerializer.clearWorkflow,
+    validationResult: validation.validationResult
   });
 
-  const {
-    validationResult,
-    getNodeTooltip,
-    getEdgeTooltip,
-    getNodeErrorClass,
-    getEdgeErrorClass
-  } = useValidation({ nodes, edges });
-
-  const {
-    handleNewProject,
-    handleImport,
-    handleExport
-  } = useWorkflowActions({
-    nodes,
-    exportWorkflowAsString,
-    importWorkflow,
-    validateWorkflow,
-    clearWorkflow,
-    validationResult
+  const indexHandlers = useIndexHandlers({
+    nodes: nodeState.nodes,
+    deleteEdgesForNode: edgeState.deleteEdgesForNode,
+    deleteNode: nodeState.deleteNode,
+    deleteEdge: edgeState.deleteEdge,
+    addEdge: edgeState.addEdge,
+    selectNode: nodeState.selectNode,
+    selectEdge: edgeState.selectEdge,
+    updateNodeProperties: nodeState.updateNodeProperties,
+    updateEdgeProperties: edgeState.updateEdgeProperties,
   });
 
-  const {
-    handleDeleteNode,
-    handleAddEdge,
-    handleSelectNode,
-    handleSelectEdge,
-    handleUpdateNodeProperties,
-    handleUpdateEdgeProperties,
-  } = useIndexHandlers({
-    nodes,
-    deleteEdgesForNode,
-    deleteNode,
-    deleteEdge,
-    addEdge,
-    selectNode,
-    selectEdge,
-    updateNodeProperties,
-    updateEdgeProperties,
+  const workflowHandlers = useIndexWorkflowHandlers({
+    handleNewProject: workflowActions.handleNewProject,
+    handleImport: workflowActions.handleImport,
+    handleExport: workflowActions.handleExport,
   });
 
-  const {
-    handleNewProjectWithAnalytics,
-    handleImportWithAnalytics,
-    handleExportWithAnalytics,
-  } = useIndexWorkflowHandlers({
-    handleNewProject,
-    handleImport,
-    handleExport,
-  });
+  const panelHandlers = useIndexPanelHandlers(nodeCreation.clearPendingCreation);
 
-  const {
-    isMobileMenuOpen,
-    activePanel,
-    showValidationPanel,
-    setShowValidationPanel,
-    isLeftPanelVisible,
-    isLeftPanelExpanded,
-    isRightPanelVisible,
-    isRightPanelExpanded,
-    handleMobileMenuToggle,
-    handlePanelToggle,
-    handleToggleLeftPanel,
-    handleToggleRightPanel,
-    handleExpandLeftPanel,
-    handleExpandRightPanel,
-    closePanels,
-    switchToPropertiesPanel,
-  } = useIndexPanelHandlers(clearPendingCreation);
-
+  // Set up pending node creation event listener
   React.useEffect(() => {
     const handlePendingCreation = (event: CustomEvent) => {
-      setPendingCreation(event.detail);
+      nodeCreation.setPendingCreation(event.detail);
     };
 
     window.addEventListener('setPendingCreation', handlePendingCreation as EventListener);
     return () => {
       window.removeEventListener('setPendingCreation', handlePendingCreation as EventListener);
     };
-  }, [setPendingCreation]);
+  }, [nodeCreation.setPendingCreation]);
 
   console.log("📍 Index component rendering");
-  console.log("📍 Validation result:", validationResult);
+  console.log("📍 Validation result:", validation.validationResult);
 
   const handleUpdateEdgeWithCondition = (edgeId: string, updates: Partial<EnhancedEdge>) => {
-    handleUpdateEdgeProperties(edgeId, updates);
+    indexHandlers.handleUpdateEdgeProperties(edgeId, updates);
     if (updates.conditional) {
-      updateEdgeCondition(edgeId, updates.conditional.condition);
+      edgeState.updateEdgeCondition(edgeId, updates.conditional.condition);
     }
   };
 
   return (
     <MainApplicationLayout
-      isMobileMenuOpen={isMobileMenuOpen}
-      activePanel={activePanel}
-      showValidationPanel={showValidationPanel}
-      isLeftPanelVisible={isLeftPanelVisible}
-      isLeftPanelExpanded={isLeftPanelExpanded}
-      isRightPanelVisible={isRightPanelVisible}
-      isRightPanelExpanded={isRightPanelExpanded}
-      nodes={nodes}
-      edges={edges}
-      selectedNode={selectedNode}
-      selectedEdge={selectedEdge}
-      validationResult={validationResult}
-      onMobileMenuToggle={handleMobileMenuToggle}
-      onPanelToggle={handlePanelToggle}
-      onToggleLeftPanel={handleToggleLeftPanel}
-      onToggleRightPanel={handleToggleRightPanel}
-      onExpandLeftPanel={handleExpandLeftPanel}
-      onExpandRightPanel={handleExpandRightPanel}
-      closePanels={closePanels}
-      setShowValidationPanel={setShowValidationPanel}
-      switchToPropertiesPanel={switchToPropertiesPanel}
-      onNewProject={handleNewProjectWithAnalytics}
-      onImport={handleImportWithAnalytics}
-      onExport={handleExportWithAnalytics}
-      onDeleteNode={handleDeleteNode}
-      onDeleteEdge={deleteEdge}
-      onUpdateNodeProperties={handleUpdateNodeProperties}
+      isMobileMenuOpen={panelHandlers.isMobileMenuOpen}
+      activePanel={panelHandlers.activePanel}
+      showValidationPanel={panelHandlers.showValidationPanel}
+      isLeftPanelVisible={panelHandlers.isLeftPanelVisible}
+      isLeftPanelExpanded={panelHandlers.isLeftPanelExpanded}
+      isRightPanelVisible={panelHandlers.isRightPanelVisible}
+      isRightPanelExpanded={panelHandlers.isRightPanelExpanded}
+      nodes={nodeState.nodes}
+      edges={edgeState.edges}
+      selectedNode={nodeState.selectedNode}
+      selectedEdge={edgeState.selectedEdge}
+      validationResult={validation.validationResult}
+      onMobileMenuToggle={panelHandlers.handleMobileMenuToggle}
+      onPanelToggle={panelHandlers.handlePanelToggle}
+      onToggleLeftPanel={panelHandlers.handleToggleLeftPanel}
+      onToggleRightPanel={panelHandlers.handleToggleRightPanel}
+      onExpandLeftPanel={panelHandlers.handleExpandLeftPanel}
+      onExpandRightPanel={panelHandlers.handleExpandRightPanel}
+      closePanels={panelHandlers.closePanels}
+      setShowValidationPanel={panelHandlers.setShowValidationPanel}
+      switchToPropertiesPanel={panelHandlers.switchToPropertiesPanel}
+      onNewProject={workflowHandlers.handleNewProjectWithAnalytics}
+      onImport={workflowHandlers.handleImportWithAnalytics}
+      onExport={workflowHandlers.handleExportWithAnalytics}
+      onDeleteNode={indexHandlers.handleDeleteNode}
+      onDeleteEdge={edgeState.deleteEdge}
+      onUpdateNodeProperties={indexHandlers.handleUpdateNodeProperties}
       onUpdateEdgeProperties={handleUpdateEdgeWithCondition}
-      validatePriorityConflicts={validatePriorityConflicts}
+      validatePriorityConflicts={edgeState.validatePriorityConflicts}
     >
       <Canvas
-        nodes={nodes}
-        edges={edges}
-        selectedNodeId={selectedNodeId}
-        selectedEdgeId={selectedEdgeId}
-        onAddNode={createNode}
-        onSelectNode={handleSelectNode}
-        onSelectEdge={handleSelectEdge}
-        onMoveNode={updateNodePosition}
-        onDeleteNode={handleDeleteNode}
-        onDeleteEdge={deleteEdge}
-        onAddEdge={handleAddEdge}
-        canCreateEdge={canCreateEdge}
-        getNodeValidationClass={getNodeErrorClass}
-        getEdgeValidationClass={getEdgeErrorClass}
-        getNodeTooltip={getNodeTooltip}
-        getEdgeTooltip={getEdgeTooltip}
-        pendingNodeType={pendingNodeType}
-        onClearPendingCreation={clearPendingCreation}
+        nodes={nodeState.nodes}
+        edges={edgeState.edges}
+        selectedNodeId={nodeState.selectedNodeId}
+        selectedEdgeId={edgeState.selectedEdgeId}
+        onAddNode={nodeCreation.createNode}
+        onSelectNode={indexHandlers.handleSelectNode}
+        onSelectEdge={indexHandlers.handleSelectEdge}
+        onMoveNode={nodeState.updateNodePosition}
+        onDeleteNode={indexHandlers.handleDeleteNode}
+        onDeleteEdge={edgeState.deleteEdge}
+        onAddEdge={indexHandlers.handleAddEdge}
+        canCreateEdge={edgeState.canCreateEdge}
+        getNodeValidationClass={validation.getNodeErrorClass}
+        getEdgeValidationClass={validation.getEdgeErrorClass}
+        getNodeTooltip={validation.getNodeTooltip}
+        getEdgeTooltip={validation.getEdgeTooltip}
+        pendingNodeType={nodeCreation.pendingNodeType}
+        onClearPendingCreation={nodeCreation.clearPendingCreation}
       />
     </MainApplicationLayout>
   );

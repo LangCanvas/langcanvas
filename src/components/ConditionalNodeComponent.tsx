@@ -3,6 +3,7 @@ import React, { useState, useRef } from 'react';
 import { EnhancedNode } from '../types/nodeTypes';
 import { EnhancedEdge } from '../types/edgeTypes';
 import { usePointerEvents } from '../hooks/usePointerEvents';
+import { sanitizeNodeLabel } from '../utils/security';
 
 interface ConditionalNodeComponentProps {
   node: EnhancedNode;
@@ -31,6 +32,9 @@ const ConditionalNodeComponent: React.FC<ConditionalNodeComponentProps> = ({
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const nodeRef = useRef<HTMLDivElement>(null);
   const { getPointerEvent, addPointerEventListeners } = usePointerEvents();
+
+  // Sanitize the node label to prevent XSS
+  const sanitizedLabel = sanitizeNodeLabel(node.label);
 
   const handlePointerDown = (e: React.MouseEvent | React.TouchEvent) => {
     const pointerEvent = getPointerEvent(e);
@@ -106,8 +110,8 @@ const ConditionalNodeComponent: React.FC<ConditionalNodeComponentProps> = ({
         const scrollLeft = scrollContainer.scrollLeft || 0;
         const scrollTop = scrollContainer.scrollTop || 0;
         
-        const startX = node.x + 60; // Center right of diamond
-        const startY = node.y + 40; // Center of diamond
+        const startX = node.x + 60;
+        const startY = node.y + 40;
         
         onStartConnection(node, startX, startY);
       }
@@ -150,9 +154,8 @@ const ConditionalNodeComponent: React.FC<ConditionalNodeComponentProps> = ({
       data-node-type={node.type}
       title={validationTooltip}
     >
-      <span>{node.label}</span>
+      <span>{sanitizedLabel}</span>
       
-      {/* Connection Handle */}
       {canCreateEdge && conditionCount < maxConditions && (
         <div
           className="absolute top-1/2 right-0 transform translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-orange-500 border-2 border-white rounded-full cursor-pointer hover:bg-orange-600 hover:scale-110 transition-all shadow-md"
@@ -162,7 +165,6 @@ const ConditionalNodeComponent: React.FC<ConditionalNodeComponentProps> = ({
         />
       )}
       
-      {/* Condition indicator */}
       {conditionCount > 0 && (
         <div className="absolute -top-2 -right-2 w-5 h-5 bg-orange-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
           {conditionCount}
