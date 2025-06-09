@@ -38,7 +38,7 @@ const License = () => {
                 The complete source code for LangCanvas is available on GitHub:
               </p>
               <a 
-                href="https://github.com/your-username/langcanvas" 
+                href="https://github.com/LangCanvas/langcanvas" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="inline-flex items-center text-blue-600 hover:text-blue-800 text-sm"
