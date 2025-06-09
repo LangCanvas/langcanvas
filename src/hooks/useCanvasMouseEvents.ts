@@ -33,6 +33,7 @@ export const useCanvasMouseEvents = ({
     if (!canvas) return;
 
     let isMouseDown = false;
+    let isDragging = false;
 
     const handleMouseDown = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
@@ -64,9 +65,10 @@ export const useCanvasMouseEvents = ({
         event.preventDefault();
         
         isMouseDown = true;
+        isDragging = false; // Reset dragging state
         const coords = getCanvasCoordinates(event, canvasRef);
         
-        console.log('🔲 Starting rectangle selection immediately at:', coords);
+        console.log('🔲 Starting rectangle selection at:', coords);
         startRectangleSelection(coords.x, coords.y);
       }
     };
@@ -74,17 +76,23 @@ export const useCanvasMouseEvents = ({
     const handleMouseMove = (event: MouseEvent) => {
       if (!isMouseDown) return;
 
+      // Mark that we're dragging after the first move
+      if (!isDragging) {
+        isDragging = true;
+        console.log('🔲 Started dragging - rectangle should now be visible');
+      }
+
       const currentCoords = getCanvasCoordinates(event, canvasRef);
-      console.log('🔲 Updating rectangle selection to:', currentCoords);
+      console.log('🔲 Updating rectangle selection to:', currentCoords, 'isSelecting:', isSelecting);
       updateRectangleSelection(currentCoords.x, currentCoords.y, nodes);
     };
 
     const handleMouseUp = (event: MouseEvent) => {
-      console.log('🖱️ Mouse up:', { isMouseDown, isSelecting });
+      console.log('🖱️ Mouse up:', { isMouseDown, isDragging, isSelecting });
       
       if (isMouseDown) {
-        if (isSelecting) {
-          console.log('🔲 Ending rectangle selection');
+        if (isDragging && isSelecting) {
+          console.log('🔲 Ending rectangle selection after drag');
           endRectangleSelection();
         } else {
           // Simple click on canvas background without any dragging - clear all selections
@@ -96,6 +104,7 @@ export const useCanvasMouseEvents = ({
       
       // Reset state
       isMouseDown = false;
+      isDragging = false;
     };
 
     canvas.addEventListener('mousedown', handleMouseDown);

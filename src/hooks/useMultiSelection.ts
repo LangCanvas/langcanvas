@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { EnhancedNode } from '../types/nodeTypes';
 import { isNodeInRectangle, getNodesBoundingBox } from '../utils/canvasCoordinates';
@@ -103,6 +104,12 @@ export const useMultiSelection = (canvasRef: React.RefObject<HTMLDivElement>) =>
     const rectTop = Math.min(rect.startY, rect.endY);
     const rectBottom = Math.max(rect.startY, rect.endY);
 
+    console.log('🔍 Real-time selection update:', {
+      rect: { left: rectLeft, right: rectRight, top: rectTop, bottom: rectBottom },
+      width: rectRight - rectLeft,
+      height: rectBottom - rectTop
+    });
+
     const selectedNodes = nodes.filter(node => {
       return isNodeInRectangle(
         node.id,
@@ -125,26 +132,34 @@ export const useMultiSelection = (canvasRef: React.RefObject<HTMLDivElement>) =>
   const startRectangleSelection = useCallback((x: number, y: number) => {
     console.log('🔲 Starting rectangle selection at:', { x, y });
     setIsSelecting(true);
-    // Immediately create and show the rectangle
+    // Start with a point rectangle
     const newRect = { startX: x, startY: y, endX: x, endY: y };
     setSelectionRect(newRect);
+    console.log('🔲 Initial rectangle set:', newRect);
   }, []);
 
   const updateRectangleSelection = useCallback((x: number, y: number, nodes: EnhancedNode[]) => {
+    console.log('🔲 updateRectangleSelection called with:', { x, y, hasSelectionRect: !!selectionRect });
+    
     if (!selectionRect) {
       console.warn('🚨 updateRectangleSelection called with no selection rectangle');
       return;
     }
     
-    console.log('🔲 Updating rectangle selection to:', { x, y });
-    
-    // Update rectangle immediately
+    // Create new rectangle
     const newRect = { 
       startX: selectionRect.startX, 
       startY: selectionRect.startY, 
       endX: x, 
       endY: y 
     };
+    
+    console.log('🔲 Updating rectangle from', selectionRect, 'to', newRect);
+    console.log('🔲 Rectangle dimensions:', {
+      width: Math.abs(newRect.endX - newRect.startX),
+      height: Math.abs(newRect.endY - newRect.startY)
+    });
+    
     setSelectionRect(newRect);
     
     // Update selected nodes in real-time
@@ -184,6 +199,13 @@ export const useMultiSelection = (canvasRef: React.RefObject<HTMLDivElement>) =>
       return () => document.removeEventListener('keydown', handleKeyDown);
     }
   }, [isSelecting, cancelRectangleSelection]);
+
+  // Debug logging for rectangle state changes
+  useEffect(() => {
+    if (selectionRect) {
+      console.log('🔲 Rectangle state changed:', selectionRect, 'isSelecting:', isSelecting);
+    }
+  }, [selectionRect, isSelecting]);
 
   return {
     selectedNodeIds,
