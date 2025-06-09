@@ -72,7 +72,7 @@ export const useCanvasMouseEvents = ({
     };
 
     const handleMouseMove = (event: MouseEvent) => {
-      if (!isMouseDown || !isSelecting) return;
+      if (!isMouseDown) return;
 
       const currentCoords = getCanvasCoordinates(event, canvasRef);
       console.log('🔲 Updating rectangle selection to:', currentCoords);
