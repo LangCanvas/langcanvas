@@ -67,24 +67,30 @@ const MainCanvasArea: React.FC<MainCanvasAreaProps> = ({
         onUpdateEdgeProperties={onUpdateEdgeProperties}
         allNodes={allNodes}
         allEdges={allEdges}
-      />
-
-      <DesktopPropertiesPanel
-        selectedNode={selectedNode}
-        selectedEdge={selectedEdge}
-        allNodes={allNodes}
-        allEdges={allEdges}
         validationResult={validationResult}
         showValidationPanel={showValidationPanel}
-        isVisible={isRightPanelVisible}
-        onUpdateNode={onUpdateNodeProperties}
-        onUpdateEdge={onUpdateEdgeProperties}
-        onDeleteNode={onDeleteNode}
-        onDeleteEdge={onDeleteEdge}
         setShowValidationPanel={setShowValidationPanel}
-        switchToPropertiesPanel={switchToPropertiesPanel}
         validatePriorityConflicts={validatePriorityConflicts}
       />
+
+      {isRightPanelVisible && (
+        <DesktopPropertiesPanel
+          selectedNode={selectedNode}
+          selectedEdge={selectedEdge}
+          allNodes={allNodes}
+          allEdges={allEdges}
+          validationResult={validationResult}
+          showValidationPanel={showValidationPanel}
+          isVisible={isRightPanelVisible}
+          onUpdateNode={onUpdateNodeProperties}
+          onUpdateEdge={onUpdateEdgeProperties}
+          onDeleteNode={onDeleteNode}
+          onDeleteEdge={onDeleteEdge}
+          setShowValidationPanel={setShowValidationPanel}
+          switchToPropertiesPanel={switchToPropertiesPanel}
+          validatePriorityConflicts={validatePriorityConflicts}
+        />
+      )}
     </div>
   );
 };
