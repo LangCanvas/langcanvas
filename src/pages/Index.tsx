@@ -1,3 +1,4 @@
+
 import React from 'react';
 import Canvas from '../components/Canvas';
 import MainApplicationLayout from '../components/layout/MainApplicationLayout';
@@ -9,7 +10,7 @@ import { useWorkflowActions } from '../hooks/useWorkflowActions';
 import { useValidation } from '../hooks/useValidation';
 import { useIndexHandlers } from '../hooks/useIndexHandlers';
 import { useIndexWorkflowHandlers } from '../hooks/useIndexWorkflowHandlers';
-import { useIndexMobileHandlers } from '../hooks/useIndexMobileHandlers';
+import { useIndexPanelHandlers } from '../hooks/useIndexPanelHandlers';
 import { EnhancedEdge } from '../types/edgeTypes';
 
 const Index = () => {
@@ -122,10 +123,15 @@ const Index = () => {
     activePanel,
     showValidationPanel,
     setShowValidationPanel,
+    isLeftPanelVisible,
+    isRightPanelVisible,
     handleMobileMenuToggle,
     handlePanelToggle,
+    handleToggleLeftPanel,
+    handleToggleRightPanel,
     closePanels,
-  } = useIndexMobileHandlers(clearPendingCreation);
+    switchToPropertiesPanel,
+  } = useIndexPanelHandlers(clearPendingCreation);
 
   React.useEffect(() => {
     const handlePendingCreation = (event: CustomEvent) => {
@@ -153,6 +159,8 @@ const Index = () => {
       isMobileMenuOpen={isMobileMenuOpen}
       activePanel={activePanel}
       showValidationPanel={showValidationPanel}
+      isLeftPanelVisible={isLeftPanelVisible}
+      isRightPanelVisible={isRightPanelVisible}
       nodes={nodes}
       edges={edges}
       selectedNode={selectedNode}
@@ -160,8 +168,11 @@ const Index = () => {
       validationResult={validationResult}
       onMobileMenuToggle={handleMobileMenuToggle}
       onPanelToggle={handlePanelToggle}
+      onToggleLeftPanel={handleToggleLeftPanel}
+      onToggleRightPanel={handleToggleRightPanel}
       closePanels={closePanels}
       setShowValidationPanel={setShowValidationPanel}
+      switchToPropertiesPanel={switchToPropertiesPanel}
       onNewProject={handleNewProjectWithAnalytics}
       onImport={handleImportWithAnalytics}
       onExport={handleExportWithAnalytics}

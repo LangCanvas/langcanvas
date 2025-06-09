@@ -14,6 +14,7 @@ interface MainCanvasAreaProps {
   allEdges: EnhancedEdge[];
   validationResult: ValidationResult;
   showValidationPanel: boolean;
+  isRightPanelVisible?: boolean;
   
   onClose: () => void;
   onPanelToggle: (panel: 'palette' | 'properties') => void;
@@ -22,6 +23,7 @@ interface MainCanvasAreaProps {
   onUpdateNodeProperties: (nodeId: string, updates: Partial<EnhancedNode>) => void;
   onUpdateEdgeProperties: (edgeId: string, updates: Partial<EnhancedEdge>) => void;
   setShowValidationPanel: (show: boolean) => void;
+  switchToPropertiesPanel?: () => void;
   validatePriorityConflicts?: (nodeId: string, priority: number, currentEdgeId?: string) => { hasConflict: boolean; conflictingEdges: EnhancedEdge[] };
   
   children: React.ReactNode;
@@ -35,6 +37,7 @@ const MainCanvasArea: React.FC<MainCanvasAreaProps> = ({
   allEdges,
   validationResult,
   showValidationPanel,
+  isRightPanelVisible = true,
   onClose,
   onPanelToggle,
   onDeleteNode,
@@ -42,34 +45,33 @@ const MainCanvasArea: React.FC<MainCanvasAreaProps> = ({
   onUpdateNodeProperties,
   onUpdateEdgeProperties,
   setShowValidationPanel,
+  switchToPropertiesPanel,
   validatePriorityConflicts,
   children
 }) => {
-  const nodeOutgoingEdges = selectedNode 
-    ? allEdges.filter(edge => edge.source === selectedNode.id)
-    : [];
-
   return (
-    <>
+    <div className="flex-1 flex flex-col relative">
+      <div className="flex-1 relative">
+        {children}
+      </div>
+
       <MobilePanelOverlay
         activePanel={activePanel}
-        onClose={onClose}
-        onPanelToggle={onPanelToggle}
         selectedNode={selectedNode}
         selectedEdge={selectedEdge}
+        onClose={onClose}
+        onPanelToggle={onPanelToggle}
         onDeleteNode={onDeleteNode}
         onDeleteEdge={onDeleteEdge}
         onUpdateNodeProperties={onUpdateNodeProperties}
         onUpdateEdgeProperties={onUpdateEdgeProperties}
         allNodes={allNodes}
         allEdges={allEdges}
-        nodeOutgoingEdges={nodeOutgoingEdges}
         validationResult={validationResult}
+        showValidationPanel={showValidationPanel}
+        setShowValidationPanel={setShowValidationPanel}
+        validatePriorityConflicts={validatePriorityConflicts}
       />
-
-      <main className="flex-1 relative overflow-auto">
-        {children}
-      </main>
 
       <DesktopPropertiesPanel
         selectedNode={selectedNode}
@@ -78,14 +80,16 @@ const MainCanvasArea: React.FC<MainCanvasAreaProps> = ({
         allEdges={allEdges}
         validationResult={validationResult}
         showValidationPanel={showValidationPanel}
+        isVisible={isRightPanelVisible}
         onUpdateNode={onUpdateNodeProperties}
         onUpdateEdge={onUpdateEdgeProperties}
         onDeleteNode={onDeleteNode}
         onDeleteEdge={onDeleteEdge}
         setShowValidationPanel={setShowValidationPanel}
+        switchToPropertiesPanel={switchToPropertiesPanel}
         validatePriorityConflicts={validatePriorityConflicts}
       />
-    </>
+    </div>
   );
 };
 

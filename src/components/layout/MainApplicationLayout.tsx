@@ -16,6 +16,10 @@ interface MainApplicationLayoutProps {
   activePanel: 'palette' | 'properties' | null;
   showValidationPanel: boolean;
   
+  // Desktop Panel State
+  isLeftPanelVisible: boolean;
+  isRightPanelVisible: boolean;
+  
   // Data
   nodes: EnhancedNode[];
   edges: EnhancedEdge[];
@@ -28,6 +32,9 @@ interface MainApplicationLayoutProps {
   onPanelToggle: (panel: 'palette' | 'properties') => void;
   closePanels: () => void;
   setShowValidationPanel: (show: boolean) => void;
+  onToggleLeftPanel: () => void;
+  onToggleRightPanel: () => void;
+  switchToPropertiesPanel: () => void;
   
   // Workflow Actions
   onNewProject: () => void;
@@ -51,6 +58,8 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
   isMobileMenuOpen,
   activePanel,
   showValidationPanel,
+  isLeftPanelVisible,
+  isRightPanelVisible,
   nodes,
   edges,
   selectedNode,
@@ -60,6 +69,9 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
   onPanelToggle,
   closePanels,
   setShowValidationPanel,
+  onToggleLeftPanel,
+  onToggleRightPanel,
+  switchToPropertiesPanel,
   onNewProject,
   onImport,
   onExport,
@@ -80,6 +92,10 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
         onExport={onExport}
         hasNodes={nodes.length > 0}
         validationResult={validationResult}
+        isLeftPanelVisible={isLeftPanelVisible}
+        isRightPanelVisible={isRightPanelVisible}
+        onToggleLeftPanel={onToggleLeftPanel}
+        onToggleRightPanel={onToggleRightPanel}
       />
 
       <MobileMenu
@@ -93,7 +109,7 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
       />
 
       <div className="flex-1 flex overflow-hidden">
-        <DesktopSidebar />
+        <DesktopSidebar isVisible={isLeftPanelVisible} />
         
         <MainCanvasArea
           activePanel={activePanel}
@@ -111,6 +127,8 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
           showValidationPanel={showValidationPanel}
           setShowValidationPanel={setShowValidationPanel}
           validatePriorityConflicts={validatePriorityConflicts}
+          isRightPanelVisible={isRightPanelVisible}
+          switchToPropertiesPanel={switchToPropertiesPanel}
         >
           {children}
         </MainCanvasArea>
