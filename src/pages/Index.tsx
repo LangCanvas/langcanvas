@@ -1,4 +1,3 @@
-
 import React from 'react';
 import NodePalette from '../components/NodePalette';
 import Canvas from '../components/Canvas';
@@ -9,7 +8,7 @@ import MobileMenu from '../components/layout/MobileMenu';
 import MobileBottomNav from '../components/layout/MobileBottomNav';
 import MobilePanelOverlay from '../components/layout/MobilePanelOverlay';
 import { useEnhancedNodes } from '../hooks/useEnhancedNodes';
-import { useEdges } from '../hooks/useEdges';
+import { useEnhancedEdges } from '../hooks/useEnhancedEdges';
 import { useNodeCreation } from '../hooks/useNodeCreation';
 import { useWorkflowSerializer } from '../hooks/useWorkflowSerializer';
 import { useWorkflowActions } from '../hooks/useWorkflowActions';
@@ -36,12 +35,15 @@ const Index = () => {
     selectedEdgeId,
     addEdge,
     updateEdgeProperties,
+    updateEdgeCondition,
+    reorderConditionalEdges,
     deleteEdge,
     deleteEdgesForNode,
     selectEdge,
     canCreateEdge,
-    getNodeOutgoingEdges
-  } = useEdges();
+    getNodeOutgoingEdges,
+    getConditionalNodeEdges
+  } = useEnhancedEdges();
 
   const {
     createNode,
@@ -172,7 +174,13 @@ const Index = () => {
           onDeleteNode={handleDeleteNode}
           onDeleteEdge={deleteEdge}
           onUpdateNodeProperties={handleUpdateNodeProperties}
-          onUpdateEdgeProperties={handleUpdateEdgeProperties}
+          onUpdateEdgeProperties={(edgeId, updates) => {
+            handleUpdateEdgeProperties(edgeId, updates);
+            // Handle conditional edge updates if needed
+            if (updates.conditional) {
+              updateEdgeCondition(edgeId, updates.conditional.condition);
+            }
+          }}
           allNodes={nodes}
           nodeOutgoingEdges={nodeOutgoingEdges}
           validationResult={validationResult}
@@ -227,7 +235,13 @@ const Index = () => {
               selectedEdge={selectedEdge}
               allNodes={nodes}
               onUpdateNode={handleUpdateNodeProperties}
-              onUpdateEdge={handleUpdateEdgeProperties}
+              onUpdateEdge={(edgeId, updates) => {
+                handleUpdateEdgeProperties(edgeId, updates);
+                // Handle conditional edge updates if needed
+                if (updates.conditional) {
+                  updateEdgeCondition(edgeId, updates.conditional.condition);
+                }
+              }}
               onDeleteNode={handleDeleteNode}
               onDeleteEdge={deleteEdge}
             />

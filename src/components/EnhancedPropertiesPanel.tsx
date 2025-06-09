@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { EnhancedNode } from '../types/nodeTypes';
 import { Edge } from '../hooks/useEdges';
@@ -9,6 +8,7 @@ import InputSchemaEditor from './properties/InputSchemaEditor';
 import AdvancedConfigurationForm from './properties/AdvancedConfigurationForm';
 import NodeDeleteButton from './properties/NodeDeleteButton';
 import EdgePropertiesForm from './properties/EdgePropertiesForm';
+import ConditionalEdgePropertiesForm from './properties/ConditionalEdgePropertiesForm';
 
 interface EnhancedPropertiesPanelProps {
   selectedNode: EnhancedNode | null;
@@ -55,16 +55,52 @@ const EnhancedPropertiesPanel: React.FC<EnhancedPropertiesPanelProps> = ({
   // Prioritize edge selection over node selection to avoid conflicts
   if (selectedEdge) {
     console.log(`🔗 Rendering edge properties for edge: ${selectedEdge.id}`);
-    return (
-      <div className="p-4 space-y-6 max-h-full overflow-y-auto">
-        <EdgePropertiesForm
-          selectedEdge={selectedEdge}
-          nodes={allNodes}
-          onUpdateEdge={onUpdateEdge}
-          onDeleteEdge={onDeleteEdge}
-        />
-      </div>
-    );
+    
+    // Check if it's a conditional edge
+    if (selectedEdge.conditional) {
+      const allConditionalEdges = allNodes
+        .filter(node => node.type === 'conditional')
+        .flatMap(node => edges.filter(edge => edge.source === node.id && edge.conditional));
+      
+      return (
+        <div className="p-4 space-y-6 max-h-full overflow-y-auto">
+          <ConditionalEdgePropertiesForm
+            selectedEdge={selectedEdge}
+            nodes={allNodes}
+            allConditionalEdges={allConditionalEdges}
+            onUpdateEdge={onUpdateEdge}
+            onUpdateEdgeCondition={(edgeId, condition) => {
+              const currentEdge = selectedEdge;
+              if (currentEdge.conditional) {
+                onUpdateEdge(edgeId, {
+                  conditional: {
+                    ...currentEdge.conditional,
+                    condition: { ...currentEdge.conditional.condition, ...condition }
+                  },
+                  label: condition.functionName || currentEdge.label
+                });
+              }
+            }}
+            onDeleteEdge={onDeleteEdge}
+            onReorderEdges={(nodeId, edgeIds) => {
+              // Implementation would need to be added to handle reordering
+              console.log('Reorder edges for node:', nodeId, edgeIds);
+            }}
+          />
+        </div>
+      );
+    } else {
+      return (
+        <div className="p-4 space-y-6 max-h-full overflow-y-auto">
+          <EdgePropertiesForm
+            selectedEdge={selectedEdge}
+            nodes={allNodes}
+            onUpdateEdge={onUpdateEdge}
+            onDeleteEdge={onDeleteEdge}
+          />
+        </div>
+      );
+    }
   }
 
   // Show node properties if a node is selected and no edge is selected

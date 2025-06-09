@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect } from 'react';
 import { EnhancedNode, NodeType } from '../types/nodeTypes';
 import { Edge } from '../hooks/useEdges';
@@ -14,6 +13,8 @@ import EdgePreview from './canvas/EdgePreview';
 import KeyboardHandler from './canvas/KeyboardHandler';
 import NodeComponent from './Node';
 import EdgeRenderer from './EdgeRenderer';
+import ConditionalNodeComponent from './ConditionalNodeComponent';
+import EnhancedEdgeRenderer from './EnhancedEdgeRenderer';
 
 interface CanvasProps {
   className?: string;
@@ -140,8 +141,8 @@ const Canvas: React.FC<CanvasProps> = ({
                   nodeCount={nodes.length} 
                 />
 
-                {/* Edge Renderer */}
-                <EdgeRenderer
+                {/* Enhanced Edge Renderer */}
+                <EnhancedEdgeRenderer
                   edges={edges}
                   nodes={nodes}
                   selectedEdgeId={selectedEdgeId}
@@ -175,16 +176,30 @@ const Canvas: React.FC<CanvasProps> = ({
                       isMobile ? 'touch-manipulation' : ''
                     }`}
                   >
-                    <NodeComponent
-                      node={node}
-                      isSelected={selectedNodeId === node.id}
-                      canCreateEdge={canCreateEdge(node)}
-                      onSelect={selectNodeSafely}
-                      onMove={handleMoveNode}
-                      onStartConnection={handleStartConnection}
-                      validationClass={getNodeValidationClass?.(node.id) || ''}
-                      validationTooltip={getNodeTooltip?.(node.id) || ''}
-                    />
+                    {node.type === 'conditional' ? (
+                      <ConditionalNodeComponent
+                        node={node}
+                        outgoingEdges={edges.filter(e => e.source === node.id)}
+                        isSelected={selectedNodeId === node.id}
+                        canCreateEdge={canCreateEdge(node)}
+                        onSelect={selectNodeSafely}
+                        onMove={handleMoveNode}
+                        onStartConnection={handleStartConnection}
+                        validationClass={getNodeValidationClass?.(node.id) || ''}
+                        validationTooltip={getNodeTooltip?.(node.id) || ''}
+                      />
+                    ) : (
+                      <NodeComponent
+                        node={node}
+                        isSelected={selectedNodeId === node.id}
+                        canCreateEdge={canCreateEdge(node)}
+                        onSelect={selectNodeSafely}
+                        onMove={handleMoveNode}
+                        onStartConnection={handleStartConnection}
+                        validationClass={getNodeValidationClass?.(node.id) || ''}
+                        validationTooltip={getNodeTooltip?.(node.id) || ''}
+                      />
+                    )}
                   </div>
                 ))}
               </>
