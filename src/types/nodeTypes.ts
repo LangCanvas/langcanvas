@@ -1,3 +1,4 @@
+
 export type NodeType = 'start' | 'agent' | 'tool' | 'function' | 'conditional' | 'parallel' | 'end';
 
 export interface InputSchema {
@@ -25,11 +26,16 @@ export interface NodeMetadata {
   notes: string;
 }
 
+export interface ConditionalNodeConfig {
+  evaluationMode: 'first-match' | 'all-matches' | 'priority-based' | 'conditional-entrypoint' | 'parallel-conditional';
+}
+
 export interface NodeConfig {
   timeout: number;
   retry: RetryConfig;
   concurrency: 'parallel' | 'sequential';
   metadata: NodeMetadata;
+  conditional?: ConditionalNodeConfig;
 }
 
 export interface ConditionalExpression {

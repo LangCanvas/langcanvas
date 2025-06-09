@@ -1,13 +1,14 @@
 import { EnhancedNode } from '../types/nodeTypes';
-import { Edge } from '../hooks/useEdges';
+import { EnhancedEdge } from '../types/edgeTypes';
 
 export interface ValidationIssue {
   id: string;
+  type: 'error' | 'warning' | 'info';
   severity: 'error' | 'warning';
   message: string;
   nodeIds?: string[];
   edgeIds?: string[];
-  type: 'missing_start' | 'multiple_start' | 'missing_end' | 'unreachable' | 'cycle' | 'duplicate_names' | 'invalid_connection' | 'orphaned_end' | 'single_branch_condition' | 'missing_condition_var';
+  category: 'structure' | 'configuration' | 'data' | 'conditional';
 }
 
 export interface ValidationResult {
@@ -17,7 +18,7 @@ export interface ValidationResult {
   warningCount: number;
 }
 
-export const validateGraph = (nodes: EnhancedNode[], edges: Edge[]): ValidationResult => {
+export const validateGraph = (nodes: EnhancedNode[], edges: EnhancedEdge[]): ValidationResult => {
   const issues: ValidationIssue[] = [];
   let issueCounter = 0;
 
@@ -31,7 +32,8 @@ export const validateGraph = (nodes: EnhancedNode[], edges: Edge[]): ValidationR
       id: createIssueId(),
       severity: 'error',
       message: 'No Start node present. Please add a Start node to designate an entry point.',
-      type: 'missing_start'
+      type: 'error',
+      category: 'structure'
     });
   } else if (startNodes.length > 1) {
     issues.push({
@@ -39,7 +41,8 @@ export const validateGraph = (nodes: EnhancedNode[], edges: Edge[]): ValidationR
       severity: 'error',
       message: 'Multiple Start nodes present. Only one entry point is allowed.',
       nodeIds: startNodes.map(n => n.id),
-      type: 'multiple_start'
+      type: 'error',
+      category: 'structure'
     });
   }
 
@@ -60,7 +63,8 @@ export const validateGraph = (nodes: EnhancedNode[], edges: Edge[]): ValidationR
         severity: 'error',
         message: `Multiple nodes share the label '${label}'. Labels must be unique.`,
         nodeIds,
-        type: 'duplicate_names'
+        type: 'error',
+        category: 'data'
       });
     }
   });
@@ -109,7 +113,8 @@ export const validateGraph = (nodes: EnhancedNode[], edges: Edge[]): ValidationR
       severity: 'error',
       message: 'Cycle detected in the workflow. Workflows must not have cycles.',
       nodeIds: cycleNodes,
-      type: 'cycle'
+      type: 'error',
+      category: 'structure'
     });
   }
 
@@ -138,7 +143,8 @@ export const validateGraph = (nodes: EnhancedNode[], edges: Edge[]): ValidationR
         severity: 'warning',
         message: `Node '${node.label}' is unreachable (no path from Start). It will never execute.`,
         nodeIds: [node.id],
-        type: 'unreachable'
+        type: 'warning',
+        category: 'structure'
       });
     });
   }
@@ -155,7 +161,8 @@ export const validateGraph = (nodes: EnhancedNode[], edges: Edge[]): ValidationR
       severity: 'warning',
       message: `Node '${node.label}' has no outgoing connection and is not an End node. The workflow may not terminate properly.`,
       nodeIds: [node.id],
-      type: 'orphaned_end'
+      type: 'warning',
+      category: 'structure'
     });
   });
 
@@ -170,7 +177,8 @@ export const validateGraph = (nodes: EnhancedNode[], edges: Edge[]): ValidationR
         severity: 'error',
         message: 'Edge references non-existent nodes.',
         edgeIds: [edge.id],
-        type: 'invalid_connection'
+        type: 'error',
+        category: 'structure'
       });
       return;
     }
@@ -183,7 +191,8 @@ export const validateGraph = (nodes: EnhancedNode[], edges: Edge[]): ValidationR
         message: `Start node '${targetNode.label}' cannot have incoming connections.`,
         edgeIds: [edge.id],
         nodeIds: [targetNode.id],
-        type: 'invalid_connection'
+        type: 'error',
+        category: 'structure'
       });
     }
 
@@ -195,7 +204,8 @@ export const validateGraph = (nodes: EnhancedNode[], edges: Edge[]): ValidationR
         message: `End node '${sourceNode.label}' cannot have outgoing connections.`,
         edgeIds: [edge.id],
         nodeIds: [sourceNode.id],
-        type: 'invalid_connection'
+        type: 'error',
+        category: 'structure'
       });
     }
   });
@@ -210,7 +220,8 @@ export const validateGraph = (nodes: EnhancedNode[], edges: Edge[]): ValidationR
         message: `Tool node '${toolNode.label}' has multiple outputs. Use a Condition node to branch.`,
         nodeIds: [toolNode.id],
         edgeIds: outgoingEdges.map(e => e.id),
-        type: 'invalid_connection'
+        type: 'error',
+        category: 'structure'
       });
     }
   });
@@ -226,7 +237,8 @@ export const validateGraph = (nodes: EnhancedNode[], edges: Edge[]): ValidationR
         severity: 'warning',
         message: `Condition node '${conditionNode.label}' has only one branch and will act like a normal step.`,
         nodeIds: [conditionNode.id],
-        type: 'single_branch_condition'
+        type: 'warning',
+        category: 'conditional'
       });
     }
 
@@ -240,10 +252,14 @@ export const validateGraph = (nodes: EnhancedNode[], edges: Edge[]): ValidationR
         message: `Condition node '${conditionNode.label}' has duplicate branch labels.`,
         nodeIds: [conditionNode.id],
         edgeIds: outgoingEdges.map(e => e.id),
-        type: 'invalid_connection'
+        type: 'error',
+        category: 'conditional'
       });
     }
   });
+
+  // Validate conditional node priorities
+  validateConditionalPriorities(nodes, edges, issues);
 
   const errorCount = issues.filter(issue => issue.severity === 'error').length;
   const warningCount = issues.filter(issue => issue.severity === 'warning').length;
@@ -254,4 +270,49 @@ export const validateGraph = (nodes: EnhancedNode[], edges: Edge[]): ValidationR
     errorCount,
     warningCount
   };
+};
+
+const validateConditionalPriorities = (nodes: EnhancedNode[], edges: EnhancedEdge[], issues: ValidationIssue[]) => {
+  const conditionalNodes = nodes.filter(node => node.type === 'conditional');
+
+  conditionalNodes.forEach(node => {
+    const nodeEdges = edges.filter(edge => edge.source === node.id && edge.conditional);
+    
+    if (nodeEdges.length === 0) return;
+
+    // Check for priority conflicts
+    const priorities = nodeEdges.map(edge => edge.conditional!.condition.priority);
+    const duplicatePriorities = priorities.filter((priority, index) => priorities.indexOf(priority) !== index);
+    
+    if (duplicatePriorities.length > 0) {
+      const uniqueDuplicates = [...new Set(duplicatePriorities)];
+      const conflictingEdgeIds = nodeEdges
+        .filter(edge => uniqueDuplicates.includes(edge.conditional!.condition.priority))
+        .map(edge => edge.id);
+
+      issues.push({
+        id: `priority-conflict-${node.id}`,
+        type: 'error',
+        severity: 'error',
+        message: `Conditional node "${node.label}" has duplicate priorities: ${uniqueDuplicates.join(', ')}. Each condition must have a unique priority.`,
+        nodeIds: [node.id],
+        edgeIds: conflictingEdgeIds,
+        category: 'conditional'
+      });
+    }
+
+    // Check for invalid priorities (zero or negative)
+    const invalidPriorityEdges = nodeEdges.filter(edge => edge.conditional!.condition.priority <= 0);
+    if (invalidPriorityEdges.length > 0) {
+      issues.push({
+        id: `invalid-priority-${node.id}`,
+        type: 'error',
+        severity: 'error',
+        message: `Conditional node "${node.label}" has invalid priorities. Priorities must be positive numbers (1, 2, 3, ...).`,
+        nodeIds: [node.id],
+        edgeIds: invalidPriorityEdges.map(edge => edge.id),
+        category: 'conditional'
+      });
+    }
+  });
 };

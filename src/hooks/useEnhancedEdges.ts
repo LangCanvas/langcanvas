@@ -1,7 +1,6 @@
-
 import { useState, useCallback } from 'react';
 import { EnhancedNode } from '../types/nodeTypes';
-import { EnhancedEdge, EdgeCondition } from '../types/edgeTypes';
+import { EnhancedEdge, EdgeCondition, EvaluationMode } from '../types/edgeTypes';
 
 export const useEnhancedEdges = () => {
   const [edges, setEdges] = useState<EnhancedEdge[]>([]);
@@ -62,19 +61,29 @@ export const useEnhancedEdges = () => {
     return { valid: true };
   }, [findPath]);
 
+  const getNextAvailablePriority = useCallback((sourceNodeId: string, existingEdges: EnhancedEdge[]): number => {
+    const outgoingEdges = existingEdges.filter(edge => edge.source === sourceNodeId && edge.conditional);
+    const usedPriorities = outgoingEdges.map(edge => edge.conditional!.condition.priority);
+    
+    // Find the lowest available priority starting from 1
+    let priority = 1;
+    while (usedPriorities.includes(priority)) {
+      priority++;
+    }
+    return priority;
+  }, []);
+
   const generateConditionalEdgeData = useCallback((sourceNode: EnhancedNode, existingEdges: EnhancedEdge[]): EdgeCondition | null => {
     if (sourceNode.type !== 'conditional') return null;
 
-    const outgoingEdges = existingEdges.filter(edge => edge.source === sourceNode.id);
-    const nextPriority = outgoingEdges.length + 1;
+    const nextPriority = getNextAvailablePriority(sourceNode.id, existingEdges);
     
     return {
       functionName: `condition_${nextPriority}`,
-      expression: `// Define your condition here\nreturn true; // Replace with actual condition`,
       priority: nextPriority,
       isDefault: false
     };
-  }, []);
+  }, [getNextAvailablePriority]);
 
   const addEdge = useCallback((sourceNode: EnhancedNode, targetNode: EnhancedNode) => {
     console.log(`🔗 Attempting to add edge: ${sourceNode.label} -> ${targetNode.label}`);
@@ -98,10 +107,11 @@ export const useEnhancedEdges = () => {
     if (sourceNode.type === 'conditional') {
       const condition = generateConditionalEdgeData(sourceNode, edges);
       if (condition) {
+        const evaluationMode: EvaluationMode = sourceNode.config.conditional?.evaluationMode || 'first-match';
         newEdge.conditional = {
           condition,
           sourceNodeType: 'conditional',
-          evaluationMode: 'first-match'
+          evaluationMode
         };
         newEdge.label = condition.functionName;
       }

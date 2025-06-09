@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { EnhancedNode } from '../types/nodeTypes';
 import { EnhancedEdge } from '../types/edgeTypes';
@@ -87,6 +86,7 @@ const EnhancedPropertiesPanel: React.FC<EnhancedPropertiesPanelProps> = ({
               // Implementation would need to be added to handle reordering
               console.log('Reorder edges for node:', nodeId, edgeIds);
             }}
+            onUpdateNode={onUpdateNode}
           />
         </div>
       );

@@ -1,15 +1,22 @@
 
 export interface EdgeCondition {
   functionName: string;
-  expression: string;
+  expression?: string; // Made optional for Python skeleton generation
   priority: number;
   isDefault?: boolean;
 }
 
+export type EvaluationMode = 
+  | 'first-match' 
+  | 'all-matches' 
+  | 'priority-based' 
+  | 'conditional-entrypoint' 
+  | 'parallel-conditional';
+
 export interface ConditionalEdgeMetadata {
   condition: EdgeCondition;
   sourceNodeType: 'conditional';
-  evaluationMode: 'first-match' | 'all-matches';
+  evaluationMode: EvaluationMode;
 }
 
 export interface EnhancedEdge {
