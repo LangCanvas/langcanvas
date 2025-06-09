@@ -73,24 +73,23 @@ const MainCanvasArea: React.FC<MainCanvasAreaProps> = ({
         validatePriorityConflicts={validatePriorityConflicts}
       />
 
-      {isRightPanelVisible && (
-        <DesktopPropertiesPanel
-          selectedNode={selectedNode}
-          selectedEdge={selectedEdge}
-          allNodes={allNodes}
-          allEdges={allEdges}
-          validationResult={validationResult}
-          showValidationPanel={showValidationPanel}
-          isVisible={isRightPanelVisible}
-          onUpdateNode={onUpdateNodeProperties}
-          onUpdateEdge={onUpdateEdgeProperties}
-          onDeleteNode={onDeleteNode}
-          onDeleteEdge={onDeleteEdge}
-          setShowValidationPanel={setShowValidationPanel}
-          switchToPropertiesPanel={switchToPropertiesPanel}
-          validatePriorityConflicts={validatePriorityConflicts}
-        />
-      )}
+      {/* Always render the desktop properties panel - let it handle its own visibility */}
+      <DesktopPropertiesPanel
+        selectedNode={selectedNode}
+        selectedEdge={selectedEdge}
+        allNodes={allNodes}
+        allEdges={allEdges}
+        validationResult={validationResult}
+        showValidationPanel={showValidationPanel}
+        isExpanded={isRightPanelVisible}
+        onUpdateNode={onUpdateNodeProperties}
+        onUpdateEdge={onUpdateEdgeProperties}
+        onDeleteNode={onDeleteNode}
+        onDeleteEdge={onDeleteEdge}
+        setShowValidationPanel={setShowValidationPanel}
+        switchToPropertiesPanel={switchToPropertiesPanel}
+        validatePriorityConflicts={validatePriorityConflicts}
+      />
     </div>
   );
 };

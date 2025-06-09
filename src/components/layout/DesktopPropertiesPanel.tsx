@@ -2,6 +2,7 @@
 import React, { useEffect } from 'react';
 import EnhancedPropertiesPanel from '../EnhancedPropertiesPanel';
 import ValidationPanel from '../ValidationPanel';
+import CollapsedPropertiesPanel from './CollapsedPropertiesPanel';
 import { EnhancedNode } from '../../types/nodeTypes';
 import { EnhancedEdge } from '../../types/edgeTypes';
 import { ValidationResult } from '../../hooks/useValidation';
@@ -13,7 +14,7 @@ interface DesktopPropertiesPanelProps {
   allEdges: EnhancedEdge[];
   validationResult: ValidationResult;
   showValidationPanel: boolean;
-  isVisible?: boolean;
+  isExpanded?: boolean;
   
   onUpdateNode: (nodeId: string, updates: Partial<EnhancedNode>) => void;
   onUpdateEdge: (edgeId: string, updates: Partial<EnhancedEdge>) => void;
@@ -31,7 +32,7 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
   allEdges,
   validationResult,
   showValidationPanel,
-  isVisible = true,
+  isExpanded = true,
   onUpdateNode,
   onUpdateEdge,
   onDeleteNode,
@@ -51,12 +52,26 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
     onUpdateEdge(edgeId, updates);
   };
 
-  if (!isVisible) {
-    return null;
+  const handleExpand = () => {
+    // This will be handled by the parent component through the toggle button
+    console.log('Expand panel requested');
+  };
+
+  // Show collapsed panel when not expanded
+  if (!isExpanded) {
+    return (
+      <CollapsedPropertiesPanel
+        selectedNode={selectedNode}
+        selectedEdge={selectedEdge}
+        validationResult={validationResult}
+        onExpand={handleExpand}
+      />
+    );
   }
 
+  // Show expanded panel
   return (
-    <aside className="w-80 bg-white border-l border-gray-200 flex flex-col lg:flex">
+    <aside className="w-80 bg-white border-l border-gray-200 flex flex-col transition-all duration-300 ease-in-out">
       <div className="p-4 border-b border-gray-100 flex items-center justify-between">
         <h2 className="text-sm font-medium text-gray-700">Properties</h2>
         {validationResult.issues.length > 0 && (
