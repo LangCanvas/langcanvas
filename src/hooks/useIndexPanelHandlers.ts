@@ -38,44 +38,20 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
   };
 
   const handleToggleLeftPanel = () => {
-    console.log("Desktop left panel toggle clicked, current state - visible:", isLeftPanelVisible, "expanded:", isLeftPanelExpanded);
-    
-    if (isLeftPanelVisible && isLeftPanelExpanded) {
-      // If visible and expanded, collapse it
-      setIsLeftPanelExpanded(false);
-    } else if (isLeftPanelVisible && !isLeftPanelExpanded) {
-      // If visible but collapsed, hide it completely
-      setIsLeftPanelVisible(false);
-    } else {
-      // If hidden, show it expanded
-      setIsLeftPanelVisible(true);
-      setIsLeftPanelExpanded(true);
-    }
-    
+    console.log("Desktop left panel toggle clicked, current expanded:", isLeftPanelExpanded);
+    setIsLeftPanelExpanded(!isLeftPanelExpanded);
+
     analytics.trackFeatureUsage('desktop_left_panel_toggled', { 
-      wasVisible: isLeftPanelVisible,
-      wasExpanded: isLeftPanelExpanded
+      isExpanded: !isLeftPanelExpanded 
     });
   };
 
   const handleToggleRightPanel = () => {
-    console.log("Desktop right panel toggle clicked, current state - visible:", isRightPanelVisible, "expanded:", isRightPanelExpanded);
-    
-    if (isRightPanelVisible && isRightPanelExpanded) {
-      // If visible and expanded, collapse it
-      setIsRightPanelExpanded(false);
-    } else if (isRightPanelVisible && !isRightPanelExpanded) {
-      // If visible but collapsed, hide it completely
-      setIsRightPanelVisible(false);
-    } else {
-      // If hidden, show it expanded
-      setIsRightPanelVisible(true);
-      setIsRightPanelExpanded(true);
-    }
-    
+    console.log("Desktop right panel toggle clicked, current expanded:", isRightPanelExpanded);
+    setIsRightPanelExpanded(!isRightPanelExpanded);
+
     analytics.trackFeatureUsage('desktop_right_panel_toggled', { 
-      wasVisible: isRightPanelVisible,
-      wasExpanded: isRightPanelExpanded
+      isExpanded: !isRightPanelExpanded 
     });
   };
 
