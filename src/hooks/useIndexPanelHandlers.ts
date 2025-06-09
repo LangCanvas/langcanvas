@@ -16,6 +16,10 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
   
   const analytics = useEnhancedAnalytics();
 
+  console.log("🎛️ useIndexPanelHandlers STATE UPDATE:");
+  console.log("🎛️ Left panel - visible:", isLeftPanelVisible, "expanded:", isLeftPanelExpanded);
+  console.log("🎛️ Right panel - visible:", isRightPanelVisible, "expanded:", isRightPanelExpanded);
+
   const handleMobileMenuToggle = () => {
     console.log("Mobile menu toggle clicked");
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -38,25 +42,27 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
   };
 
   const handleToggleLeftPanel = () => {
-    console.log("Desktop left panel toggle clicked, current expanded:", isLeftPanelExpanded);
-    setIsLeftPanelExpanded(!isLeftPanelExpanded);
+    const newExpanded = !isLeftPanelExpanded;
+    console.log("🎛️ Desktop left panel toggle clicked, new expanded state:", newExpanded);
+    setIsLeftPanelExpanded(newExpanded);
 
     analytics.trackFeatureUsage('desktop_left_panel_toggled', { 
-      isExpanded: !isLeftPanelExpanded 
+      isExpanded: newExpanded 
     });
   };
 
   const handleToggleRightPanel = () => {
-    console.log("Desktop right panel toggle clicked, current expanded:", isRightPanelExpanded);
-    setIsRightPanelExpanded(!isRightPanelExpanded);
+    const newExpanded = !isRightPanelExpanded;
+    console.log("🎛️ Desktop right panel toggle clicked, old expanded:", isRightPanelExpanded, "new expanded:", newExpanded);
+    setIsRightPanelExpanded(newExpanded);
 
     analytics.trackFeatureUsage('desktop_right_panel_toggled', { 
-      isExpanded: !isRightPanelExpanded 
+      isExpanded: newExpanded 
     });
   };
 
   const handleExpandLeftPanel = () => {
-    console.log("Left panel expand requested");
+    console.log("🎛️ Left panel expand requested");
     setIsLeftPanelVisible(true);
     setIsLeftPanelExpanded(true);
     
@@ -64,7 +70,7 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
   };
 
   const handleExpandRightPanel = () => {
-    console.log("Right panel expand requested");
+    console.log("🎛️ Right panel expand requested");
     setIsRightPanelVisible(true);
     setIsRightPanelExpanded(true);
     

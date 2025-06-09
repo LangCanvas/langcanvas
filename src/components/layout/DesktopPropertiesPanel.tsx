@@ -48,7 +48,23 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
   switchToPropertiesPanel,
   validatePriorityConflicts
 }) => {
-  console.log("🎛️ DesktopPropertiesPanel render - visible:", isVisible, "expanded:", isExpanded);
+  console.log("🎛️ DesktopPropertiesPanel RENDER START");
+  console.log("🎛️ Props - isVisible:", isVisible, "isExpanded:", isExpanded);
+  console.log("🎛️ Selected - Node:", selectedNode?.id || 'none', "Edge:", selectedEdge?.id || 'none');
+
+  // Debug logging on mount and prop changes
+  useEffect(() => {
+    console.log("🎛️ DesktopPropertiesPanel MOUNTED - DOM Element should be present");
+    const panelElement = document.querySelector('[data-panel="desktop-properties"]');
+    console.log("🎛️ Panel DOM element found:", !!panelElement);
+    if (panelElement) {
+      console.log("🎛️ Panel computed styles:", window.getComputedStyle(panelElement));
+    }
+  }, []);
+
+  useEffect(() => {
+    console.log("🎛️ DesktopPropertiesPanel VISIBILITY CHANGED - isVisible:", isVisible, "isExpanded:", isExpanded);
+  }, [isVisible, isExpanded]);
 
   // Smart switching: when user selects a node/edge while validation panel is showing
   useEffect(() => {
@@ -62,21 +78,28 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
   };
 
   const handleExpand = () => {
-    console.log('Expand panel requested');
+    console.log('🎛️ Expand panel requested');
     if (onExpand) {
       onExpand();
     }
   };
 
-  // Don't render anything if not visible
+  // DEBUG: Log when component would not render
   if (!isVisible) {
+    console.log("🎛️ DesktopPropertiesPanel NOT RENDERING - isVisible is false");
     return null;
   }
 
   // Show collapsed panel when not expanded
   if (!isExpanded) {
+    console.log("🎛️ DesktopPropertiesPanel RENDERING COLLAPSED");
     return (
-      <aside className="relative w-14 bg-white border-l border-gray-200 flex flex-col transition-all duration-300 ease-in-out">
+      <aside 
+        data-panel="desktop-properties" 
+        className="relative w-14 bg-red-200 border-l border-gray-200 flex flex-col transition-all duration-300 ease-in-out"
+        style={{ minHeight: '100vh', backgroundColor: '#fee2e2' }}
+      >
+        <div className="p-2 bg-red-300 text-xs font-bold">COLLAPSED PANEL DEBUG</div>
         <CollapsedPropertiesPanel
           selectedNode={selectedNode}
           selectedEdge={selectedEdge}
@@ -91,8 +114,14 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
   }
 
   // Show expanded panel
+  console.log("🎛️ DesktopPropertiesPanel RENDERING EXPANDED");
   return (
-    <aside className="relative w-80 bg-white border-l border-gray-200 flex flex-col transition-all duration-300 ease-in-out">
+    <aside 
+      data-panel="desktop-properties" 
+      className="relative w-80 bg-green-200 border-l border-gray-200 flex flex-col transition-all duration-300 ease-in-out"
+      style={{ minHeight: '100vh', backgroundColor: '#dcfce7' }}
+    >
+      <div className="p-2 bg-green-300 text-xs font-bold">EXPANDED PANEL DEBUG - Visible: {isVisible ? 'YES' : 'NO'}</div>
       <div className="p-4 border-b border-gray-100 flex items-center justify-between">
         <h2 className="text-sm font-medium text-gray-700">Properties</h2>
         {validationResult.issues.length > 0 && (

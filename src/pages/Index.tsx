@@ -47,6 +47,18 @@ const Index = () => {
 
   const panelHandlers = useIndexPanelHandlers(nodeCreation.clearPendingCreation);
 
+  console.log("📍 Index component rendering - DEBUG STATE:");
+  console.log("📍 Panel handlers state:", {
+    isLeftPanelVisible: panelHandlers.isLeftPanelVisible,
+    isLeftPanelExpanded: panelHandlers.isLeftPanelExpanded,
+    isRightPanelVisible: panelHandlers.isRightPanelVisible,
+    isRightPanelExpanded: panelHandlers.isRightPanelExpanded
+  });
+  console.log("📍 Panel handlers functions:", {
+    handleToggleRightPanel: !!panelHandlers.handleToggleRightPanel,
+    handleExpandRightPanel: !!panelHandlers.handleExpandRightPanel
+  });
+
   // Set up pending node creation event listener
   React.useEffect(() => {
     const handlePendingCreation = (event: CustomEvent) => {
@@ -59,9 +71,6 @@ const Index = () => {
     };
   }, [nodeCreation.setPendingCreation]);
 
-  console.log("📍 Index component rendering");
-  console.log("📍 Validation result:", validation.validationResult);
-
   const handleUpdateEdgeWithCondition = (edgeId: string, updates: Partial<EnhancedEdge>) => {
     indexHandlers.handleUpdateEdgeProperties(edgeId, updates);
     if (updates.conditional) {
@@ -70,58 +79,64 @@ const Index = () => {
   };
 
   return (
-    <MainApplicationLayout
-      isMobileMenuOpen={panelHandlers.isMobileMenuOpen}
-      activePanel={panelHandlers.activePanel}
-      showValidationPanel={panelHandlers.showValidationPanel}
-      isLeftPanelVisible={panelHandlers.isLeftPanelVisible}
-      isLeftPanelExpanded={panelHandlers.isLeftPanelExpanded}
-      isRightPanelVisible={panelHandlers.isRightPanelVisible}
-      isRightPanelExpanded={panelHandlers.isRightPanelExpanded}
-      nodes={nodeState.nodes}
-      edges={edgeState.edges}
-      selectedNode={nodeState.selectedNode}
-      selectedEdge={edgeState.selectedEdge}
-      validationResult={validation.validationResult}
-      onMobileMenuToggle={panelHandlers.handleMobileMenuToggle}
-      onPanelToggle={panelHandlers.handlePanelToggle}
-      onToggleLeftPanel={panelHandlers.handleToggleLeftPanel}
-      onToggleRightPanel={panelHandlers.handleToggleRightPanel}
-      onExpandLeftPanel={panelHandlers.handleExpandLeftPanel}
-      onExpandRightPanel={panelHandlers.handleExpandRightPanel}
-      closePanels={panelHandlers.closePanels}
-      setShowValidationPanel={panelHandlers.setShowValidationPanel}
-      switchToPropertiesPanel={panelHandlers.switchToPropertiesPanel}
-      onNewProject={workflowHandlers.handleNewProjectWithAnalytics}
-      onImport={workflowHandlers.handleImportWithAnalytics}
-      onExport={workflowHandlers.handleExportWithAnalytics}
-      onDeleteNode={indexHandlers.handleDeleteNode}
-      onDeleteEdge={edgeState.deleteEdge}
-      onUpdateNodeProperties={indexHandlers.handleUpdateNodeProperties}
-      onUpdateEdgeProperties={handleUpdateEdgeWithCondition}
-      validatePriorityConflicts={edgeState.validatePriorityConflicts}
-    >
-      <Canvas
+    <div style={{ backgroundColor: '#fef3c7' }} className="min-h-screen">
+      <div className="absolute top-0 left-0 bg-orange-500 text-white px-3 py-1 text-xs z-50 rounded-br">
+        INDEX DEBUG - Right Panel: {panelHandlers.isRightPanelVisible ? 'VISIBLE' : 'HIDDEN'} / {panelHandlers.isRightPanelExpanded ? 'EXPANDED' : 'COLLAPSED'}
+      </div>
+      
+      <MainApplicationLayout
+        isMobileMenuOpen={panelHandlers.isMobileMenuOpen}
+        activePanel={panelHandlers.activePanel}
+        showValidationPanel={panelHandlers.showValidationPanel}
+        isLeftPanelVisible={panelHandlers.isLeftPanelVisible}
+        isLeftPanelExpanded={panelHandlers.isLeftPanelExpanded}
+        isRightPanelVisible={panelHandlers.isRightPanelVisible}
+        isRightPanelExpanded={panelHandlers.isRightPanelExpanded}
         nodes={nodeState.nodes}
         edges={edgeState.edges}
-        selectedNodeId={nodeState.selectedNodeId}
-        selectedEdgeId={edgeState.selectedEdgeId}
-        onAddNode={nodeCreation.createNode}
-        onSelectNode={indexHandlers.handleSelectNode}
-        onSelectEdge={indexHandlers.handleSelectEdge}
-        onMoveNode={nodeState.updateNodePosition}
+        selectedNode={nodeState.selectedNode}
+        selectedEdge={edgeState.selectedEdge}
+        validationResult={validation.validationResult}
+        onMobileMenuToggle={panelHandlers.handleMobileMenuToggle}
+        onPanelToggle={panelHandlers.handlePanelToggle}
+        onToggleLeftPanel={panelHandlers.handleToggleLeftPanel}
+        onToggleRightPanel={panelHandlers.handleToggleRightPanel}
+        onExpandLeftPanel={panelHandlers.handleExpandLeftPanel}
+        onExpandRightPanel={panelHandlers.handleExpandRightPanel}
+        closePanels={panelHandlers.closePanels}
+        setShowValidationPanel={panelHandlers.setShowValidationPanel}
+        switchToPropertiesPanel={panelHandlers.switchToPropertiesPanel}
+        onNewProject={workflowHandlers.handleNewProjectWithAnalytics}
+        onImport={workflowHandlers.handleImportWithAnalytics}
+        onExport={workflowHandlers.handleExportWithAnalytics}
         onDeleteNode={indexHandlers.handleDeleteNode}
         onDeleteEdge={edgeState.deleteEdge}
-        onAddEdge={indexHandlers.handleAddEdge}
-        canCreateEdge={edgeState.canCreateEdge}
-        getNodeValidationClass={validation.getNodeErrorClass}
-        getEdgeValidationClass={validation.getEdgeErrorClass}
-        getNodeTooltip={validation.getNodeTooltip}
-        getEdgeTooltip={validation.getEdgeTooltip}
-        pendingNodeType={nodeCreation.pendingNodeType}
-        onClearPendingCreation={nodeCreation.clearPendingCreation}
-      />
-    </MainApplicationLayout>
+        onUpdateNodeProperties={indexHandlers.handleUpdateNodeProperties}
+        onUpdateEdgeProperties={handleUpdateEdgeWithCondition}
+        validatePriorityConflicts={edgeState.validatePriorityConflicts}
+      >
+        <Canvas
+          nodes={nodeState.nodes}
+          edges={edgeState.edges}
+          selectedNodeId={nodeState.selectedNodeId}
+          selectedEdgeId={edgeState.selectedEdgeId}
+          onAddNode={nodeCreation.createNode}
+          onSelectNode={indexHandlers.handleSelectNode}
+          onSelectEdge={indexHandlers.handleSelectEdge}
+          onMoveNode={nodeState.updateNodePosition}
+          onDeleteNode={indexHandlers.handleDeleteNode}
+          onDeleteEdge={edgeState.deleteEdge}
+          onAddEdge={indexHandlers.handleAddEdge}
+          canCreateEdge={edgeState.canCreateEdge}
+          getNodeValidationClass={validation.getNodeErrorClass}
+          getEdgeValidationClass={validation.getEdgeErrorClass}
+          getNodeTooltip={validation.getNodeTooltip}
+          getEdgeTooltip={validation.getEdgeTooltip}
+          pendingNodeType={nodeCreation.pendingNodeType}
+          onClearPendingCreation={nodeCreation.clearPendingCreation}
+        />
+      </MainApplicationLayout>
+    </div>
   );
 };
 

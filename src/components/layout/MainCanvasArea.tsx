@@ -55,11 +55,16 @@ const MainCanvasArea: React.FC<MainCanvasAreaProps> = ({
   validatePriorityConflicts,
   children
 }) => {
-  console.log("🖼️ MainCanvasArea render - Right panel visible:", isRightPanelVisible, "expanded:", isRightPanelExpanded);
+  console.log("🖼️ MainCanvasArea RENDER START");
+  console.log("🖼️ Right panel props - visible:", isRightPanelVisible, "expanded:", isRightPanelExpanded);
+  console.log("🖼️ Right panel handlers - onToggle:", !!onToggleRightPanel, "onExpand:", !!onExpandRightPanel);
   
   return (
-    <div className="flex-1 flex">
-      <div className="flex-1 relative">
+    <div className="flex-1 flex" style={{ backgroundColor: '#f3f4f6' }}>
+      <div className="flex-1 relative bg-blue-100" style={{ backgroundColor: '#dbeafe' }}>
+        <div className="absolute top-2 left-2 bg-blue-500 text-white px-2 py-1 text-xs rounded z-50">
+          MAIN CANVAS DEBUG
+        </div>
         {children}
       </div>
 
@@ -80,6 +85,14 @@ const MainCanvasArea: React.FC<MainCanvasAreaProps> = ({
         setShowValidationPanel={setShowValidationPanel}
         validatePriorityConflicts={validatePriorityConflicts}
       />
+
+      {/* DEBUG: Always render the panel with debug info */}
+      <div className="bg-yellow-200 p-2 text-xs border-l-2 border-yellow-500">
+        <div>RIGHT PANEL DEBUG:</div>
+        <div>Visible: {isRightPanelVisible ? 'YES' : 'NO'}</div>
+        <div>Expanded: {isRightPanelExpanded ? 'YES' : 'NO'}</div>
+        <div>Toggle Handler: {onToggleRightPanel ? 'YES' : 'NO'}</div>
+      </div>
 
       <DesktopPropertiesPanel
         selectedNode={selectedNode}
