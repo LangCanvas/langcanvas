@@ -35,6 +35,8 @@ export const useMultiSelection = () => {
   }, []);
 
   const selectNodesInRectangle = useCallback((nodes: EnhancedNode[], rect: SelectionRectangle) => {
+    console.log('🔍 Selecting nodes in rectangle:', rect, 'Nodes available:', nodes.length);
+    
     const selectedNodes = nodes.filter(node => {
       const nodeLeft = node.x;
       const nodeRight = node.x + 120; // Node width
@@ -46,14 +48,19 @@ export const useMultiSelection = () => {
       const rectTop = Math.min(rect.startY, rect.endY);
       const rectBottom = Math.max(rect.startY, rect.endY);
 
-      return (
+      const isIntersecting = (
         nodeLeft < rectRight &&
         nodeRight > rectLeft &&
         nodeTop < rectBottom &&
         nodeBottom > rectTop
       );
+
+      console.log(`Node ${node.id} at (${nodeLeft}, ${nodeTop}) - ${isIntersecting ? 'SELECTED' : 'not selected'}`);
+      
+      return isIntersecting;
     });
 
+    console.log('🎯 Selected nodes:', selectedNodes.map(n => n.id));
     setSelectedNodeIds(selectedNodes.map(node => node.id));
   }, []);
 
@@ -62,6 +69,7 @@ export const useMultiSelection = () => {
   }, []);
 
   const startRectangleSelection = useCallback((x: number, y: number) => {
+    console.log('🔲 Starting rectangle selection at:', { x, y });
     setIsSelecting(true);
     setSelectionRect({ startX: x, startY: y, endX: x, endY: y });
   }, []);
@@ -73,6 +81,7 @@ export const useMultiSelection = () => {
   }, [selectionRect]);
 
   const endRectangleSelection = useCallback((nodes: EnhancedNode[]) => {
+    console.log('🔲 Ending rectangle selection with rect:', selectionRect);
     if (selectionRect) {
       selectNodesInRectangle(nodes, selectionRect);
     }

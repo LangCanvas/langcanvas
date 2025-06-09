@@ -6,7 +6,7 @@ import DesktopPropertiesPanel from './DesktopPropertiesPanel';
 import MobileMenu from './MobileMenu';
 import MobilePanelOverlay from './MobilePanelOverlay';
 import MobileBottomNav from './MobileBottomNav';
-import MainCanvasArea from './MainCanvasArea';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { EnhancedNode } from '../../types/nodeTypes';
 import { EnhancedEdge } from '../../types/edgeTypes';
 import { ValidationResult } from '../../hooks/useValidation';
@@ -81,6 +81,21 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
   const isMobile = useMobileDetection();
   const { selectedNodeIds, isSelecting } = useMultiSelection();
 
+  // Calculate panel sizes for resizable layout
+  const getLeftPanelSize = () => {
+    if (!isLeftPanelVisible) return 0;
+    return isLeftPanelExpanded ? 20 : 4; // 20% expanded, 4% collapsed
+  };
+
+  const getRightPanelSize = () => {
+    if (!isRightPanelVisible) return 0;
+    return isRightPanelExpanded ? 25 : 4; // 25% expanded, 4% collapsed
+  };
+
+  const getCanvasSize = () => {
+    return 100 - getLeftPanelSize() - getRightPanelSize();
+  };
+
   return (
     <div className="flex flex-col h-screen bg-gray-50">
       <Toolbar
@@ -96,58 +111,85 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
       />
 
       <div className="flex flex-1 relative overflow-hidden">
-        {/* Desktop Layout */}
+        {/* Desktop Layout with Resizable Panels */}
         {!isMobile && (
-          <>
-            <DesktopSidebar
-              isVisible={isLeftPanelVisible}
-              isExpanded={isLeftPanelExpanded}
-              onToggle={onToggleLeftPanel}
-              onExpand={onExpandLeftPanel}
-            />
+          <ResizablePanelGroup direction="horizontal" className="flex-1">
+            {/* Left Panel */}
+            {isLeftPanelVisible && (
+              <ResizablePanel 
+                defaultSize={getLeftPanelSize()} 
+                minSize={4}
+                maxSize={30}
+                className="relative"
+              >
+                <DesktopSidebar
+                  isVisible={isLeftPanelVisible}
+                  isExpanded={isLeftPanelExpanded}
+                  onToggle={onToggleLeftPanel}
+                  onExpand={onExpandLeftPanel}
+                />
+              </ResizablePanel>
+            )}
 
-            <MainCanvasArea
-              isLeftPanelVisible={isLeftPanelVisible}
-              isLeftPanelExpanded={isLeftPanelExpanded}
-              isRightPanelVisible={isRightPanelVisible}
-              isRightPanelExpanded={isRightPanelExpanded}
+            {/* Resize Handle */}
+            {isLeftPanelVisible && (
+              <ResizableHandle withHandle />
+            )}
+
+            {/* Main Canvas Area */}
+            <ResizablePanel 
+              defaultSize={getCanvasSize()}
+              minSize={30}
+              className="relative"
             >
-              {children}
-            </MainCanvasArea>
+              <div className="h-full w-full relative">
+                {children}
+              </div>
+            </ResizablePanel>
 
-            <DesktopPropertiesPanel
-              selectedNode={selectedNode}
-              selectedEdge={selectedEdge}
-              allNodes={nodes}
-              allEdges={edges}
-              validationResult={validationResult}
-              showValidationPanel={showValidationPanel}
-              isVisible={isRightPanelVisible}
-              isExpanded={isRightPanelExpanded}
-              onUpdateNode={onUpdateNodeProperties}
-              onUpdateEdge={onUpdateEdgeProperties}
-              onDeleteNode={onDeleteNode}
-              onDeleteEdge={onDeleteEdge}
-              setShowValidationPanel={setShowValidationPanel}
-              onToggle={onToggleRightPanel}
-              onExpand={onExpandRightPanel}
-              switchToPropertiesPanel={switchToPropertiesPanel}
-              validatePriorityConflicts={validatePriorityConflicts}
-            />
-          </>
+            {/* Resize Handle */}
+            {isRightPanelVisible && (
+              <ResizableHandle withHandle />
+            )}
+
+            {/* Right Panel */}
+            {isRightPanelVisible && (
+              <ResizablePanel 
+                defaultSize={getRightPanelSize()}
+                minSize={4}
+                maxSize={40}
+                className="relative"
+              >
+                <DesktopPropertiesPanel
+                  selectedNode={selectedNode}
+                  selectedEdge={selectedEdge}
+                  allNodes={nodes}
+                  allEdges={edges}
+                  validationResult={validationResult}
+                  showValidationPanel={showValidationPanel}
+                  isVisible={isRightPanelVisible}
+                  isExpanded={isRightPanelExpanded}
+                  onUpdateNode={onUpdateNodeProperties}
+                  onUpdateEdge={onUpdateEdgeProperties}
+                  onDeleteNode={onDeleteNode}
+                  onDeleteEdge={onDeleteEdge}
+                  setShowValidationPanel={setShowValidationPanel}
+                  onToggle={onToggleRightPanel}
+                  onExpand={onExpandRightPanel}
+                  switchToPropertiesPanel={switchToPropertiesPanel}
+                  validatePriorityConflicts={validatePriorityConflicts}
+                />
+              </ResizablePanel>
+            )}
+          </ResizablePanelGroup>
         )}
 
         {/* Mobile Layout */}
         {isMobile && (
           <>
-            <MainCanvasArea
-              isLeftPanelVisible={false}
-              isLeftPanelExpanded={false}
-              isRightPanelVisible={false}
-              isRightPanelExpanded={false}
-            >
+            <div className="flex-1 relative">
               {children}
-            </MainCanvasArea>
+            </div>
 
             <MobileMenu
               isOpen={isMobileMenuOpen}

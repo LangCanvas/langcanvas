@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState } from 'react';
 import { EnhancedNode, NodeType } from '../types/nodeTypes';
 import { EnhancedEdge } from '../types/edgeTypes';
@@ -121,6 +122,22 @@ const Canvas: React.FC<CanvasProps> = ({
     nodes,
   });
 
+  // Helper function to get proper coordinates with scroll offset
+  const getCanvasCoordinates = (event: MouseEvent) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+
+    const rect = canvas.getBoundingClientRect();
+    const scrollContainer = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+    const scrollLeft = scrollContainer?.scrollLeft || 0;
+    const scrollTop = scrollContainer?.scrollTop || 0;
+    
+    return {
+      x: event.clientX - rect.left + scrollLeft,
+      y: event.clientY - rect.top + scrollTop
+    };
+  };
+
   // Handle mouse events for rectangle selection
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -139,17 +156,11 @@ const Canvas: React.FC<CanvasProps> = ({
         return;
       }
 
-      // Start rectangle selection if clicking on canvas background (removed Shift requirement)
+      // Start rectangle selection if clicking on canvas background
       if (target === canvas || target.closest('.canvas-background')) {
         event.preventDefault();
         
-        const rect = canvas.getBoundingClientRect();
-        const scrollContainer = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
-        const scrollLeft = scrollContainer?.scrollLeft || 0;
-        const scrollTop = scrollContainer?.scrollTop || 0;
-        
-        const x = event.clientX - rect.left + scrollLeft;
-        const y = event.clientY - rect.top + scrollTop;
+        const { x, y } = getCanvasCoordinates(event);
         
         console.log('🔲 Starting rectangle selection at:', { x, y });
         startRectangleSelection(x, y);
@@ -158,21 +169,14 @@ const Canvas: React.FC<CanvasProps> = ({
 
     const handleMouseMove = (event: MouseEvent) => {
       if (isSelecting) {
-        const rect = canvas.getBoundingClientRect();
-        const scrollContainer = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
-        const scrollLeft = scrollContainer?.scrollLeft || 0;
-        const scrollTop = scrollContainer?.scrollTop || 0;
-        
-        const x = event.clientX - rect.left + scrollLeft;
-        const y = event.clientY - rect.top + scrollTop;
-        
+        const { x, y } = getCanvasCoordinates(event);
         updateRectangleSelection(x, y);
       }
     };
 
     const handleMouseUp = (event: MouseEvent) => {
       if (isSelecting) {
-        console.log('🔲 Ending rectangle selection');
+        console.log('🔲 Ending rectangle selection, nodes to check:', nodes.length);
         endRectangleSelection(nodes);
       }
     };
@@ -258,135 +262,136 @@ const Canvas: React.FC<CanvasProps> = ({
   };
 
   return (
-    <ScrollArea ref={scrollAreaRef} className="w-full h-full">
-      <DragDropHandler onAddNode={createNodeWithAnalytics}>
-        <div
-          ref={canvasRef}
-          id="canvas"
-          className={`relative transition-colors ${className} ${
-            isMobile ? 'touch-pan-y' : ''
-          } ${pendingNodeType ? 'cursor-crosshair' : ''} ${
-            isSelecting ? 'cursor-crosshair' : ''
-          }`}
-          style={{
-            width: '3000px',
-            height: '3000px',
-            minWidth: '100vw',
-            minHeight: '100vh',
-            paddingRight: '20px', // Space for scrollbar
-            touchAction: 'manipulation',
-          }}
-        >
-          <KeyboardHandler
-            selectedNodeId={selectedNodeId}
-            selectedEdgeId={selectedEdgeId}
-            onDeleteNode={onDeleteNode}
-            onDeleteEdge={onDeleteEdge}
-          />
-
-          <EdgeCreationHandler
-            nodes={nodes}
-            onAddEdge={onAddEdge}
-            canvasRef={canvasRef}
+    <div className="h-full w-full relative">
+      <ScrollArea ref={scrollAreaRef} className="w-full h-full">
+        <DragDropHandler onAddNode={createNodeWithAnalytics}>
+          <div
+            ref={canvasRef}
+            id="canvas"
+            className={`relative transition-colors ${className} ${
+              isMobile ? 'touch-pan-y' : ''
+            } ${pendingNodeType ? 'cursor-crosshair' : ''} ${
+              isSelecting ? 'cursor-crosshair' : ''
+            }`}
+            style={{
+              width: '3000px',
+              height: '3000px',
+              minWidth: '100%',
+              minHeight: '100%',
+              touchAction: 'manipulation',
+            }}
           >
-            {({ isCreatingEdge, edgePreview, hoveredNodeId, handleStartConnection }) => (
-              <>
-                <CanvasBackground 
-                  isDragOver={false} 
-                  isMobile={isMobile} 
-                  nodeCount={nodes.length} 
-                />
+            <KeyboardHandler
+              selectedNodeId={selectedNodeId}
+              selectedEdgeId={selectedEdgeId}
+              onDeleteNode={onDeleteNode}
+              onDeleteEdge={onDeleteEdge}
+            />
 
-                {/* Enhanced Edge Renderer */}
-                <EnhancedEdgeRenderer
-                  edges={edges}
-                  nodes={nodes}
-                  selectedEdgeId={selectedEdgeId}
-                  onSelectEdge={selectEdgeSafely}
-                  onDoubleClick={handleEdgeDoubleClick}
-                  getEdgeValidationClass={getEdgeValidationClass}
-                  getEdgeTooltip={getEdgeTooltip}
-                />
+            <EdgeCreationHandler
+              nodes={nodes}
+              onAddEdge={onAddEdge}
+              canvasRef={canvasRef}
+            >
+              {({ isCreatingEdge, edgePreview, hoveredNodeId, handleStartConnection }) => (
+                <>
+                  <CanvasBackground 
+                    isDragOver={false} 
+                    isMobile={isMobile} 
+                    nodeCount={nodes.length} 
+                  />
 
-                {/* Rectangle Selection */}
-                <RectangleSelector
-                  selectionRect={selectionRect}
-                  isSelecting={isSelecting}
-                />
+                  {/* Enhanced Edge Renderer */}
+                  <EnhancedEdgeRenderer
+                    edges={edges}
+                    nodes={nodes}
+                    selectedEdgeId={selectedEdgeId}
+                    onSelectEdge={selectEdgeSafely}
+                    onDoubleClick={handleEdgeDoubleClick}
+                    getEdgeValidationClass={getEdgeValidationClass}
+                    getEdgeTooltip={getEdgeTooltip}
+                  />
 
-                {/* Edge Preview while creating */}
-                <EdgePreview edgePreview={edgePreview} />
+                  {/* Rectangle Selection */}
+                  <RectangleSelector
+                    selectionRect={selectionRect}
+                    isSelecting={isSelecting}
+                  />
 
-                {/* Mobile connection instructions */}
-                {isMobile && isCreatingEdge && (
-                  <div className="absolute top-4 left-4 right-4 bg-blue-100 border border-blue-300 rounded-lg p-3 text-blue-800 text-sm z-20">
-                    Drag to another node to create a connection
-                  </div>
-                )}
+                  {/* Edge Preview while creating */}
+                  <EdgePreview edgePreview={edgePreview} />
 
-                {/* Pending node creation instruction */}
-                {pendingNodeType && (
-                  <div className="absolute top-4 left-4 right-4 bg-green-100 border border-green-300 rounded-lg p-3 text-green-800 text-sm z-20">
-                    Click on the canvas to place the {pendingNodeType} node
-                  </div>
-                )}
-
-                {/* Rectangle selection instruction */}
-                {isSelecting && (
-                  <div className="absolute top-4 left-4 right-4 bg-purple-100 border border-purple-300 rounded-lg p-3 text-purple-800 text-sm z-20">
-                    Drag to select multiple nodes
-                  </div>
-                )}
-
-                {/* Render all nodes */}
-                {nodes.map((node) => {
-                  const isSelected = selectedNodeIds.includes(node.id);
-                  const isHovered = hoveredNodeId === node.id;
-                  
-                  return (
-                    <div
-                      key={node.id}
-                      className={`${isHovered ? 'ring-2 ring-blue-400 ring-opacity-50 rounded-lg' : ''} ${
-                        isMobile ? 'touch-manipulation' : ''
-                      }`}
-                    >
-                      {node.type === 'conditional' ? (
-                        <ConditionalNodeComponent
-                          node={node}
-                          outgoingEdges={edges.filter(e => e.source === node.id)}
-                          isSelected={isSelected}
-                          canCreateEdge={canCreateEdge(node)}
-                          onSelect={(id) => handleNodeSelect(id)}
-                          onDoubleClick={() => handleNodeDoubleClick(node.id)}
-                          onMove={handleMoveNode}
-                          onDragStart={(event) => handleNodeDragStart(node.id, event)}
-                          onStartConnection={handleStartConnection}
-                          validationClass={getNodeValidationClass?.(node.id) || ''}
-                          validationTooltip={getNodeTooltip?.(node.id) || ''}
-                        />
-                      ) : (
-                        <NodeComponent
-                          node={node}
-                          isSelected={isSelected}
-                          canCreateEdge={canCreateEdge(node)}
-                          onSelect={(id) => handleNodeSelect(id)}
-                          onDoubleClick={() => handleNodeDoubleClick(node.id)}
-                          onMove={handleMoveNode}
-                          onDragStart={(event) => handleNodeDragStart(node.id, event)}
-                          onStartConnection={handleStartConnection}
-                          validationClass={getNodeValidationClass?.(node.id) || ''}
-                          validationTooltip={getNodeTooltip?.(node.id) || ''}
-                        />
-                      )}
+                  {/* Mobile connection instructions */}
+                  {isMobile && isCreatingEdge && (
+                    <div className="absolute top-4 left-4 right-4 bg-blue-100 border border-blue-300 rounded-lg p-3 text-blue-800 text-sm z-20">
+                      Drag to another node to create a connection
                     </div>
-                  );
-                })}
-              </>
-            )}
-          </EdgeCreationHandler>
-        </div>
-      </DragDropHandler>
-    </ScrollArea>
+                  )}
+
+                  {/* Pending node creation instruction */}
+                  {pendingNodeType && (
+                    <div className="absolute top-4 left-4 right-4 bg-green-100 border border-green-300 rounded-lg p-3 text-green-800 text-sm z-20">
+                      Click on the canvas to place the {pendingNodeType} node
+                    </div>
+                  )}
+
+                  {/* Rectangle selection instruction */}
+                  {isSelecting && (
+                    <div className="absolute top-4 left-4 right-4 bg-purple-100 border border-purple-300 rounded-lg p-3 text-purple-800 text-sm z-20">
+                      Drag to select multiple nodes
+                    </div>
+                  )}
+
+                  {/* Render all nodes */}
+                  {nodes.map((node) => {
+                    const isSelected = selectedNodeIds.includes(node.id);
+                    const isHovered = hoveredNodeId === node.id;
+                    
+                    return (
+                      <div
+                        key={node.id}
+                        className={`${isHovered ? 'ring-2 ring-blue-400 ring-opacity-50 rounded-lg' : ''} ${
+                          isMobile ? 'touch-manipulation' : ''
+                        }`}
+                      >
+                        {node.type === 'conditional' ? (
+                          <ConditionalNodeComponent
+                            node={node}
+                            outgoingEdges={edges.filter(e => e.source === node.id)}
+                            isSelected={isSelected}
+                            canCreateEdge={canCreateEdge(node)}
+                            onSelect={(id) => handleNodeSelect(id)}
+                            onDoubleClick={() => handleNodeDoubleClick(node.id)}
+                            onMove={handleMoveNode}
+                            onDragStart={(event) => handleNodeDragStart(node.id, event)}
+                            onStartConnection={handleStartConnection}
+                            validationClass={getNodeValidationClass?.(node.id) || ''}
+                            validationTooltip={getNodeTooltip?.(node.id) || ''}
+                          />
+                        ) : (
+                          <NodeComponent
+                            node={node}
+                            isSelected={isSelected}
+                            canCreateEdge={canCreateEdge(node)}
+                            onSelect={(id) => handleNodeSelect(id)}
+                            onDoubleClick={() => handleNodeDoubleClick(node.id)}
+                            onMove={handleMoveNode}
+                            onDragStart={(event) => handleNodeDragStart(node.id, event)}
+                            onStartConnection={handleStartConnection}
+                            validationClass={getNodeValidationClass?.(node.id) || ''}
+                            validationTooltip={getNodeTooltip?.(node.id) || ''}
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
+                </>
+              )}
+            </EdgeCreationHandler>
+          </div>
+        </DragDropHandler>
+      </ScrollArea>
+    </div>
   );
 };
 
