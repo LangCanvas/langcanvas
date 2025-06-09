@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState } from 'react';
 import { EnhancedNode, NodeType } from '../types/nodeTypes';
 import { EnhancedEdge } from '../types/edgeTypes';
@@ -140,8 +139,8 @@ const Canvas: React.FC<CanvasProps> = ({
         return;
       }
 
-      // Only start rectangle selection if clicking on canvas background with Shift key
-      if (event.shiftKey && (target === canvas || target.closest('.canvas-background'))) {
+      // Start rectangle selection if clicking on canvas background (removed Shift requirement)
+      if (target === canvas || target.closest('.canvas-background')) {
         event.preventDefault();
         
         const rect = canvas.getBoundingClientRect();
@@ -152,6 +151,7 @@ const Canvas: React.FC<CanvasProps> = ({
         const x = event.clientX - rect.left + scrollLeft;
         const y = event.clientY - rect.top + scrollTop;
         
+        console.log('🔲 Starting rectangle selection at:', { x, y });
         startRectangleSelection(x, y);
       }
     };
@@ -170,8 +170,9 @@ const Canvas: React.FC<CanvasProps> = ({
       }
     };
 
-    const handleMouseUp = () => {
+    const handleMouseUp = (event: MouseEvent) => {
       if (isSelecting) {
+        console.log('🔲 Ending rectangle selection');
         endRectangleSelection(nodes);
       }
     };
@@ -219,8 +220,8 @@ const Canvas: React.FC<CanvasProps> = ({
 
   // Debug logging for selection state changes
   useEffect(() => {
-    console.log(`📊 Canvas selection state - Node: ${selectedNodeId}, Edge: ${selectedEdgeId}, Multi: [${selectedNodeIds.join(', ')}]`);
-  }, [selectedNodeId, selectedEdgeId, selectedNodeIds]);
+    console.log(`📊 Canvas selection state - Node: ${selectedNodeId}, Edge: ${selectedEdgeId}, Multi: [${selectedNodeIds.join(', ')}], Selecting: ${isSelecting}`);
+  }, [selectedNodeId, selectedEdgeId, selectedNodeIds, isSelecting]);
 
   const handleNodeSelect = (nodeId: string, event?: React.MouseEvent) => {
     const isCtrlPressed = event?.ctrlKey || event?.metaKey || false;

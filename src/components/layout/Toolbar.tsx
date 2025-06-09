@@ -4,12 +4,15 @@ import ToolbarBrand from './toolbar/ToolbarBrand';
 import ToolbarMenu from './toolbar/ToolbarMenu';
 import ToolbarActions from './toolbar/ToolbarActions';
 import ToolbarValidation from './toolbar/ToolbarValidation';
+import ToolbarSelectionStatus from './toolbar/ToolbarSelectionStatus';
 import { ValidationResult } from '../../hooks/useValidation';
 
 interface ToolbarProps {
   isMobileMenuOpen: boolean;
   hasNodes: boolean;
   validationResult: ValidationResult;
+  isSelecting?: boolean;
+  selectedCount?: number;
   onMobileMenuToggle: () => void;
   onNewProject: () => void;
   onImport: () => void;
@@ -20,6 +23,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
   isMobileMenuOpen,
   hasNodes,
   validationResult,
+  isSelecting = false,
+  selectedCount = 0,
   onMobileMenuToggle,
   onNewProject,
   onImport,
@@ -31,7 +36,12 @@ const Toolbar: React.FC<ToolbarProps> = ({
       
       <ToolbarMenu />
 
-      <div className="flex items-center gap-2 ml-auto">
+      <div className="flex items-center gap-3 ml-auto">
+        <ToolbarSelectionStatus 
+          isSelecting={isSelecting}
+          selectedCount={selectedCount}
+        />
+        
         <ToolbarValidation 
           validationResult={validationResult} 
           hasNodes={hasNodes}

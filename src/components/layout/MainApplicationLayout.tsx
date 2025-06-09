@@ -1,63 +1,53 @@
+
 import React from 'react';
 import Toolbar from './Toolbar';
-import MobileMenu from './MobileMenu';
 import DesktopSidebar from './DesktopSidebar';
-import MainCanvasArea from './MainCanvasArea';
+import DesktopPropertiesPanel from './DesktopPropertiesPanel';
+import MobileMenu from './MobileMenu';
+import MobilePanelOverlay from './MobilePanelOverlay';
 import MobileBottomNav from './MobileBottomNav';
-import Footer from './Footer';
+import MainCanvasArea from './MainCanvasArea';
 import { EnhancedNode } from '../../types/nodeTypes';
 import { EnhancedEdge } from '../../types/edgeTypes';
 import { ValidationResult } from '../../hooks/useValidation';
+import { useMobileDetection } from '../../hooks/useMobileDetection';
+import { useMultiSelection } from '../../hooks/useMultiSelection';
 
 interface MainApplicationLayoutProps {
-  // UI State
+  children: React.ReactNode;
   isMobileMenuOpen: boolean;
-  activePanel: 'palette' | 'properties' | null;
+  activePanel: 'palette' | 'properties' | 'validation';
   showValidationPanel: boolean;
-  
-  // Desktop Panel State - updated interface
   isLeftPanelVisible: boolean;
   isLeftPanelExpanded: boolean;
   isRightPanelVisible: boolean;
   isRightPanelExpanded: boolean;
-  
-  // Data
   nodes: EnhancedNode[];
   edges: EnhancedEdge[];
   selectedNode: EnhancedNode | null;
   selectedEdge: EnhancedEdge | null;
   validationResult: ValidationResult;
-  
-  // Actions
   onMobileMenuToggle: () => void;
-  onPanelToggle: (panel: 'palette' | 'properties') => void;
-  closePanels: () => void;
-  setShowValidationPanel: (show: boolean) => void;
+  onPanelToggle: (panel: 'palette' | 'properties' | 'validation') => void;
   onToggleLeftPanel: () => void;
   onToggleRightPanel: () => void;
   onExpandLeftPanel: () => void;
   onExpandRightPanel: () => void;
+  closePanels: () => void;
+  setShowValidationPanel: (show: boolean) => void;
   switchToPropertiesPanel: () => void;
-  
-  // Workflow Actions
   onNewProject: () => void;
   onImport: () => void;
   onExport: () => void;
-  
-  // Node/Edge Actions
-  onDeleteNode: (nodeId: string) => void;
-  onDeleteEdge: (edgeId: string) => void;
-  onUpdateNodeProperties: (nodeId: string, updates: Partial<EnhancedNode>) => void;
-  onUpdateEdgeProperties: (edgeId: string, updates: Partial<EnhancedEdge>) => void;
-  
-  // Validation
-  validatePriorityConflicts?: (nodeId: string, priority: number, currentEdgeId?: string) => { hasConflict: boolean; conflictingEdges: EnhancedEdge[] };
-  
-  // Other props
-  children: React.ReactNode;
+  onDeleteNode: (id: string) => void;
+  onDeleteEdge: (id: string) => void;
+  onUpdateNodeProperties: (id: string, updates: Partial<EnhancedNode>) => void;
+  onUpdateEdgeProperties: (id: string, updates: Partial<EnhancedEdge>) => void;
+  validatePriorityConflicts: (sourceNodeId: string, excludeEdgeId?: string) => string[];
 }
 
 const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
+  children,
   isMobileMenuOpen,
   activePanel,
   showValidationPanel,
@@ -72,12 +62,12 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
   validationResult,
   onMobileMenuToggle,
   onPanelToggle,
-  closePanels,
-  setShowValidationPanel,
   onToggleLeftPanel,
   onToggleRightPanel,
   onExpandLeftPanel,
   onExpandRightPanel,
+  closePanels,
+  setShowValidationPanel,
   switchToPropertiesPanel,
   onNewProject,
   onImport,
@@ -87,73 +77,108 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
   onUpdateNodeProperties,
   onUpdateEdgeProperties,
   validatePriorityConflicts,
-  children
 }) => {
-  console.log("🏗️ MainApplicationLayout render - Right panel visible:", isRightPanelVisible, "expanded:", isRightPanelExpanded);
-  
+  const isMobile = useMobileDetection();
+  const { selectedNodeIds, isSelecting } = useMultiSelection();
+
   return (
-    <div className="h-screen flex flex-col bg-gray-50 relative">
+    <div className="flex flex-col h-screen bg-gray-50">
       <Toolbar
         isMobileMenuOpen={isMobileMenuOpen}
+        hasNodes={nodes.length > 0}
+        validationResult={validationResult}
+        isSelecting={isSelecting}
+        selectedCount={selectedNodeIds.length}
         onMobileMenuToggle={onMobileMenuToggle}
         onNewProject={onNewProject}
         onImport={onImport}
         onExport={onExport}
-        hasNodes={nodes.length > 0}
-        validationResult={validationResult}
       />
 
-      <MobileMenu
-        isOpen={isMobileMenuOpen}
-        onClose={closePanels}
-        onNewProject={onNewProject}
-        onImport={onImport}
-        onExport={onExport}
-        onPanelToggle={onPanelToggle}
-        hasNodes={nodes.length > 0}
-      />
+      <div className="flex flex-1 relative overflow-hidden">
+        {/* Desktop Layout */}
+        {!isMobile && (
+          <>
+            <DesktopSidebar
+              isVisible={isLeftPanelVisible}
+              isExpanded={isLeftPanelExpanded}
+              onToggle={onToggleLeftPanel}
+              onExpand={onExpandLeftPanel}
+            />
 
-      <div className="flex-1 flex overflow-hidden">
-        <DesktopSidebar 
-          isVisible={isLeftPanelVisible} 
-          isExpanded={isLeftPanelExpanded}
-          onExpand={onExpandLeftPanel}
-          onToggle={onToggleLeftPanel}
-        />
-        
-        <MainCanvasArea
-          activePanel={activePanel}
-          selectedNode={selectedNode}
-          selectedEdge={selectedEdge}
-          onClose={closePanels}
-          onPanelToggle={onPanelToggle}
-          onDeleteNode={onDeleteNode}
-          onDeleteEdge={onDeleteEdge}
-          onUpdateNodeProperties={onUpdateNodeProperties}
-          onUpdateEdgeProperties={onUpdateEdgeProperties}
-          allNodes={nodes}
-          allEdges={edges}
-          validationResult={validationResult}
-          showValidationPanel={showValidationPanel}
-          setShowValidationPanel={setShowValidationPanel}
-          validatePriorityConflicts={validatePriorityConflicts}
-          isRightPanelVisible={isRightPanelVisible}
-          isRightPanelExpanded={isRightPanelExpanded}
-          onExpandRightPanel={onExpandRightPanel}
-          onToggleRightPanel={onToggleRightPanel}
-          switchToPropertiesPanel={switchToPropertiesPanel}
-        >
-          {children}
-        </MainCanvasArea>
+            <MainCanvasArea
+              isLeftPanelVisible={isLeftPanelVisible}
+              isLeftPanelExpanded={isLeftPanelExpanded}
+              isRightPanelVisible={isRightPanelVisible}
+              isRightPanelExpanded={isRightPanelExpanded}
+            >
+              {children}
+            </MainCanvasArea>
+
+            <DesktopPropertiesPanel
+              isVisible={isRightPanelVisible}
+              isExpanded={isRightPanelExpanded}
+              activePanel={activePanel}
+              showValidationPanel={showValidationPanel}
+              selectedNode={selectedNode}
+              selectedEdge={selectedEdge}
+              validationResult={validationResult}
+              onToggle={onToggleRightPanel}
+              onExpand={onExpandRightPanel}
+              onPanelToggle={onPanelToggle}
+              setShowValidationPanel={setShowValidationPanel}
+              onDeleteNode={onDeleteNode}
+              onDeleteEdge={onDeleteEdge}
+              onUpdateNodeProperties={onUpdateNodeProperties}
+              onUpdateEdgeProperties={onUpdateEdgeProperties}
+              validatePriorityConflicts={validatePriorityConflicts}
+            />
+          </>
+        )}
+
+        {/* Mobile Layout */}
+        {isMobile && (
+          <>
+            <MainCanvasArea
+              isLeftPanelVisible={false}
+              isLeftPanelExpanded={false}
+              isRightPanelVisible={false}
+              isRightPanelExpanded={false}
+            >
+              {children}
+            </MainCanvasArea>
+
+            <MobileMenu
+              isOpen={isMobileMenuOpen}
+              onClose={() => onMobileMenuToggle()}
+              onNewProject={onNewProject}
+              onImport={onImport}
+              onExport={onExport}
+            />
+
+            <MobilePanelOverlay
+              activePanel={activePanel}
+              showValidationPanel={showValidationPanel}
+              selectedNode={selectedNode}
+              selectedEdge={selectedEdge}
+              validationResult={validationResult}
+              onClose={closePanels}
+              onDeleteNode={onDeleteNode}
+              onDeleteEdge={onDeleteEdge}
+              onUpdateNodeProperties={onUpdateNodeProperties}
+              onUpdateEdgeProperties={onUpdateEdgeProperties}
+              validatePriorityConflicts={validatePriorityConflicts}
+            />
+
+            <MobileBottomNav
+              activePanel={activePanel}
+              validationResult={validationResult}
+              onPanelToggle={onPanelToggle}
+              setShowValidationPanel={setShowValidationPanel}
+            />
+          </>
+        )}
       </div>
-
-      <MobileBottomNav
-        onPanelToggle={onPanelToggle}
-        hasNodes={nodes.length > 0}
-        validationResult={validationResult}
-      />
-
-      <Footer />
     </div>
   );
 };
