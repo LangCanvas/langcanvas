@@ -37,7 +37,8 @@ const Index = () => {
     selectEdge,
     canCreateEdge,
     getNodeOutgoingEdges,
-    getConditionalNodeEdges
+    getConditionalNodeEdges,
+    validatePriorityConflicts
   } = useEnhancedEdges();
 
   const {
@@ -126,7 +127,6 @@ const Index = () => {
     closePanels,
   } = useIndexMobileHandlers(clearPendingCreation);
 
-  // Listen for pending creation events from sidebar
   React.useEffect(() => {
     const handlePendingCreation = (event: CustomEvent) => {
       setPendingCreation(event.detail);
@@ -143,7 +143,6 @@ const Index = () => {
 
   const handleUpdateEdgeWithCondition = (edgeId: string, updates: Partial<EnhancedEdge>) => {
     handleUpdateEdgeProperties(edgeId, updates);
-    // Handle conditional edge updates if needed
     if (updates.conditional) {
       updateEdgeCondition(edgeId, updates.conditional.condition);
     }
@@ -170,6 +169,7 @@ const Index = () => {
       onDeleteEdge={deleteEdge}
       onUpdateNodeProperties={handleUpdateNodeProperties}
       onUpdateEdgeProperties={handleUpdateEdgeWithCondition}
+      validatePriorityConflicts={validatePriorityConflicts}
     >
       <Canvas
         nodes={nodes}

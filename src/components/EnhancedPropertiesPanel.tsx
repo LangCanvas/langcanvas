@@ -19,6 +19,7 @@ interface EnhancedPropertiesPanelProps {
   onUpdateEdge: (edgeId: string, updates: Partial<EnhancedEdge>) => void;
   onDeleteNode: (nodeId: string) => void;
   onDeleteEdge: (edgeId: string) => void;
+  validatePriorityConflicts?: (nodeId: string, priority: number, currentEdgeId?: string) => { hasConflict: boolean; conflictingEdges: EnhancedEdge[] };
 }
 
 const EnhancedPropertiesPanel: React.FC<EnhancedPropertiesPanelProps> = ({
@@ -29,17 +30,16 @@ const EnhancedPropertiesPanel: React.FC<EnhancedPropertiesPanelProps> = ({
   onUpdateNode,
   onUpdateEdge,
   onDeleteNode,
-  onDeleteEdge
+  onDeleteEdge,
+  validatePriorityConflicts
 }) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
-  // Debug logging for selection changes
   useEffect(() => {
     console.log(`🎛️ PropertiesPanel - Node: ${selectedNode?.id || 'null'}, Edge: ${selectedEdge?.id || 'null'}`);
   }, [selectedNode, selectedEdge]);
 
-  // Validation for nodes only
   useEffect(() => {
     if (selectedNode) {
       const validation = validateNodeConfiguration(selectedNode);
@@ -49,16 +49,13 @@ const EnhancedPropertiesPanel: React.FC<EnhancedPropertiesPanelProps> = ({
     }
   }, [selectedNode]);
 
-  // Reset advanced view when switching between selections
   useEffect(() => {
     setShowAdvanced(false);
   }, [selectedNode?.id, selectedEdge?.id]);
 
-  // Prioritize edge selection over node selection to avoid conflicts
   if (selectedEdge) {
     console.log(`🔗 Rendering edge properties for edge: ${selectedEdge.id}`);
     
-    // Check if it's a conditional edge
     if (selectedEdge.conditional) {
       const allConditionalEdges = allEdges.filter(edge => edge.conditional);
       
@@ -83,10 +80,10 @@ const EnhancedPropertiesPanel: React.FC<EnhancedPropertiesPanelProps> = ({
             }}
             onDeleteEdge={onDeleteEdge}
             onReorderEdges={(nodeId, edgeIds) => {
-              // Implementation would need to be added to handle reordering
               console.log('Reorder edges for node:', nodeId, edgeIds);
             }}
             onUpdateNode={onUpdateNode}
+            validatePriorityConflicts={validatePriorityConflicts || (() => ({ hasConflict: false, conflictingEdges: [] }))}
           />
         </div>
       );
@@ -104,7 +101,6 @@ const EnhancedPropertiesPanel: React.FC<EnhancedPropertiesPanelProps> = ({
     }
   }
 
-  // Show node properties if a node is selected and no edge is selected
   if (selectedNode && !selectedEdge) {
     console.log(`🎯 Rendering node properties for node: ${selectedNode.id}`);
     
@@ -159,7 +155,6 @@ const EnhancedPropertiesPanel: React.FC<EnhancedPropertiesPanelProps> = ({
     );
   }
 
-  // Default state when nothing is selected
   console.log('📄 Rendering default properties panel state');
   return (
     <div className="p-4 text-center text-gray-500">

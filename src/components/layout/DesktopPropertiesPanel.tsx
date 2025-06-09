@@ -19,6 +19,7 @@ interface DesktopPropertiesPanelProps {
   onDeleteNode: (nodeId: string) => void;
   onDeleteEdge: (edgeId: string) => void;
   setShowValidationPanel: (show: boolean) => void;
+  validatePriorityConflicts?: (nodeId: string, priority: number, currentEdgeId?: string) => { hasConflict: boolean; conflictingEdges: EnhancedEdge[] };
 }
 
 const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
@@ -32,7 +33,8 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
   onUpdateEdge,
   onDeleteNode,
   onDeleteEdge,
-  setShowValidationPanel
+  setShowValidationPanel,
+  validatePriorityConflicts
 }) => {
   const handleUpdateEdge = (edgeId: string, updates: Partial<EnhancedEdge>) => {
     onUpdateEdge(edgeId, updates);
@@ -67,6 +69,7 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
           onUpdateEdge={handleUpdateEdge}
           onDeleteNode={onDeleteNode}
           onDeleteEdge={onDeleteEdge}
+          validatePriorityConflicts={validatePriorityConflicts}
         />
       )}
     </aside>
