@@ -6,7 +6,6 @@ import DesktopPropertiesPanel from './DesktopPropertiesPanel';
 import MobileMenu from './MobileMenu';
 import MobilePanelOverlay from './MobilePanelOverlay';
 import MobileBottomNav from './MobileBottomNav';
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { EnhancedNode } from '../../types/nodeTypes';
 import { EnhancedEdge } from '../../types/edgeTypes';
 import { ValidationResult } from '../../hooks/useValidation';
@@ -81,19 +80,15 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
   const isMobile = useMobileDetection();
   const { selectedNodeIds, isSelecting } = useMultiSelection();
 
-  // Calculate panel sizes for resizable layout
-  const getLeftPanelSize = () => {
+  // Calculate margins for desktop layout
+  const getLeftMargin = () => {
     if (!isLeftPanelVisible) return 0;
-    return isLeftPanelExpanded ? 20 : 4; // 20% expanded, 4% collapsed
+    return isLeftPanelExpanded ? 256 : 56; // 256px expanded, 56px collapsed
   };
 
-  const getRightPanelSize = () => {
+  const getRightMargin = () => {
     if (!isRightPanelVisible) return 0;
-    return isRightPanelExpanded ? 25 : 4; // 25% expanded, 4% collapsed
-  };
-
-  const getCanvasSize = () => {
-    return 100 - getLeftPanelSize() - getRightPanelSize();
+    return isRightPanelExpanded ? 320 : 56; // 320px expanded, 56px collapsed
   };
 
   return (
@@ -111,16 +106,14 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
       />
 
       <div className="flex flex-1 relative overflow-hidden">
-        {/* Desktop Layout with Resizable Panels */}
+        {/* Desktop Layout */}
         {!isMobile && (
-          <ResizablePanelGroup direction="horizontal" className="flex-1">
+          <>
             {/* Left Panel */}
             {isLeftPanelVisible && (
-              <ResizablePanel 
-                defaultSize={getLeftPanelSize()} 
-                minSize={4}
-                maxSize={30}
-                className="relative"
+              <div 
+                className="fixed left-0 top-14 bottom-0 z-20 transition-all duration-300 ease-in-out"
+                style={{ width: isLeftPanelExpanded ? '256px' : '56px' }}
               >
                 <DesktopSidebar
                   isVisible={isLeftPanelVisible}
@@ -128,37 +121,25 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
                   onToggle={onToggleLeftPanel}
                   onExpand={onExpandLeftPanel}
                 />
-              </ResizablePanel>
-            )}
-
-            {/* Resize Handle */}
-            {isLeftPanelVisible && (
-              <ResizableHandle withHandle />
+              </div>
             )}
 
             {/* Main Canvas Area */}
-            <ResizablePanel 
-              defaultSize={getCanvasSize()}
-              minSize={30}
-              className="relative"
+            <div 
+              className="flex-1 transition-all duration-300 ease-in-out"
+              style={{
+                marginLeft: `${getLeftMargin()}px`,
+                marginRight: `${getRightMargin()}px`,
+              }}
             >
-              <div className="h-full w-full relative">
-                {children}
-              </div>
-            </ResizablePanel>
-
-            {/* Resize Handle */}
-            {isRightPanelVisible && (
-              <ResizableHandle withHandle />
-            )}
+              {children}
+            </div>
 
             {/* Right Panel */}
             {isRightPanelVisible && (
-              <ResizablePanel 
-                defaultSize={getRightPanelSize()}
-                minSize={4}
-                maxSize={40}
-                className="relative"
+              <div 
+                className="fixed right-0 top-14 bottom-0 z-20 transition-all duration-300 ease-in-out"
+                style={{ width: isRightPanelExpanded ? '320px' : '56px' }}
               >
                 <DesktopPropertiesPanel
                   selectedNode={selectedNode}
@@ -179,9 +160,9 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
                   switchToPropertiesPanel={switchToPropertiesPanel}
                   validatePriorityConflicts={validatePriorityConflicts}
                 />
-              </ResizablePanel>
+              </div>
             )}
-          </ResizablePanelGroup>
+          </>
         )}
 
         {/* Mobile Layout */}

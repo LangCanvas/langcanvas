@@ -22,13 +22,14 @@ const RectangleSelector: React.FC<RectangleSelectorProps> = ({
 
   return (
     <div
-      className="absolute border-2 border-blue-500 border-dashed bg-blue-100 bg-opacity-20 pointer-events-none"
+      className="absolute border-2 border-blue-500 border-dashed bg-blue-100 bg-opacity-30 pointer-events-none"
       style={{
         left: `${left}px`,
         top: `${top}px`,
         width: `${width}px`,
         height: `${height}px`,
-        zIndex: 1000, // High z-index to ensure visibility
+        zIndex: 1000,
+        boxShadow: '0 0 0 1px rgba(59, 130, 246, 0.5)',
       }}
     />
   );

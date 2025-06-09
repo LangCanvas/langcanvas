@@ -37,17 +37,20 @@ export const useMultiSelection = () => {
   const selectNodesInRectangle = useCallback((nodes: EnhancedNode[], rect: SelectionRectangle) => {
     console.log('🔍 Selecting nodes in rectangle:', rect, 'Nodes available:', nodes.length);
     
+    const rectLeft = Math.min(rect.startX, rect.endX);
+    const rectRight = Math.max(rect.startX, rect.endX);
+    const rectTop = Math.min(rect.startY, rect.endY);
+    const rectBottom = Math.max(rect.startY, rect.endY);
+
+    console.log('🔍 Rectangle bounds:', { rectLeft, rectRight, rectTop, rectBottom });
+
     const selectedNodes = nodes.filter(node => {
       const nodeLeft = node.x;
-      const nodeRight = node.x + 120; // Node width
+      const nodeRight = node.x + 200; // Node width (more generous)
       const nodeTop = node.y;
-      const nodeBottom = node.y + 60; // Node height
+      const nodeBottom = node.y + 100; // Node height (more generous)
 
-      const rectLeft = Math.min(rect.startX, rect.endX);
-      const rectRight = Math.max(rect.startX, rect.endX);
-      const rectTop = Math.min(rect.startY, rect.endY);
-      const rectBottom = Math.max(rect.startY, rect.endY);
-
+      // Check if node overlaps with rectangle
       const isIntersecting = (
         nodeLeft < rectRight &&
         nodeRight > rectLeft &&
@@ -55,7 +58,7 @@ export const useMultiSelection = () => {
         nodeBottom > rectTop
       );
 
-      console.log(`Node ${node.id} at (${nodeLeft}, ${nodeTop}) - ${isIntersecting ? 'SELECTED' : 'not selected'}`);
+      console.log(`Node ${node.id} at (${nodeLeft}, ${nodeTop}, ${nodeRight}, ${nodeBottom}) - ${isIntersecting ? 'SELECTED' : 'not selected'}`);
       
       return isIntersecting;
     });
@@ -83,7 +86,13 @@ export const useMultiSelection = () => {
   const endRectangleSelection = useCallback((nodes: EnhancedNode[]) => {
     console.log('🔲 Ending rectangle selection with rect:', selectionRect);
     if (selectionRect) {
-      selectNodesInRectangle(nodes, selectionRect);
+      // Only select if we've actually dragged a meaningful distance
+      const width = Math.abs(selectionRect.endX - selectionRect.startX);
+      const height = Math.abs(selectionRect.endY - selectionRect.startY);
+      
+      if (width > 10 || height > 10) {
+        selectNodesInRectangle(nodes, selectionRect);
+      }
     }
     setIsSelecting(false);
     setSelectionRect(null);
