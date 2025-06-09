@@ -42,10 +42,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
     <header className="bg-white border-b border-gray-200 h-14 flex items-center px-4 relative z-50">
       <ToolbarBrand />
       
-      <ToolbarMenu 
-        isMobileMenuOpen={isMobileMenuOpen}
-        onMobileMenuToggle={onMobileMenuToggle}
-      />
+      <ToolbarMenu />
 
       <div className="flex items-center gap-2 ml-auto">
         {onToggleLeftPanel && onToggleRightPanel && (
