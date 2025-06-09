@@ -16,7 +16,6 @@ export const useMultiSelection = (canvasRef: React.RefObject<HTMLDivElement>) =>
   const [selectionRect, setSelectionRect] = useState<SelectionRectangle | null>(null);
   const selectionRectRef = useRef<SelectionRectangle | null>(null);
   const lastSelectedNodeRef = useRef<string | null>(null);
-  const hasActuallyDragged = useRef<boolean>(false);
 
   const selectSingleNode = useCallback((nodeId: string | null) => {
     console.log('🎯 Multi-selection: selectSingleNode called with:', nodeId);
@@ -135,9 +134,8 @@ export const useMultiSelection = (canvasRef: React.RefObject<HTMLDivElement>) =>
     console.log('🔲 Starting rectangle selection at:', { x, y });
     const rect = { startX: x, startY: y, endX: x, endY: y };
     setIsSelecting(true);
-    // Don't set visual rectangle yet - wait for actual drag movement
+    setSelectionRect(rect);
     selectionRectRef.current = rect;
-    hasActuallyDragged.current = false;
   }, []);
 
   const updateRectangleSelection = useCallback((x: number, y: number) => {
@@ -149,23 +147,15 @@ export const useMultiSelection = (canvasRef: React.RefObject<HTMLDivElement>) =>
     console.log('🔲 Updating rectangle selection to:', { x, y });
     const newRect = { ...selectionRectRef.current, endX: x, endY: y };
     
-    // Only show visual rectangle if we've actually dragged a meaningful distance
-    const deltaX = Math.abs(newRect.endX - newRect.startX);
-    const deltaY = Math.abs(newRect.endY - newRect.startY);
-    
-    if (deltaX > 3 || deltaY > 3) {
-      hasActuallyDragged.current = true;
-      setSelectionRect(newRect);
-    }
-    
+    setSelectionRect(newRect);
     selectionRectRef.current = newRect;
   }, []);
 
   const endRectangleSelection = useCallback((nodes: EnhancedNode[]) => {
     const currentRect = selectionRectRef.current;
-    console.log('🔲 Ending rectangle selection with current rect:', currentRect, 'hasActuallyDragged:', hasActuallyDragged.current);
+    console.log('🔲 Ending rectangle selection with current rect:', currentRect);
     
-    if (currentRect && hasActuallyDragged.current) {
+    if (currentRect) {
       const width = Math.abs(currentRect.endX - currentRect.startX);
       const height = Math.abs(currentRect.endY - currentRect.startY);
       
@@ -178,14 +168,13 @@ export const useMultiSelection = (canvasRef: React.RefObject<HTMLDivElement>) =>
         clearSelection();
       }
     } else {
-      console.log('🔲 No actual drag detected, clearing selection');
+      console.log('🔲 No rectangle found, clearing selection');
       clearSelection();
     }
     
     setSelectionRect(null);
     selectionRectRef.current = null;
     setIsSelecting(false);
-    hasActuallyDragged.current = false;
   }, [selectNodesInRectangle, clearSelection]);
 
   return {

@@ -35,7 +35,6 @@ export const useCanvasMouseEvents = ({
     let isMouseDown = false;
     let isDragging = false;
     let startCoords: { x: number; y: number } | null = null;
-    let hasStartedSelection = false;
 
     const handleMouseDown = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
@@ -68,7 +67,6 @@ export const useCanvasMouseEvents = ({
         
         isMouseDown = true;
         isDragging = false;
-        hasStartedSelection = false;
         startCoords = getCanvasCoordinates(event, canvasRef);
         
         console.log('🔲 Mouse down at canvas coords:', startCoords);
@@ -82,11 +80,10 @@ export const useCanvasMouseEvents = ({
       const deltaX = Math.abs(currentCoords.x - startCoords.x);
       const deltaY = Math.abs(currentCoords.y - startCoords.y);
 
-      // Start rectangle selection only after minimum movement and only once
-      if (!isDragging && !hasStartedSelection && (deltaX > 3 || deltaY > 3)) {
-        console.log('🔲 Starting rectangle selection on first drag movement');
+      // Start rectangle selection immediately when minimum movement is reached
+      if (!isDragging && (deltaX > 3 || deltaY > 3)) {
+        console.log('🔲 Starting rectangle selection immediately');
         isDragging = true;
-        hasStartedSelection = true;
         startRectangleSelection(startCoords.x, startCoords.y);
       }
       
@@ -97,13 +94,13 @@ export const useCanvasMouseEvents = ({
     };
 
     const handleMouseUp = (event: MouseEvent) => {
-      console.log('🖱️ Mouse up:', { isMouseDown, isDragging, isSelecting, hasStartedSelection });
+      console.log('🖱️ Mouse up:', { isMouseDown, isDragging, isSelecting });
       
       if (isMouseDown) {
-        if (isDragging && isSelecting && hasStartedSelection) {
+        if (isDragging && isSelecting) {
           console.log('🔲 Ending rectangle selection');
           endRectangleSelection(nodes);
-        } else if (!isDragging && !hasStartedSelection) {
+        } else if (!isDragging) {
           // Simple click on canvas background without any dragging - clear all selections
           console.log('🧹 Canvas background click - clearing all selections');
           clearSelection();
@@ -114,7 +111,6 @@ export const useCanvasMouseEvents = ({
       // Reset state
       isMouseDown = false;
       isDragging = false;
-      hasStartedSelection = false;
       startCoords = null;
     };
 

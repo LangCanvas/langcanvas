@@ -4,7 +4,6 @@ import ToolbarBrand from './toolbar/ToolbarBrand';
 import ToolbarMenu from './toolbar/ToolbarMenu';
 import ToolbarActions from './toolbar/ToolbarActions';
 import ToolbarValidation from './toolbar/ToolbarValidation';
-import ToolbarSelectionStatus from './toolbar/ToolbarSelectionStatus';
 import { ValidationResult } from '../../hooks/useValidation';
 
 interface ToolbarProps {
@@ -37,11 +36,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
       <ToolbarMenu />
 
       <div className="flex items-center gap-3 ml-auto">
-        <ToolbarSelectionStatus 
-          isSelecting={isSelecting}
-          selectedCount={selectedCount}
-        />
-        
         <ToolbarValidation 
           validationResult={validationResult} 
           hasNodes={hasNodes}
