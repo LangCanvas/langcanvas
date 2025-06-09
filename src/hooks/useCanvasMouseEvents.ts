@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { EnhancedNode } from '../types/nodeTypes';
 import { getCanvasCoordinates } from '../utils/canvasCoordinates';
 
@@ -28,12 +28,12 @@ export const useCanvasMouseEvents = ({
   clearSelection,
   selectNodeSafely,
 }: UseCanvasMouseEventsProps) => {
+  const isMouseDownRef = useRef(false);
+  const isDraggingRef = useRef(false);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
-    let isMouseDown = false;
-    let isDragging = false;
 
     const handleMouseDown = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
@@ -64,8 +64,8 @@ export const useCanvasMouseEvents = ({
         console.log('✅ Valid mousedown on canvas background');
         event.preventDefault();
         
-        isMouseDown = true;
-        isDragging = false; // Reset dragging state
+        isMouseDownRef.current = true;
+        isDraggingRef.current = false;
         const coords = getCanvasCoordinates(event, canvasRef);
         
         console.log('🔲 Starting rectangle selection at:', coords);
@@ -74,11 +74,16 @@ export const useCanvasMouseEvents = ({
     };
 
     const handleMouseMove = (event: MouseEvent) => {
-      if (!isMouseDown) return;
+      console.log('🖱️ Mouse move detected, isMouseDown:', isMouseDownRef.current);
+      
+      if (!isMouseDownRef.current) {
+        console.log('🚫 Mouse move ignored - not in selection mode');
+        return;
+      }
 
       // Mark that we're dragging after the first move
-      if (!isDragging) {
-        isDragging = true;
+      if (!isDraggingRef.current) {
+        isDraggingRef.current = true;
         console.log('🔲 Started dragging - rectangle should now be visible');
       }
 
@@ -88,10 +93,14 @@ export const useCanvasMouseEvents = ({
     };
 
     const handleMouseUp = (event: MouseEvent) => {
-      console.log('🖱️ Mouse up:', { isMouseDown, isDragging, isSelecting });
+      console.log('🖱️ Mouse up:', { 
+        isMouseDown: isMouseDownRef.current, 
+        isDragging: isDraggingRef.current, 
+        isSelecting 
+      });
       
-      if (isMouseDown) {
-        if (isDragging && isSelecting) {
+      if (isMouseDownRef.current) {
+        if (isDraggingRef.current && isSelecting) {
           console.log('🔲 Ending rectangle selection after drag');
           endRectangleSelection();
         } else {
@@ -103,8 +112,8 @@ export const useCanvasMouseEvents = ({
       }
       
       // Reset state
-      isMouseDown = false;
-      isDragging = false;
+      isMouseDownRef.current = false;
+      isDraggingRef.current = false;
     };
 
     canvas.addEventListener('mousedown', handleMouseDown);
