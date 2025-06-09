@@ -1,3 +1,4 @@
+
 import React from 'react';
 import Canvas from '../components/Canvas';
 import MainApplicationLayout from '../components/layout/MainApplicationLayout';
