@@ -40,6 +40,7 @@ interface CanvasProps {
   getEdgeTooltip?: (edgeId: string) => string;
   pendingNodeType?: NodeType | null;
   onClearPendingCreation?: () => void;
+  hasUnsavedChanges?: boolean;
 }
 
 const Canvas: React.FC<CanvasProps> = ({ 
@@ -61,7 +62,8 @@ const Canvas: React.FC<CanvasProps> = ({
   getNodeTooltip,
   getEdgeTooltip,
   pendingNodeType,
-  onClearPendingCreation
+  onClearPendingCreation,
+  hasUnsavedChanges = false
 }) => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -332,6 +334,8 @@ const Canvas: React.FC<CanvasProps> = ({
                         <div
                           key={node.id}
                           className={`${isHovered ? 'ring-2 ring-blue-400 ring-opacity-50 rounded-lg' : ''} ${
+                            isSelected ? 'ring-2 ring-blue-500 ring-opacity-75 rounded-lg shadow-lg' : ''
+                          } ${
                             isMobile ? 'touch-manipulation' : ''
                           }`}
                         >
@@ -373,6 +377,7 @@ const Canvas: React.FC<CanvasProps> = ({
                       selectedCount={selectedNodeIds.length}
                       pendingNodeType={pendingNodeType}
                       isCreatingEdge={isCreatingEdge}
+                      hasUnsavedChanges={hasUnsavedChanges}
                     />
                   </>
                 )}

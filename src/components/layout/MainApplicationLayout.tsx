@@ -112,7 +112,7 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
             {/* Left Panel */}
             {isLeftPanelVisible && (
               <div 
-                className="fixed left-0 top-14 bottom-0 z-20 transition-all duration-300 ease-in-out"
+                className="fixed left-0 top-14 bottom-8 z-20 transition-all duration-300 ease-in-out"
                 style={{ width: isLeftPanelExpanded ? '256px' : '56px' }}
               >
                 <DesktopSidebar
@@ -138,7 +138,7 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
             {/* Right Panel */}
             {isRightPanelVisible && (
               <div 
-                className="fixed right-0 top-14 bottom-0 z-20 transition-all duration-300 ease-in-out"
+                className="fixed right-0 top-14 bottom-8 z-20 transition-all duration-300 ease-in-out"
                 style={{ width: isRightPanelExpanded ? '320px' : '56px' }}
               >
                 <DesktopPropertiesPanel

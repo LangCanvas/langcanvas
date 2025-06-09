@@ -6,6 +6,7 @@ import { useIndexHandlers } from '../hooks/useIndexHandlers';
 import { useIndexWorkflowHandlers } from '../hooks/useIndexWorkflowHandlers';
 import { useIndexPanelHandlers } from '../hooks/useIndexPanelHandlers';
 import { useIndexState } from '../hooks/useIndexState';
+import { useChangeTracking } from '../hooks/useChangeTracking';
 import { EnhancedEdge } from '../types/edgeTypes';
 
 const Index = () => {
@@ -16,6 +17,8 @@ const Index = () => {
     workflowSerializer,
     validation
   } = useIndexState();
+
+  const { hasUnsavedChanges, markAsChanged, markAsSaved } = useChangeTracking();
 
   const workflowActions = useWorkflowActions({
     nodes: nodeState.nodes,
@@ -38,10 +41,68 @@ const Index = () => {
     updateEdgeProperties: edgeState.updateEdgeProperties,
   });
 
+  // Enhanced handlers that track changes
+  const handleAddNodeWithTracking = (type: any, x: number, y: number) => {
+    const result = nodeCreation.createNode(type, x, y);
+    if (result) {
+      markAsChanged();
+    }
+    return result;
+  };
+
+  const handleDeleteNodeWithTracking = (id: string) => {
+    indexHandlers.handleDeleteNode(id);
+    markAsChanged();
+  };
+
+  const handleDeleteEdgeWithTracking = (id: string) => {
+    edgeState.deleteEdge(id);
+    markAsChanged();
+  };
+
+  const handleUpdateNodePropertiesWithTracking = (id: string, updates: any) => {
+    indexHandlers.handleUpdateNodeProperties(id, updates);
+    markAsChanged();
+  };
+
+  const handleUpdateEdgePropertiesWithTracking = (id: string, updates: any) => {
+    indexHandlers.handleUpdateEdgeProperties(id, updates);
+    markAsChanged();
+  };
+
+  const handleAddEdgeWithTracking = (sourceNode: any, targetNode: any) => {
+    const result = indexHandlers.handleAddEdge(sourceNode, targetNode);
+    if (result.success) {
+      markAsChanged();
+    }
+    return result;
+  };
+
+  const handleMoveNodeWithTracking = (id: string, x: number, y: number) => {
+    nodeState.updateNodePosition(id, x, y);
+    markAsChanged();
+  };
+
+  // Enhanced workflow handlers that track save state
+  const handleExportWithTracking = () => {
+    workflowActions.handleExport();
+    markAsSaved();
+  };
+
+  const handleNewProjectWithTracking = () => {
+    workflowActions.handleNewProject();
+    markAsSaved();
+  };
+
+  const handleImportWithTracking = () => {
+    workflowActions.handleImport();
+    markAsSaved();
+  };
+
   const workflowHandlers = useIndexWorkflowHandlers({
-    handleNewProject: workflowActions.handleNewProject,
-    handleImport: workflowActions.handleImport,
-    handleExport: workflowActions.handleExport,
+    handleNewProject: handleNewProjectWithTracking,
+    handleImport: handleImportWithTracking,
+    handleExport: handleExportWithTracking,
   });
 
   const panelHandlers = useIndexPanelHandlers(nodeCreation.clearPendingCreation);
@@ -91,7 +152,7 @@ const Index = () => {
   }, [nodeCreation.setPendingCreation, indexHandlers.handleSelectNode, indexHandlers.handleSelectEdge, panelHandlers.handleExpandRightPanel, panelHandlers.switchToPropertiesPanel]);
 
   const handleUpdateEdgeWithCondition = (edgeId: string, updates: Partial<EnhancedEdge>) => {
-    indexHandlers.handleUpdateEdgeProperties(edgeId, updates);
+    handleUpdateEdgePropertiesWithTracking(edgeId, updates);
     if (updates.conditional) {
       edgeState.updateEdgeCondition(edgeId, updates.conditional.condition);
     }
@@ -128,9 +189,9 @@ const Index = () => {
         onNewProject={workflowHandlers.handleNewProjectWithAnalytics}
         onImport={workflowHandlers.handleImportWithAnalytics}
         onExport={workflowHandlers.handleExportWithAnalytics}
-        onDeleteNode={indexHandlers.handleDeleteNode}
-        onDeleteEdge={edgeState.deleteEdge}
-        onUpdateNodeProperties={indexHandlers.handleUpdateNodeProperties}
+        onDeleteNode={handleDeleteNodeWithTracking}
+        onDeleteEdge={handleDeleteEdgeWithTracking}
+        onUpdateNodeProperties={handleUpdateNodePropertiesWithTracking}
         onUpdateEdgeProperties={handleUpdateEdgeWithCondition}
         validatePriorityConflicts={edgeState.validatePriorityConflicts}
       >
@@ -139,13 +200,13 @@ const Index = () => {
           edges={edgeState.edges}
           selectedNodeId={nodeState.selectedNodeId}
           selectedEdgeId={edgeState.selectedEdgeId}
-          onAddNode={nodeCreation.createNode}
+          onAddNode={handleAddNodeWithTracking}
           onSelectNode={indexHandlers.handleSelectNode}
           onSelectEdge={indexHandlers.handleSelectEdge}
-          onMoveNode={nodeState.updateNodePosition}
-          onDeleteNode={indexHandlers.handleDeleteNode}
-          onDeleteEdge={edgeState.deleteEdge}
-          onAddEdge={indexHandlers.handleAddEdge}
+          onMoveNode={handleMoveNodeWithTracking}
+          onDeleteNode={handleDeleteNodeWithTracking}
+          onDeleteEdge={handleDeleteEdgeWithTracking}
+          onAddEdge={handleAddEdgeWithTracking}
           canCreateEdge={edgeState.canCreateEdge}
           getNodeValidationClass={validation.getNodeErrorClass}
           getEdgeValidationClass={validation.getEdgeErrorClass}
@@ -153,6 +214,7 @@ const Index = () => {
           getEdgeTooltip={validation.getEdgeTooltip}
           pendingNodeType={nodeCreation.pendingNodeType}
           onClearPendingCreation={nodeCreation.clearPendingCreation}
+          hasUnsavedChanges={hasUnsavedChanges}
         />
       </MainApplicationLayout>
     </div>
