@@ -48,7 +48,6 @@ steps:
       - 'managed'
       - '--allow-unauthenticated'
       - '--port=8080'
-      - '--set-http-headers=Content-Security-Policy=default-src ''self''; script-src ''self'' https://accounts.google.com; connect-src ''self'' https://accounts.google.com https://www.google-analytics.com https://analytics.google.com https://region1.google-analytics.com https://firestore.googleapis.com; style-src ''self'' ''unsafe-inline'' https://fonts.googleapis.com; font-src ''self'' https://fonts.gstatic.com; img-src ''self'' data: https://www.google.com https://*.googleusercontent.com;'
     entrypoint: gcloud
 
 options:
