@@ -72,7 +72,7 @@ const Canvas: React.FC<CanvasProps> = ({
   
   const { createNode } = useNodeCreation({ onAddNode });
 
-  // Multi-selection state
+  // Multi-selection state with canvas ref
   const {
     selectedNodeIds,
     isSelecting,
@@ -83,7 +83,7 @@ const Canvas: React.FC<CanvasProps> = ({
     startRectangleSelection,
     updateRectangleSelection,
     endRectangleSelection,
-  } = useMultiSelection();
+  } = useMultiSelection(canvasRef);
 
   // Multi-node dragging
   const {
@@ -125,7 +125,7 @@ const Canvas: React.FC<CanvasProps> = ({
     nodes,
   });
 
-  // Mouse event handling for rectangle selection
+  // Consolidated mouse event handling
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -140,7 +140,7 @@ const Canvas: React.FC<CanvasProps> = ({
       console.log('🖱️ Canvas mousedown:', {
         target: target.tagName,
         className: target.className,
-        hasNode: !!target.closest('.node'),
+        hasNode: !!target.closest('[data-node-id]'),
         hasSVG: !!target.closest('svg'),
         hasHandle: !!target.closest('.connection-handle'),
         ctrlKey: event.ctrlKey,
@@ -148,22 +148,20 @@ const Canvas: React.FC<CanvasProps> = ({
         metaKey: event.metaKey
       });
       
-      // Don't start selection if clicking on interactive elements
-      if (target.closest('.node') || 
+      // Don't interfere with node interactions or other UI elements
+      if (target.closest('[data-node-id]') || 
           target.closest('svg') || 
           target.closest('.connection-handle') ||
           pendingNodeType ||
-          isSelecting ||
           isMultiDragging) {
-        console.log('🚫 Mousedown ignored - invalid target or state');
+        console.log('🚫 Mousedown ignored - interacting with UI element');
         return;
       }
 
-      // Only start on canvas background
+      // Only start selection on canvas background
       if (target === canvas || target.closest('.canvas-background')) {
         console.log('✅ Valid mousedown on canvas background');
         event.preventDefault();
-        event.stopPropagation();
         
         isMouseDown = true;
         isDragging = false;
@@ -179,18 +177,15 @@ const Canvas: React.FC<CanvasProps> = ({
       const currentCoords = getCanvasCoordinates(event, canvasRef);
       const deltaX = Math.abs(currentCoords.x - startCoords.x);
       const deltaY = Math.abs(currentCoords.y - startCoords.y);
-      
-      console.log('🖱️ Mouse move:', { currentCoords, deltaX, deltaY, isDragging });
 
-      // Start dragging only after moving a minimum distance
-      if (!isDragging && (deltaX > 5 || deltaY > 5)) {
+      // Start rectangle selection after minimum movement
+      if (!isDragging && (deltaX > 3 || deltaY > 3)) {
         console.log('🔲 Starting rectangle selection');
         isDragging = true;
         startRectangleSelection(startCoords.x, startCoords.y);
       }
       
       if (isDragging && isSelecting) {
-        console.log('🔲 Updating rectangle selection');
         updateRectangleSelection(currentCoords.x, currentCoords.y);
       }
     };
@@ -203,20 +198,19 @@ const Canvas: React.FC<CanvasProps> = ({
           console.log('🔲 Ending rectangle selection');
           endRectangleSelection(nodes);
         } else if (!isDragging) {
-          // This was just a click without drag - clear selections
-          console.log('🧹 Single click on canvas - clearing selections');
+          // Simple click on canvas background - clear all selections
+          console.log('🧹 Canvas background click - clearing all selections');
           clearSelection();
           selectNodeSafely(null);
         }
-        
-        // Reset state
-        isMouseDown = false;
-        isDragging = false;
-        startCoords = null;
       }
+      
+      // Reset state
+      isMouseDown = false;
+      isDragging = false;
+      startCoords = null;
     };
 
-    // Add event listeners
     canvas.addEventListener('mousedown', handleMouseDown);
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
@@ -271,12 +265,17 @@ const Canvas: React.FC<CanvasProps> = ({
     
     console.log('🎯 Node select called:', { nodeId, isCtrlPressed, isShiftPressed, currentSelection: selectedNodeIds });
     
-    if (selectedNodeIds.length > 1 || isCtrlPressed || isShiftPressed) {
+    // Prevent event from bubbling to canvas
+    event?.stopPropagation();
+    
+    if (isCtrlPressed || isShiftPressed) {
       toggleNodeSelection(nodeId, isCtrlPressed, isShiftPressed, nodes);
-      if (!isCtrlPressed && !isShiftPressed) {
+      // For single node with modifiers, still update the main selection
+      if (!isShiftPressed) {
         selectNodeSafely(nodeId);
       }
     } else {
+      // Simple click - single selection
       selectNodeSafely(nodeId);
       selectSingleNode(nodeId);
     }
