@@ -260,6 +260,7 @@ const Canvas: React.FC<CanvasProps> = ({
 
   const handleNodeDragStart = (nodeId: string, event: React.MouseEvent) => {
     if (selectedNodeIds.includes(nodeId) && selectedNodeIds.length > 1) {
+      console.log('🎯 Starting multi-node drag for:', selectedNodeIds);
       startMultiDrag(nodeId, event.clientX, event.clientY);
     }
   };
@@ -334,10 +335,10 @@ const Canvas: React.FC<CanvasProps> = ({
                         <div
                           key={node.id}
                           className={`${isHovered ? 'ring-2 ring-blue-400 ring-opacity-50 rounded-lg' : ''} ${
-                            isSelected ? 'ring-2 ring-blue-500 ring-opacity-75 rounded-lg shadow-lg' : ''
+                            isSelected ? 'ring-4 ring-blue-500 ring-opacity-100 rounded-lg shadow-xl scale-105' : ''
                           } ${
                             isMobile ? 'touch-manipulation' : ''
-                          }`}
+                          } transition-all duration-200`}
                         >
                           {node.type === 'conditional' ? (
                             <ConditionalNodeComponent

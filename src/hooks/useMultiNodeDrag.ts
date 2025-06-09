@@ -1,5 +1,5 @@
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { EnhancedNode } from '../types/nodeTypes';
 
 interface DragState {
@@ -50,6 +50,8 @@ export const useMultiNodeDrag = (
       }
     });
 
+    console.log('🎯 Starting multi-drag for nodes:', nodesToDrag, 'with offset:', dragOffset);
+
     setDragState({
       isDragging: true,
       dragOffset,
@@ -85,14 +87,15 @@ export const useMultiNodeDrag = (
 
       // Move all selected nodes by the same delta
       dragState.initialPositions.forEach((initialPos, nodeId) => {
-        const constrainedX = Math.max(0, Math.min(initialPos.x + deltaX, 2880)); // Canvas width - node width - scrollbar space
-        const constrainedY = Math.max(0, Math.min(initialPos.y + deltaY, 2940)); // Canvas height - node height
+        const constrainedX = Math.max(0, Math.min(initialPos.x + deltaX, 2880));
+        const constrainedY = Math.max(0, Math.min(initialPos.y + deltaY, 2940));
         onMoveNode(nodeId, constrainedX, constrainedY);
       });
     }
   }, [dragState, onMoveNode]);
 
   const endDrag = useCallback(() => {
+    console.log('🎯 Ending multi-drag');
     setDragState({
       isDragging: false,
       dragOffset: { x: 0, y: 0 },

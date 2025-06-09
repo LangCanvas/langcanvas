@@ -6,6 +6,7 @@ import DesktopPropertiesPanel from './DesktopPropertiesPanel';
 import MobileMenu from './MobileMenu';
 import MobilePanelOverlay from './MobilePanelOverlay';
 import MobileBottomNav from './MobileBottomNav';
+import UnderConstructionBanner from './UnderConstructionBanner';
 import { EnhancedNode } from '../../types/nodeTypes';
 import { EnhancedEdge } from '../../types/edgeTypes';
 import { ValidationResult } from '../../hooks/useValidation';
@@ -93,6 +94,8 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
 
   return (
     <div className="flex flex-col h-screen bg-gray-50">
+      <UnderConstructionBanner />
+      
       <Toolbar
         isMobileMenuOpen={isMobileMenuOpen}
         hasNodes={nodes.length > 0}

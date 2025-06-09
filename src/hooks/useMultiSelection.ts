@@ -34,6 +34,13 @@ export const useMultiSelection = () => {
     }
   }, []);
 
+  const getNodeDimensions = (node: EnhancedNode) => {
+    if (node.type === 'conditional') {
+      return { width: 80, height: 80 };
+    }
+    return { width: 120, height: 60 };
+  };
+
   const selectNodesInRectangle = useCallback((nodes: EnhancedNode[], rect: SelectionRectangle) => {
     console.log('🔍 Selecting nodes in rectangle:', rect, 'Nodes available:', nodes.length);
     
@@ -45,10 +52,11 @@ export const useMultiSelection = () => {
     console.log('🔍 Rectangle bounds:', { rectLeft, rectRight, rectTop, rectBottom });
 
     const selectedNodes = nodes.filter(node => {
+      const { width, height } = getNodeDimensions(node);
       const nodeLeft = node.x;
-      const nodeRight = node.x + 200; // Node width (more generous)
+      const nodeRight = node.x + width;
       const nodeTop = node.y;
-      const nodeBottom = node.y + 100; // Node height (more generous)
+      const nodeBottom = node.y + height;
 
       // Check if node overlaps with rectangle
       const isIntersecting = (

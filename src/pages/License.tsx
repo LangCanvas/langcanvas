@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Github, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const License = () => {
@@ -22,6 +22,52 @@ const License = () => {
           
           <h1 className="text-3xl font-bold text-foreground mb-2">License</h1>
           <p className="text-muted-foreground">MIT License for LangCanvas</p>
+        </div>
+
+        {/* Repository Information */}
+        <div className="bg-card border rounded-lg p-6 mb-6">
+          <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center">
+            <Github className="w-5 h-5 mr-2" />
+            Repository & Contributions
+          </h2>
+          
+          <div className="space-y-4">
+            <div>
+              <h3 className="font-medium text-foreground mb-2">Source Code</h3>
+              <p className="text-muted-foreground text-sm mb-3">
+                The complete source code for LangCanvas is available on GitHub:
+              </p>
+              <a 
+                href="https://github.com/your-username/langcanvas" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-flex items-center text-blue-600 hover:text-blue-800 text-sm"
+              >
+                github.com/your-username/langcanvas
+                <ExternalLink className="w-3 h-3 ml-1" />
+              </a>
+            </div>
+            
+            <div>
+              <h3 className="font-medium text-foreground mb-2">Contributing</h3>
+              <p className="text-muted-foreground text-sm mb-2">
+                We welcome contributions! Here's how you can help:
+              </p>
+              <ul className="text-sm text-muted-foreground space-y-1 ml-4">
+                <li>• Report bugs and request features via GitHub Issues</li>
+                <li>• Submit pull requests for bug fixes and new features</li>
+                <li>• Improve documentation and examples</li>
+                <li>• Share feedback and suggestions</li>
+              </ul>
+            </div>
+            
+            <div>
+              <h3 className="font-medium text-foreground mb-2">Development Setup</h3>
+              <p className="text-sm text-muted-foreground">
+                Check the README.md file in the repository for development setup instructions and contribution guidelines.
+              </p>
+            </div>
+          </div>
         </div>
 
         <div className="bg-card border rounded-lg p-6 space-y-6">
