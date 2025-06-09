@@ -16,12 +16,7 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
   
   const analytics = useEnhancedAnalytics();
 
-  console.log("🎛️ useIndexPanelHandlers STATE UPDATE:");
-  console.log("🎛️ Left panel - visible:", isLeftPanelVisible, "expanded:", isLeftPanelExpanded);
-  console.log("🎛️ Right panel - visible:", isRightPanelVisible, "expanded:", isRightPanelExpanded);
-
   const handleMobileMenuToggle = () => {
-    console.log("Mobile menu toggle clicked");
     setIsMobileMenuOpen(!isMobileMenuOpen);
     setActivePanel(null);
     
@@ -31,7 +26,6 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
   };
 
   const handlePanelToggle = (panel: 'palette' | 'properties') => {
-    console.log(`Panel toggle clicked: ${panel}`);
     const newActivePanel = activePanel === panel ? null : panel;
     setActivePanel(newActivePanel);
     
@@ -43,11 +37,7 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
 
   const handleToggleLeftPanel = () => {
     const newExpanded = !isLeftPanelExpanded;
-    console.log("🎛️ handleToggleLeftPanel CALLED!");
-    console.log("🎛️ Desktop left panel toggle clicked, old expanded:", isLeftPanelExpanded, "new expanded:", newExpanded);
-    
     setIsLeftPanelExpanded(newExpanded);
-    console.log("🎛️ setIsLeftPanelExpanded called with:", newExpanded);
 
     analytics.trackFeatureUsage('desktop_left_panel_toggled', { 
       isExpanded: newExpanded 
@@ -56,16 +46,7 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
 
   const handleToggleRightPanel = () => {
     const newExpanded = !isRightPanelExpanded;
-    console.log("🎛️ handleToggleRightPanel CALLED!");
-    console.log("🎛️ Desktop right panel toggle clicked, old expanded:", isRightPanelExpanded, "new expanded:", newExpanded);
-    
     setIsRightPanelExpanded(newExpanded);
-    console.log("🎛️ setIsRightPanelExpanded called with:", newExpanded);
-
-    // Force a re-render by updating the state in a new tick
-    setTimeout(() => {
-      console.log("🎛️ Post-toggle state check - isRightPanelExpanded:", isRightPanelExpanded);
-    }, 0);
 
     analytics.trackFeatureUsage('desktop_right_panel_toggled', { 
       isExpanded: newExpanded 
@@ -73,7 +54,6 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
   };
 
   const handleExpandLeftPanel = () => {
-    console.log("🎛️ Left panel expand requested");
     setIsLeftPanelVisible(true);
     setIsLeftPanelExpanded(true);
     
@@ -81,7 +61,6 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
   };
 
   const handleExpandRightPanel = () => {
-    console.log("🎛️ Right panel expand requested");
     setIsRightPanelVisible(true);
     setIsRightPanelExpanded(true);
     
@@ -89,7 +68,6 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
   };
 
   const closePanels = () => {
-    console.log("Closing panels");
     setActivePanel(null);
     setIsMobileMenuOpen(false);
     setShowValidationPanel(false);
@@ -99,7 +77,6 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
   };
 
   const switchToPropertiesPanel = () => {
-    console.log("Switching to properties panel from validation");
     setShowValidationPanel(false);
     
     analytics.trackFeatureUsage('validation_to_properties_switch');

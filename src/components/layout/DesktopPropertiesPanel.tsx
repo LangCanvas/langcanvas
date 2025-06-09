@@ -48,14 +48,6 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
   switchToPropertiesPanel,
   validatePriorityConflicts
 }) => {
-  console.log("🎛️ DesktopPropertiesPanel RENDER");
-  console.log("🎛️ Props received - isVisible:", isVisible, "isExpanded:", isExpanded);
-
-  // Enhanced prop change logging
-  useEffect(() => {
-    console.log("🎛️ DesktopPropertiesPanel PROP CHANGE - isVisible:", isVisible, "isExpanded:", isExpanded);
-  }, [isVisible, isExpanded]);
-
   // Smart switching: when user selects a node/edge while validation panel is showing
   useEffect(() => {
     if ((selectedNode || selectedEdge) && showValidationPanel && switchToPropertiesPanel) {
@@ -68,7 +60,6 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
   };
 
   const handleExpand = () => {
-    console.log('🎛️ Expand panel requested');
     if (onExpand) {
       onExpand();
     }
@@ -76,13 +67,11 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
 
   // If not visible, don't render anything
   if (!isVisible) {
-    console.log("🎛️ DesktopPropertiesPanel NOT RENDERING - isVisible is false");
     return null;
   }
 
   // Show collapsed panel when not expanded
   if (!isExpanded) {
-    console.log("🎛️ DesktopPropertiesPanel RENDERING COLLAPSED");
     return (
       <aside 
         data-panel="desktop-properties" 
@@ -102,7 +91,6 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
   }
 
   // Show expanded panel
-  console.log("🎛️ DesktopPropertiesPanel RENDERING EXPANDED");
   return (
     <aside 
       data-panel="desktop-properties" 

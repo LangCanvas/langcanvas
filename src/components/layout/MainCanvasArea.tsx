@@ -55,9 +55,6 @@ const MainCanvasArea: React.FC<MainCanvasAreaProps> = ({
   validatePriorityConflicts,
   children
 }) => {
-  console.log("🖼️ MainCanvasArea RENDER");
-  console.log("🖼️ Right panel props - visible:", isRightPanelVisible, "expanded:", isRightPanelExpanded);
-  
   return (
     <div className="flex-1 flex">
       <div className="flex-1 relative">
