@@ -1,6 +1,7 @@
+
 import React, { useRef, useEffect } from 'react';
 import { EnhancedNode, NodeType } from '../types/nodeTypes';
-import { Edge } from '../hooks/useEdges';
+import { EnhancedEdge } from '../types/edgeTypes';
 import { useNodeCreation } from '../hooks/useNodeCreation';
 import { useMobileDetection } from '../hooks/useMobileDetection';
 import { useEnhancedAnalytics } from '../hooks/useEnhancedAnalytics';
@@ -12,14 +13,13 @@ import CanvasBackground from './canvas/CanvasBackground';
 import EdgePreview from './canvas/EdgePreview';
 import KeyboardHandler from './canvas/KeyboardHandler';
 import NodeComponent from './Node';
-import EdgeRenderer from './EdgeRenderer';
 import ConditionalNodeComponent from './ConditionalNodeComponent';
 import EnhancedEdgeRenderer from './EnhancedEdgeRenderer';
 
 interface CanvasProps {
   className?: string;
   nodes: EnhancedNode[];
-  edges: Edge[];
+  edges: EnhancedEdge[];
   selectedNodeId: string | null;
   selectedEdgeId: string | null;
   onAddNode: (type: NodeType, x: number, y: number) => EnhancedNode | null;

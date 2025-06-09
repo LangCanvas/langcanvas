@@ -5,13 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Trash2 } from 'lucide-react';
-import { Edge } from '../../hooks/useEdges';
+import { EnhancedEdge } from '../../types/edgeTypes';
 import { EnhancedNode } from '../../types/nodeTypes';
 
 interface EdgePropertiesFormProps {
-  selectedEdge: Edge;
+  selectedEdge: EnhancedEdge;
   nodes: EnhancedNode[];
-  onUpdateEdge: (edgeId: string, updates: Partial<Edge>) => void;
+  onUpdateEdge: (edgeId: string, updates: Partial<EnhancedEdge>) => void;
   onDeleteEdge: (edgeId: string) => void;
 }
 

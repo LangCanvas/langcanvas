@@ -1,12 +1,7 @@
+
 import React from 'react';
-import NodePalette from '../components/NodePalette';
 import Canvas from '../components/Canvas';
-import EnhancedPropertiesPanel from '../components/EnhancedPropertiesPanel';
-import ValidationPanel from '../components/ValidationPanel';
-import Toolbar from '../components/layout/Toolbar';
-import MobileMenu from '../components/layout/MobileMenu';
-import MobileBottomNav from '../components/layout/MobileBottomNav';
-import MobilePanelOverlay from '../components/layout/MobilePanelOverlay';
+import MainApplicationLayout from '../components/layout/MainApplicationLayout';
 import { useEnhancedNodes } from '../hooks/useEnhancedNodes';
 import { useEnhancedEdges } from '../hooks/useEnhancedEdges';
 import { useNodeCreation } from '../hooks/useNodeCreation';
@@ -131,130 +126,72 @@ const Index = () => {
     closePanels,
   } = useIndexMobileHandlers(clearPendingCreation);
 
+  // Listen for pending creation events from sidebar
+  React.useEffect(() => {
+    const handlePendingCreation = (event: CustomEvent) => {
+      setPendingCreation(event.detail);
+    };
+
+    window.addEventListener('setPendingCreation', handlePendingCreation as EventListener);
+    return () => {
+      window.removeEventListener('setPendingCreation', handlePendingCreation as EventListener);
+    };
+  }, [setPendingCreation]);
+
   console.log("📍 Index component rendering");
   console.log("📍 Validation result:", validationResult);
 
-  const nodeOutgoingEdges = selectedNode ? getNodeOutgoingEdges(selectedNode.id) : [];
+  const handleUpdateEdgeWithCondition = (edgeId: string, updates: Partial<EnhancedEdge>) => {
+    handleUpdateEdgeProperties(edgeId, updates);
+    // Handle conditional edge updates if needed
+    if (updates.conditional) {
+      updateEdgeCondition(edgeId, updates.conditional.condition);
+    }
+  };
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
-      <Toolbar
-        isMobileMenuOpen={isMobileMenuOpen}
-        onMobileMenuToggle={handleMobileMenuToggle}
-        onNewProject={handleNewProjectWithAnalytics}
-        onImport={handleImportWithAnalytics}
-        onExport={handleExportWithAnalytics}
-        hasNodes={nodes.length > 0}
-        validationResult={validationResult}
+    <MainApplicationLayout
+      isMobileMenuOpen={isMobileMenuOpen}
+      activePanel={activePanel}
+      showValidationPanel={showValidationPanel}
+      nodes={nodes}
+      edges={edges}
+      selectedNode={selectedNode}
+      selectedEdge={selectedEdge}
+      validationResult={validationResult}
+      onMobileMenuToggle={handleMobileMenuToggle}
+      onPanelToggle={handlePanelToggle}
+      closePanels={closePanels}
+      setShowValidationPanel={setShowValidationPanel}
+      onNewProject={handleNewProjectWithAnalytics}
+      onImport={handleImportWithAnalytics}
+      onExport={handleExportWithAnalytics}
+      onDeleteNode={handleDeleteNode}
+      onDeleteEdge={deleteEdge}
+      onUpdateNodeProperties={handleUpdateNodeProperties}
+      onUpdateEdgeProperties={handleUpdateEdgeWithCondition}
+    >
+      <Canvas
+        nodes={nodes}
+        edges={edges}
+        selectedNodeId={selectedNodeId}
+        selectedEdgeId={selectedEdgeId}
+        onAddNode={createNode}
+        onSelectNode={handleSelectNode}
+        onSelectEdge={handleSelectEdge}
+        onMoveNode={updateNodePosition}
+        onDeleteNode={handleDeleteNode}
+        onDeleteEdge={deleteEdge}
+        onAddEdge={handleAddEdge}
+        canCreateEdge={canCreateEdge}
+        getNodeValidationClass={getNodeErrorClass}
+        getEdgeValidationClass={getEdgeErrorClass}
+        getNodeTooltip={getNodeTooltip}
+        getEdgeTooltip={getEdgeTooltip}
+        pendingNodeType={pendingNodeType}
+        onClearPendingCreation={clearPendingCreation}
       />
-
-      <MobileMenu
-        isOpen={isMobileMenuOpen}
-        onClose={closePanels}
-        onNewProject={handleNewProjectWithAnalytics}
-        onImport={handleImportWithAnalytics}
-        onExport={handleExportWithAnalytics}
-        onPanelToggle={handlePanelToggle}
-        hasNodes={nodes.length > 0}
-      />
-
-      {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Desktop Left Sidebar - Node Palette */}
-        <aside className="hidden lg:flex w-64 bg-white border-r border-gray-200 flex-col">
-          <NodePalette onNodeTypeSelect={setPendingCreation} />
-        </aside>
-
-        <MobilePanelOverlay
-          activePanel={activePanel}
-          onClose={closePanels}
-          onPanelToggle={handlePanelToggle}
-          selectedNode={selectedNode}
-          selectedEdge={selectedEdge}
-          onDeleteNode={handleDeleteNode}
-          onDeleteEdge={deleteEdge}
-          onUpdateNodeProperties={handleUpdateNodeProperties}
-          onUpdateEdgeProperties={(edgeId, updates) => {
-            handleUpdateEdgeProperties(edgeId, updates);
-            // Handle conditional edge updates if needed
-            if (updates.conditional) {
-              updateEdgeCondition(edgeId, updates.conditional.condition);
-            }
-          }}
-          allNodes={nodes}
-          nodeOutgoingEdges={nodeOutgoingEdges}
-          validationResult={validationResult}
-        />
-
-        {/* Main Canvas Area */}
-        <main className="flex-1 relative overflow-auto">
-          <Canvas
-            nodes={nodes}
-            edges={edges}
-            selectedNodeId={selectedNodeId}
-            selectedEdgeId={selectedEdgeId}
-            onAddNode={createNode}
-            onSelectNode={handleSelectNode}
-            onSelectEdge={handleSelectEdge}
-            onMoveNode={updateNodePosition}
-            onDeleteNode={handleDeleteNode}
-            onDeleteEdge={deleteEdge}
-            onAddEdge={handleAddEdge}
-            canCreateEdge={canCreateEdge}
-            getNodeValidationClass={getNodeErrorClass}
-            getEdgeValidationClass={getEdgeErrorClass}
-            getNodeTooltip={getNodeTooltip}
-            getEdgeTooltip={getEdgeTooltip}
-            pendingNodeType={pendingNodeType}
-            onClearPendingCreation={clearPendingCreation}
-          />
-        </main>
-
-        {/* Desktop Right Sidebar - Enhanced Properties Panel */}
-        <aside className="hidden lg:flex w-80 bg-white border-l border-gray-200 flex-col">
-          <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-            <h2 className="text-sm font-medium text-gray-700">Properties</h2>
-            {validationResult.issues.length > 0 && (
-              <button
-                onClick={() => setShowValidationPanel(!showValidationPanel)}
-                className="text-xs px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 transition-colors"
-              >
-                <ValidationPanel validationResult={validationResult} compact />
-              </button>
-            )}
-          </div>
-          
-          {showValidationPanel ? (
-            <ValidationPanel 
-              validationResult={validationResult} 
-              onClose={() => setShowValidationPanel(false)}
-            />
-          ) : (
-            <EnhancedPropertiesPanel 
-              selectedNode={selectedNode}
-              selectedEdge={selectedEdge}
-              allNodes={nodes}
-              onUpdateNode={handleUpdateNodeProperties}
-              onUpdateEdge={(edgeId, updates) => {
-                handleUpdateEdgeProperties(edgeId, updates);
-                // Handle conditional edge updates if needed
-                if (updates.conditional) {
-                  updateEdgeCondition(edgeId, updates.conditional.condition);
-                }
-              }}
-              onDeleteNode={handleDeleteNode}
-              onDeleteEdge={deleteEdge}
-            />
-          )}
-        </aside>
-      </div>
-
-      <MobileBottomNav
-        onPanelToggle={handlePanelToggle}
-        hasNodes={nodes.length > 0}
-        validationResult={validationResult}
-      />
-    </div>
+    </MainApplicationLayout>
   );
 };
 

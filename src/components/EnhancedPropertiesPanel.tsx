@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { EnhancedNode } from '../types/nodeTypes';
-import { Edge } from '../hooks/useEdges';
+import { EnhancedEdge } from '../types/edgeTypes';
 import { validateNodeConfiguration } from '../utils/nodeDefaults';
 import ValidationErrorsDisplay from './properties/ValidationErrorsDisplay';
 import BasicPropertiesForm from './properties/BasicPropertiesForm';
@@ -12,10 +13,11 @@ import ConditionalEdgePropertiesForm from './properties/ConditionalEdgePropertie
 
 interface EnhancedPropertiesPanelProps {
   selectedNode: EnhancedNode | null;
-  selectedEdge: Edge | null;
+  selectedEdge: EnhancedEdge | null;
   allNodes: EnhancedNode[];
+  allEdges: EnhancedEdge[];
   onUpdateNode: (nodeId: string, updates: Partial<EnhancedNode>) => void;
-  onUpdateEdge: (edgeId: string, updates: Partial<Edge>) => void;
+  onUpdateEdge: (edgeId: string, updates: Partial<EnhancedEdge>) => void;
   onDeleteNode: (nodeId: string) => void;
   onDeleteEdge: (edgeId: string) => void;
 }
@@ -24,6 +26,7 @@ const EnhancedPropertiesPanel: React.FC<EnhancedPropertiesPanelProps> = ({
   selectedNode,
   selectedEdge,
   allNodes,
+  allEdges,
   onUpdateNode,
   onUpdateEdge,
   onDeleteNode,
@@ -58,9 +61,7 @@ const EnhancedPropertiesPanel: React.FC<EnhancedPropertiesPanelProps> = ({
     
     // Check if it's a conditional edge
     if (selectedEdge.conditional) {
-      const allConditionalEdges = allNodes
-        .filter(node => node.type === 'conditional')
-        .flatMap(node => edges.filter(edge => edge.source === node.id && edge.conditional));
+      const allConditionalEdges = allEdges.filter(edge => edge.conditional);
       
       return (
         <div className="p-4 space-y-6 max-h-full overflow-y-auto">

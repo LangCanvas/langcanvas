@@ -1,0 +1,90 @@
+
+import React from 'react';
+import MobilePanelOverlay from './MobilePanelOverlay';
+import DesktopPropertiesPanel from './DesktopPropertiesPanel';
+import { EnhancedNode } from '../../types/nodeTypes';
+import { EnhancedEdge } from '../../types/edgeTypes';
+import { ValidationResult } from '../../hooks/useValidation';
+
+interface MainCanvasAreaProps {
+  activePanel: string | null;
+  selectedNode: EnhancedNode | null;
+  selectedEdge: EnhancedEdge | null;
+  allNodes: EnhancedNode[];
+  allEdges: EnhancedEdge[];
+  validationResult: ValidationResult;
+  showValidationPanel: boolean;
+  
+  onClose: () => void;
+  onPanelToggle: (panel: string) => void;
+  onDeleteNode: (nodeId: string) => void;
+  onDeleteEdge: (edgeId: string) => void;
+  onUpdateNodeProperties: (nodeId: string, updates: Partial<EnhancedNode>) => void;
+  onUpdateEdgeProperties: (edgeId: string, updates: Partial<EnhancedEdge>) => void;
+  setShowValidationPanel: (show: boolean) => void;
+  
+  children: React.ReactNode;
+}
+
+const MainCanvasArea: React.FC<MainCanvasAreaProps> = ({
+  activePanel,
+  selectedNode,
+  selectedEdge,
+  allNodes,
+  allEdges,
+  validationResult,
+  showValidationPanel,
+  onClose,
+  onPanelToggle,
+  onDeleteNode,
+  onDeleteEdge,
+  onUpdateNodeProperties,
+  onUpdateEdgeProperties,
+  setShowValidationPanel,
+  children
+}) => {
+  const nodeOutgoingEdges = selectedNode 
+    ? allEdges.filter(edge => edge.source === selectedNode.id)
+    : [];
+
+  return (
+    <>
+      <MobilePanelOverlay
+        activePanel={activePanel}
+        onClose={onClose}
+        onPanelToggle={onPanelToggle}
+        selectedNode={selectedNode}
+        selectedEdge={selectedEdge}
+        onDeleteNode={onDeleteNode}
+        onDeleteEdge={onDeleteEdge}
+        onUpdateNodeProperties={onUpdateNodeProperties}
+        onUpdateEdgeProperties={onUpdateEdgeProperties}
+        allNodes={allNodes}
+        nodeOutgoingEdges={nodeOutgoingEdges}
+        validationResult={validationResult}
+      />
+
+      {/* Main Canvas Area */}
+      <main className="flex-1 relative overflow-auto">
+        {children}
+      </main>
+
+      {/* Desktop Right Sidebar - Enhanced Properties Panel */}
+      <DesktopPropertiesPanel
+        selectedNode={selectedNode}
+        selectedEdge={selectedEdge}
+        allNodes={allNodes}
+        allEdges={allEdges}
+        validationResult={validationResult}
+        showValidationPanel={showValidationPanel}
+        onUpdateNode={onUpdateNodeProperties}
+        onUpdateEdge={onUpdateEdgeProperties}
+        onDeleteNode={onDeleteNode}
+        onDeleteEdge={onDeleteEdge}
+        setShowValidationPanel={setShowValidationPanel}
+      />
+    </>
+  );
+};
+
+export default MainCanvasArea;
