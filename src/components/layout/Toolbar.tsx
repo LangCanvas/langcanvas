@@ -48,10 +48,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
         <ToolbarPanelToggles
           isLeftPanelVisible={isLeftPanelVisible}
           isLeftPanelExpanded={isLeftPanelExpanded}
-          isRightPanelVisible={isRightPanelVisible}
-          isRightPanelExpanded={isRightPanelExpanded}
           onToggleLeftPanel={onToggleLeftPanel}
-          onToggleRightPanel={onToggleRightPanel}
         />
         
         <ToolbarValidation 

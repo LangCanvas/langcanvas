@@ -1,8 +1,11 @@
-import React, { useEffect } from 'react';
+
+import React, { useEffect, useState } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { PanelRightClose } from 'lucide-react';
 import EnhancedPropertiesPanel from '../EnhancedPropertiesPanel';
 import ValidationPanel from '../ValidationPanel';
 import CollapsedPropertiesPanel from './CollapsedPropertiesPanel';
-import RightPanelToggle from './RightPanelToggle';
 import { EnhancedNode } from '../../types/nodeTypes';
 import { EnhancedEdge } from '../../types/edgeTypes';
 import { ValidationResult } from '../../hooks/useValidation';
@@ -47,12 +50,22 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
   switchToPropertiesPanel,
   validatePriorityConflicts
 }) => {
+  const [activeTab, setActiveTab] = useState('properties');
+
   // Smart switching: when user selects a node/edge while validation panel is showing
   useEffect(() => {
     if ((selectedNode || selectedEdge) && showValidationPanel && switchToPropertiesPanel) {
       switchToPropertiesPanel();
     }
   }, [selectedNode, selectedEdge, showValidationPanel, switchToPropertiesPanel]);
+
+  // Auto-switch to validation tab when there are issues and user clicks on validation
+  useEffect(() => {
+    if (showValidationPanel) {
+      setActiveTab('validation');
+      setShowValidationPanel(false); // Reset the flag
+    }
+  }, [showValidationPanel, setShowValidationPanel]);
 
   // Debug logging
   useEffect(() => {
@@ -87,64 +100,81 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
     return (
       <aside 
         data-panel="desktop-properties" 
-        className="relative bg-red-100 border-4 border-red-500 flex flex-col min-w-14 w-14 flex-shrink-0 z-10"
+        className="relative bg-background border-l border-border flex flex-col w-14 flex-shrink-0 z-10"
         style={{ minWidth: '3.5rem', width: '3.5rem' }}
       >
-        <div className="text-xs text-red-600 p-1">COLLAPSED</div>
         <CollapsedPropertiesPanel
           selectedNode={selectedNode}
           selectedEdge={selectedEdge}
           validationResult={validationResult}
           onExpand={handleExpand}
         />
-        {onToggle && (
-          <RightPanelToggle isExpanded={isExpanded} onToggle={onToggle} />
-        )}
       </aside>
     );
   }
 
-  // Show expanded panel
+  // Show expanded panel with tabs
   console.log('🎛️ DesktopPropertiesPanel rendering expanded state');
   return (
     <aside 
       data-panel="desktop-properties" 
-      className="relative w-80 bg-white border-l border-gray-200 flex flex-col flex-shrink-0"
+      className="relative w-80 bg-background border-l border-border flex flex-col flex-shrink-0"
     >
-      <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-        <h2 className="text-sm font-medium text-gray-700">Properties</h2>
-        {validationResult.issues.length > 0 && (
-          <button
-            onClick={() => setShowValidationPanel(!showValidationPanel)}
-            className="text-xs px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 transition-colors"
+      <div className="p-4 border-b border-border flex items-center justify-between">
+        <h2 className="text-sm font-medium text-foreground">Panel</h2>
+        {onToggle && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onToggle}
+            className="w-8 h-8 p-0"
+            title="Collapse Properties Panel"
           >
-            <ValidationPanel validationResult={validationResult} compact />
-          </button>
+            <PanelRightClose className="w-4 h-4" />
+          </Button>
         )}
       </div>
       
-      {showValidationPanel ? (
-        <ValidationPanel 
-          validationResult={validationResult} 
-          onClose={() => setShowValidationPanel(false)}
-        />
-      ) : (
-        <EnhancedPropertiesPanel 
-          selectedNode={selectedNode}
-          selectedEdge={selectedEdge}
-          allNodes={allNodes}
-          allEdges={allEdges}
-          onUpdateNode={onUpdateNode}
-          onUpdateEdge={handleUpdateEdge}
-          onDeleteNode={onDeleteNode}
-          onDeleteEdge={onDeleteEdge}
-          validatePriorityConflicts={validatePriorityConflicts}
-        />
-      )}
-      
-      {onToggle && (
-        <RightPanelToggle isExpanded={isExpanded} onToggle={onToggle} />
-      )}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+        <div className="px-4 pt-2">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="properties" className="text-xs">
+              Properties
+            </TabsTrigger>
+            <TabsTrigger value="validation" className="text-xs">
+              Issues
+              {validationResult.issues.length > 0 && (
+                <span className="ml-1 bg-destructive text-destructive-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {validationResult.issues.length}
+                </span>
+              )}
+            </TabsTrigger>
+          </TabsList>
+        </div>
+        
+        <TabsContent value="properties" className="flex-1 mt-0">
+          <EnhancedPropertiesPanel 
+            selectedNode={selectedNode}
+            selectedEdge={selectedEdge}
+            allNodes={allNodes}
+            allEdges={allEdges}
+            onUpdateNode={onUpdateNode}
+            onUpdateEdge={handleUpdateEdge}
+            onDeleteNode={onDeleteNode}
+            onDeleteEdge={onDeleteEdge}
+            validatePriorityConflicts={validatePriorityConflicts}
+          />
+        </TabsContent>
+        
+        <TabsContent value="validation" className="flex-1 mt-0">
+          <div className="p-4">
+            <ValidationPanel 
+              validationResult={validationResult}
+              compact={false}
+            />
+          </div>
+        </TabsContent>
+      </Tabs>
     </aside>
   );
 };
