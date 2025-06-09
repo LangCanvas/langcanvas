@@ -127,30 +127,30 @@ const EnhancedNodeComponent: React.FC<EnhancedNodeComponentProps> = ({
       fontWeight: '500',
       boxShadow: isDragging ? '0 4px 12px rgba(0,0,0,0.15)' : '0 2px 4px rgba(0,0,0,0.1)',
       zIndex: isSelected ? 10 : 5,
-      touchAction: 'none', // Prevent default touch behaviors
+      touchAction: 'none',
     };
 
     switch (node.type) {
       case 'agent':
         return {
           ...baseStyle,
-          backgroundColor: isSelected ? '#22c55e' : '#f0fdf4',
-          borderColor: isSelected ? '#16a34a' : '#22c55e',
+          backgroundColor: isSelected ? '#15803d' : '#f0fdf4',
+          borderColor: isSelected ? '#15803d' : '#22c55e',
           color: isSelected ? '#ffffff' : '#15803d',
           borderRadius: '30px',
         };
       case 'tool':
         return {
           ...baseStyle,
-          backgroundColor: isSelected ? '#3b82f6' : '#eff6ff',
-          borderColor: isSelected ? '#2563eb' : '#3b82f6',
+          backgroundColor: isSelected ? '#1d4ed8' : '#eff6ff',
+          borderColor: isSelected ? '#1d4ed8' : '#3b82f6',
           color: isSelected ? '#ffffff' : '#1d4ed8',
         };
       case 'function':
         return {
           ...baseStyle,
-          backgroundColor: isSelected ? '#7c3aed' : '#faf5ff',
-          borderColor: isSelected ? '#9333ea' : '#a855f7',
+          backgroundColor: isSelected ? '#6d28d9' : '#faf5ff',
+          borderColor: isSelected ? '#6d28d9' : '#a855f7',
           color: isSelected ? '#ffffff' : '#7c3aed',
         };
       case 'conditional':
@@ -165,15 +165,15 @@ const EnhancedNodeComponent: React.FC<EnhancedNodeComponentProps> = ({
       case 'parallel':
         return {
           ...baseStyle,
-          backgroundColor: isSelected ? '#06b6d4' : '#ecfeff',
-          borderColor: isSelected ? '#0891b2' : '#06b6d4',
+          backgroundColor: isSelected ? '#0e7490' : '#ecfeff',
+          borderColor: isSelected ? '#0e7490' : '#06b6d4',
           color: isSelected ? '#ffffff' : '#0e7490',
         };
       case 'end':
         return {
           ...baseStyle,
-          backgroundColor: isSelected ? '#ef4444' : '#fef2f2',
-          borderColor: isSelected ? '#dc2626' : '#ef4444',
+          backgroundColor: isSelected ? '#b91c1c' : '#fef2f2',
+          borderColor: isSelected ? '#b91c1c' : '#ef4444',
           color: isSelected ? '#ffffff' : '#b91c1c',
           borderRadius: '30px',
         };
@@ -182,7 +182,6 @@ const EnhancedNodeComponent: React.FC<EnhancedNodeComponentProps> = ({
     }
   };
 
-  // Combine validation tooltip with any existing title
   const tooltipText = validationTooltip || undefined;
 
   return (
@@ -201,7 +200,6 @@ const EnhancedNodeComponent: React.FC<EnhancedNodeComponentProps> = ({
         {node.label}
       </span>
       
-      {/* Connection Handle */}
       <ConnectionHandle
         node={node}
         canCreateEdge={canCreateEdge}
