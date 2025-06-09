@@ -43,8 +43,11 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
 
   const handleToggleLeftPanel = () => {
     const newExpanded = !isLeftPanelExpanded;
-    console.log("🎛️ Desktop left panel toggle clicked, new expanded state:", newExpanded);
+    console.log("🎛️ handleToggleLeftPanel CALLED!");
+    console.log("🎛️ Desktop left panel toggle clicked, old expanded:", isLeftPanelExpanded, "new expanded:", newExpanded);
+    
     setIsLeftPanelExpanded(newExpanded);
+    console.log("🎛️ setIsLeftPanelExpanded called with:", newExpanded);
 
     analytics.trackFeatureUsage('desktop_left_panel_toggled', { 
       isExpanded: newExpanded 
@@ -53,8 +56,16 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
 
   const handleToggleRightPanel = () => {
     const newExpanded = !isRightPanelExpanded;
+    console.log("🎛️ handleToggleRightPanel CALLED!");
     console.log("🎛️ Desktop right panel toggle clicked, old expanded:", isRightPanelExpanded, "new expanded:", newExpanded);
+    
     setIsRightPanelExpanded(newExpanded);
+    console.log("🎛️ setIsRightPanelExpanded called with:", newExpanded);
+
+    // Force a re-render by updating the state in a new tick
+    setTimeout(() => {
+      console.log("🎛️ Post-toggle state check - isRightPanelExpanded:", isRightPanelExpanded);
+    }, 0);
 
     analytics.trackFeatureUsage('desktop_right_panel_toggled', { 
       isExpanded: newExpanded 
