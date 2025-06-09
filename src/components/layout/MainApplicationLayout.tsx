@@ -1,3 +1,4 @@
+
 import React from 'react';
 import Toolbar from './Toolbar';
 import MobileMenu from './MobileMenu';
@@ -11,7 +12,7 @@ import { ValidationResult } from '../../hooks/useValidation';
 interface MainApplicationLayoutProps {
   // UI State
   isMobileMenuOpen: boolean;
-  activePanel: string | null;
+  activePanel: 'palette' | 'properties' | null;
   showValidationPanel: boolean;
   
   // Data
@@ -23,7 +24,7 @@ interface MainApplicationLayoutProps {
   
   // Actions
   onMobileMenuToggle: () => void;
-  onPanelToggle: (panel: string) => void;
+  onPanelToggle: (panel: 'palette' | 'properties') => void;
   closePanels: () => void;
   setShowValidationPanel: (show: boolean) => void;
   

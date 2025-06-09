@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Canvas from '../components/Canvas';
 import MainApplicationLayout from '../components/layout/MainApplicationLayout';
@@ -11,6 +10,7 @@ import { useValidation } from '../hooks/useValidation';
 import { useIndexHandlers } from '../hooks/useIndexHandlers';
 import { useIndexWorkflowHandlers } from '../hooks/useIndexWorkflowHandlers';
 import { useIndexMobileHandlers } from '../hooks/useIndexMobileHandlers';
+import { EnhancedEdge } from '../types/edgeTypes';
 
 const Index = () => {
   const { 

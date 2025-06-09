@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from 'react';
 import { EnhancedNode } from '../types/nodeTypes';
 import { Edge } from './useEdges';
@@ -8,6 +7,9 @@ interface UseValidationProps {
   nodes: EnhancedNode[];
   edges: Edge[];
 }
+
+// Re-export ValidationResult so other components can use it
+export type { ValidationResult, ValidationIssue } from '../utils/graphValidation';
 
 export const useValidation = ({ nodes, edges }: UseValidationProps) => {
   const [validationResult, setValidationResult] = useState<ValidationResult>({

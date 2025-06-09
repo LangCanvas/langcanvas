@@ -1,23 +1,26 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import NodePalette from '../NodePalette';
 import EnhancedPropertiesPanel from '../EnhancedPropertiesPanel';
-import { ValidationResult } from '../../utils/graphValidation';
+import { ValidationResult } from '../../hooks/useValidation';
 import { EnhancedNode } from '../../types/nodeTypes';
+import { EnhancedEdge } from '../../types/edgeTypes';
 
 interface MobilePanelOverlayProps {
   activePanel: 'palette' | 'properties' | null;
   onClose: () => void;
   onPanelToggle: (panel: 'palette' | 'properties') => void;
   selectedNode: EnhancedNode | null;
-  selectedEdge: any;
+  selectedEdge: EnhancedEdge | null;
   onDeleteNode: (nodeId: string) => void;
   onDeleteEdge: (edgeId: string) => void;
   onUpdateNodeProperties: (nodeId: string, updates: Partial<EnhancedNode>) => void;
-  onUpdateEdgeProperties: (edgeId: string, updates: any) => void;
+  onUpdateEdgeProperties: (edgeId: string, updates: Partial<EnhancedEdge>) => void;
   allNodes: EnhancedNode[];
-  nodeOutgoingEdges: any[];
+  allEdges: EnhancedEdge[];
+  nodeOutgoingEdges: EnhancedEdge[];
   validationResult: ValidationResult;
 }
 
@@ -32,6 +35,7 @@ const MobilePanelOverlay: React.FC<MobilePanelOverlayProps> = ({
   onUpdateNodeProperties,
   onUpdateEdgeProperties,
   allNodes,
+  allEdges,
   nodeOutgoingEdges,
   validationResult
 }) => {
@@ -82,6 +86,7 @@ const MobilePanelOverlay: React.FC<MobilePanelOverlayProps> = ({
               selectedNode={selectedNode}
               selectedEdge={selectedEdge}
               allNodes={allNodes}
+              allEdges={allEdges}
               onUpdateNode={onUpdateNodeProperties}
               onUpdateEdge={onUpdateEdgeProperties}
               onDeleteNode={onDeleteNode}

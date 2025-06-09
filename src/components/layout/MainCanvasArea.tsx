@@ -7,7 +7,7 @@ import { EnhancedEdge } from '../../types/edgeTypes';
 import { ValidationResult } from '../../hooks/useValidation';
 
 interface MainCanvasAreaProps {
-  activePanel: string | null;
+  activePanel: 'palette' | 'properties' | null;
   selectedNode: EnhancedNode | null;
   selectedEdge: EnhancedEdge | null;
   allNodes: EnhancedNode[];
@@ -16,7 +16,7 @@ interface MainCanvasAreaProps {
   showValidationPanel: boolean;
   
   onClose: () => void;
-  onPanelToggle: (panel: string) => void;
+  onPanelToggle: (panel: 'palette' | 'properties') => void;
   onDeleteNode: (nodeId: string) => void;
   onDeleteEdge: (edgeId: string) => void;
   onUpdateNodeProperties: (nodeId: string, updates: Partial<EnhancedNode>) => void;
@@ -60,6 +60,7 @@ const MainCanvasArea: React.FC<MainCanvasAreaProps> = ({
         onUpdateNodeProperties={onUpdateNodeProperties}
         onUpdateEdgeProperties={onUpdateEdgeProperties}
         allNodes={allNodes}
+        allEdges={allEdges}
         nodeOutgoingEdges={nodeOutgoingEdges}
         validationResult={validationResult}
       />
