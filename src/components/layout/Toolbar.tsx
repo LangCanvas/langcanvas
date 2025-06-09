@@ -6,7 +6,6 @@ import { ValidationResult } from '../../utils/graphValidation';
 import ToolbarBrand from './toolbar/ToolbarBrand';
 import ToolbarValidation from './toolbar/ToolbarValidation';
 import ToolbarActions from './toolbar/ToolbarActions';
-import ToolbarPanelToggles from './toolbar/ToolbarPanelToggles';
 import ToolbarMenu from './toolbar/ToolbarMenu';
 
 interface ToolbarProps {
@@ -30,11 +29,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   onImport,
   onExport,
   hasNodes,
-  validationResult,
-  isLeftPanelVisible = true,
-  isRightPanelVisible = true,
-  onToggleLeftPanel,
-  onToggleRightPanel
+  validationResult
 }) => {
   return (
     <header className="bg-gray-100 border-b border-gray-200 px-2 sm:px-4 py-2 flex items-center justify-between shadow-sm">
@@ -51,15 +46,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
         
         <ToolbarBrand />
         
-        {onToggleLeftPanel && (
-          <ToolbarPanelToggles
-            isLeftPanelVisible={isLeftPanelVisible}
-            isRightPanelVisible={isRightPanelVisible}
-            onToggleLeftPanel={onToggleLeftPanel}
-            onToggleRightPanel={onToggleRightPanel || (() => {})}
-          />
-        )}
-        
         <ToolbarValidation 
           validationResult={validationResult}
           hasNodes={hasNodes}
@@ -73,22 +59,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
       </div>
 
       <div className="flex items-center space-x-2">
-        {onToggleRightPanel && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="hidden lg:flex text-gray-600 hover:text-gray-800 touch-manipulation"
-            onClick={onToggleRightPanel}
-            style={{ minHeight: '44px', minWidth: '44px' }}
-            title={isRightPanelVisible ? 'Hide Properties Panel' : 'Show Properties Panel'}
-          >
-            {isRightPanelVisible ? 
-              <span className="text-xs">Hide</span> : 
-              <span className="text-xs">Show</span>
-            }
-          </Button>
-        )}
-        
         <ToolbarMenu />
       </div>
     </header>

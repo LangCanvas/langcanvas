@@ -6,6 +6,8 @@ import DesktopSidebar from './DesktopSidebar';
 import MainCanvasArea from './MainCanvasArea';
 import MobileBottomNav from './MobileBottomNav';
 import Footer from './Footer';
+import LeftPanelToggle from './LeftPanelToggle';
+import RightPanelToggle from './RightPanelToggle';
 import { EnhancedNode } from '../../types/nodeTypes';
 import { EnhancedEdge } from '../../types/edgeTypes';
 import { ValidationResult } from '../../hooks/useValidation';
@@ -83,7 +85,7 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
   children
 }) => {
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
+    <div className="h-screen flex flex-col bg-gray-50 relative">
       <Toolbar
         isMobileMenuOpen={isMobileMenuOpen}
         onMobileMenuToggle={onMobileMenuToggle}
@@ -92,10 +94,16 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
         onExport={onExport}
         hasNodes={nodes.length > 0}
         validationResult={validationResult}
-        isLeftPanelVisible={isLeftPanelVisible}
-        isRightPanelVisible={isRightPanelVisible}
-        onToggleLeftPanel={onToggleLeftPanel}
-        onToggleRightPanel={onToggleRightPanel}
+      />
+
+      <LeftPanelToggle
+        isVisible={isLeftPanelVisible}
+        onToggle={onToggleLeftPanel}
+      />
+
+      <RightPanelToggle
+        isVisible={isRightPanelVisible}
+        onToggle={onToggleRightPanel}
       />
 
       <MobileMenu
