@@ -2,7 +2,6 @@
 import React from 'react';
 import NodePalette from '../NodePalette';
 import CollapsedNodePalette from './CollapsedNodePalette';
-import LeftPanelToggle from './LeftPanelToggle';
 
 interface DesktopSidebarProps {
   isVisible?: boolean;
@@ -23,9 +22,11 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
   }
 
   // Handle collapsed state
-  const handleExpand = () => {
-    console.log('Expand sidebar requested');
-    if (onExpand) {
+  const handleToggle = () => {
+    console.log('Toggle sidebar requested');
+    if (onToggle) {
+      onToggle();
+    } else if (onExpand) {
       onExpand();
     }
   };
@@ -34,10 +35,7 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
   if (!isExpanded) {
     return (
       <aside className="relative w-14 bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out">
-        <CollapsedNodePalette onExpand={handleExpand} />
-        {onToggle && (
-          <LeftPanelToggle isExpanded={isExpanded} onToggle={onToggle} />
-        )}
+        <CollapsedNodePalette onToggle={handleToggle} isExpanded={isExpanded} />
       </aside>
     );
   }
@@ -49,9 +47,6 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
         const event = new CustomEvent('setPendingCreation', { detail: type });
         window.dispatchEvent(event);
       }} />
-      {onToggle && (
-        <LeftPanelToggle isExpanded={isExpanded} onToggle={onToggle} />
-      )}
     </aside>
   );
 };

@@ -1,12 +1,13 @@
-
 import React from 'react';
+import { PanelLeft, PanelLeftClose } from 'lucide-react';
 import { NodeType } from '../../types/nodeTypes';
 
 interface CollapsedNodePaletteProps {
-  onExpand: () => void;
+  onToggle: () => void;
+  isExpanded: boolean;
 }
 
-const CollapsedNodePalette: React.FC<CollapsedNodePaletteProps> = ({ onExpand }) => {
+const CollapsedNodePalette: React.FC<CollapsedNodePaletteProps> = ({ onToggle, isExpanded }) => {
   const nodeTypes = [
     { type: 'start' as NodeType, label: 'Start', icon: '▶', color: 'text-green-600' },
     { type: 'agent' as NodeType, label: 'Agent', icon: '🤖', color: 'text-green-600' },
@@ -130,11 +131,11 @@ const CollapsedNodePalette: React.FC<CollapsedNodePaletteProps> = ({ onExpand })
   return (
     <div className="flex flex-col items-center py-4 space-y-3">
       <button
-        onClick={onExpand}
+        onClick={onToggle}
         className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors mb-2"
-        title="Expand Node Palette"
+        title={isExpanded ? 'Collapse Node Palette' : 'Expand Node Palette'}
       >
-        <span className="text-blue-600 text-lg">+</span>
+        {isExpanded ? <PanelLeftClose className="w-4 h-4 text-gray-700" /> : <PanelLeft className="w-4 h-4 text-gray-700" />}
       </button>
 
       {nodeTypes.map(({ type, label, icon, color }) => (
