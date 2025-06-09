@@ -137,7 +137,7 @@ const Canvas: React.FC<CanvasProps> = ({
     }
   }, [isSelecting, selectedNodeIds.length, onSelectionStateChange]);
 
-  // Consolidated mouse event handling
+  // Fixed mouse event handling - only start selection on actual drag
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -145,6 +145,7 @@ const Canvas: React.FC<CanvasProps> = ({
     let isMouseDown = false;
     let isDragging = false;
     let startCoords: { x: number; y: number } | null = null;
+    let hasStartedSelection = false;
 
     const handleMouseDown = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
@@ -170,13 +171,14 @@ const Canvas: React.FC<CanvasProps> = ({
         return;
       }
 
-      // Only start selection on canvas background
+      // Only start tracking on canvas background
       if (target === canvas || target.closest('.canvas-background')) {
         console.log('✅ Valid mousedown on canvas background');
         event.preventDefault();
         
         isMouseDown = true;
         isDragging = false;
+        hasStartedSelection = false;
         startCoords = getCanvasCoordinates(event, canvasRef);
         
         console.log('🔲 Mouse down at canvas coords:', startCoords);
@@ -190,27 +192,29 @@ const Canvas: React.FC<CanvasProps> = ({
       const deltaX = Math.abs(currentCoords.x - startCoords.x);
       const deltaY = Math.abs(currentCoords.y - startCoords.y);
 
-      // Start rectangle selection after minimum movement
-      if (!isDragging && (deltaX > 3 || deltaY > 3)) {
-        console.log('🔲 Starting rectangle selection');
+      // Start rectangle selection only after minimum movement and only once
+      if (!isDragging && !hasStartedSelection && (deltaX > 3 || deltaY > 3)) {
+        console.log('🔲 Starting rectangle selection on first drag movement');
         isDragging = true;
+        hasStartedSelection = true;
         startRectangleSelection(startCoords.x, startCoords.y);
       }
       
+      // Update rectangle selection if we're dragging
       if (isDragging && isSelecting) {
         updateRectangleSelection(currentCoords.x, currentCoords.y);
       }
     };
 
     const handleMouseUp = (event: MouseEvent) => {
-      console.log('🖱️ Mouse up:', { isMouseDown, isDragging, isSelecting });
+      console.log('🖱️ Mouse up:', { isMouseDown, isDragging, isSelecting, hasStartedSelection });
       
       if (isMouseDown) {
-        if (isDragging && isSelecting) {
+        if (isDragging && isSelecting && hasStartedSelection) {
           console.log('🔲 Ending rectangle selection');
           endRectangleSelection(nodes);
-        } else if (!isDragging) {
-          // Simple click on canvas background - clear all selections
+        } else if (!isDragging && !hasStartedSelection) {
+          // Simple click on canvas background without any dragging - clear all selections
           console.log('🧹 Canvas background click - clearing all selections');
           clearSelection();
           selectNodeSafely(null);
@@ -220,6 +224,7 @@ const Canvas: React.FC<CanvasProps> = ({
       // Reset state
       isMouseDown = false;
       isDragging = false;
+      hasStartedSelection = false;
       startCoords = null;
     };
 
