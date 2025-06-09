@@ -15,6 +15,7 @@ interface MainCanvasAreaProps {
   validationResult: ValidationResult;
   showValidationPanel: boolean;
   isRightPanelVisible?: boolean;
+  isRightPanelExpanded?: boolean;
   
   onClose: () => void;
   onPanelToggle: (panel: 'palette' | 'properties') => void;
@@ -23,6 +24,7 @@ interface MainCanvasAreaProps {
   onUpdateNodeProperties: (nodeId: string, updates: Partial<EnhancedNode>) => void;
   onUpdateEdgeProperties: (edgeId: string, updates: Partial<EnhancedEdge>) => void;
   setShowValidationPanel: (show: boolean) => void;
+  onExpandRightPanel?: () => void;
   switchToPropertiesPanel?: () => void;
   validatePriorityConflicts?: (nodeId: string, priority: number, currentEdgeId?: string) => { hasConflict: boolean; conflictingEdges: EnhancedEdge[] };
   
@@ -38,6 +40,7 @@ const MainCanvasArea: React.FC<MainCanvasAreaProps> = ({
   validationResult,
   showValidationPanel,
   isRightPanelVisible = true,
+  isRightPanelExpanded = true,
   onClose,
   onPanelToggle,
   onDeleteNode,
@@ -45,10 +48,13 @@ const MainCanvasArea: React.FC<MainCanvasAreaProps> = ({
   onUpdateNodeProperties,
   onUpdateEdgeProperties,
   setShowValidationPanel,
+  onExpandRightPanel,
   switchToPropertiesPanel,
   validatePriorityConflicts,
   children
 }) => {
+  console.log("🖼️ MainCanvasArea render - Right panel visible:", isRightPanelVisible, "expanded:", isRightPanelExpanded);
+  
   return (
     <div className="flex-1 flex">
       <div className="flex-1 relative">
@@ -73,7 +79,7 @@ const MainCanvasArea: React.FC<MainCanvasAreaProps> = ({
         validatePriorityConflicts={validatePriorityConflicts}
       />
 
-      {/* Always render the desktop properties panel - let it handle its own visibility */}
+      {/* Always render the desktop properties panel - it handles its own visibility */}
       <DesktopPropertiesPanel
         selectedNode={selectedNode}
         selectedEdge={selectedEdge}
@@ -81,12 +87,14 @@ const MainCanvasArea: React.FC<MainCanvasAreaProps> = ({
         allEdges={allEdges}
         validationResult={validationResult}
         showValidationPanel={showValidationPanel}
-        isExpanded={isRightPanelVisible}
+        isVisible={isRightPanelVisible}
+        isExpanded={isRightPanelExpanded}
         onUpdateNode={onUpdateNodeProperties}
         onUpdateEdge={onUpdateEdgeProperties}
         onDeleteNode={onDeleteNode}
         onDeleteEdge={onDeleteEdge}
         setShowValidationPanel={setShowValidationPanel}
+        onExpand={onExpandRightPanel}
         switchToPropertiesPanel={switchToPropertiesPanel}
         validatePriorityConflicts={validatePriorityConflicts}
       />

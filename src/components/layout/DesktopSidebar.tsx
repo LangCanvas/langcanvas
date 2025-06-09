@@ -1,28 +1,44 @@
 
 import React from 'react';
 import NodePalette from '../NodePalette';
+import CollapsedNodePalette from './CollapsedNodePalette';
 
 interface DesktopSidebarProps {
   isVisible?: boolean;
+  isExpanded?: boolean;
+  onExpand?: () => void;
 }
 
-const DesktopSidebar: React.FC<DesktopSidebarProps> = ({ isVisible = true }) => {
+const DesktopSidebar: React.FC<DesktopSidebarProps> = ({ 
+  isVisible = true, 
+  isExpanded = true,
+  onExpand
+}) => {
+  // If not visible at all, don't render anything
+  if (!isVisible) {
+    return null;
+  }
+
+  // Handle collapsed state
+  const handleExpand = () => {
+    console.log('Expand sidebar requested');
+    if (onExpand) {
+      onExpand();
+    }
+  };
+
+  // Show collapsed panel when not expanded
+  if (!isExpanded) {
+    return <CollapsedNodePalette onExpand={handleExpand} />;
+  }
+
+  // Show expanded panel
   return (
-    <aside 
-      className={`hidden lg:flex bg-white border-r border-gray-200 flex-col transition-all duration-300 ease-in-out ${
-        isVisible ? 'w-64 translate-x-0' : 'w-0 -translate-x-full'
-      }`}
-      style={{ 
-        overflow: isVisible ? 'visible' : 'hidden',
-        opacity: isVisible ? 1 : 0
-      }}
-    >
-      {isVisible && (
-        <NodePalette onNodeTypeSelect={(type) => {
-          const event = new CustomEvent('setPendingCreation', { detail: type });
-          window.dispatchEvent(event);
-        }} />
-      )}
+    <aside className="w-64 bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out">
+      <NodePalette onNodeTypeSelect={(type) => {
+        const event = new CustomEvent('setPendingCreation', { detail: type });
+        window.dispatchEvent(event);
+      }} />
     </aside>
   );
 };

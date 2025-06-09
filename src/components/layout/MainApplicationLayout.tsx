@@ -18,9 +18,11 @@ interface MainApplicationLayoutProps {
   activePanel: 'palette' | 'properties' | null;
   showValidationPanel: boolean;
   
-  // Desktop Panel State
+  // Desktop Panel State - updated interface
   isLeftPanelVisible: boolean;
+  isLeftPanelExpanded: boolean;
   isRightPanelVisible: boolean;
+  isRightPanelExpanded: boolean;
   
   // Data
   nodes: EnhancedNode[];
@@ -36,6 +38,8 @@ interface MainApplicationLayoutProps {
   setShowValidationPanel: (show: boolean) => void;
   onToggleLeftPanel: () => void;
   onToggleRightPanel: () => void;
+  onExpandLeftPanel: () => void;
+  onExpandRightPanel: () => void;
   switchToPropertiesPanel: () => void;
   
   // Workflow Actions
@@ -61,7 +65,9 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
   activePanel,
   showValidationPanel,
   isLeftPanelVisible,
+  isLeftPanelExpanded,
   isRightPanelVisible,
+  isRightPanelExpanded,
   nodes,
   edges,
   selectedNode,
@@ -73,6 +79,8 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
   setShowValidationPanel,
   onToggleLeftPanel,
   onToggleRightPanel,
+  onExpandLeftPanel,
+  onExpandRightPanel,
   switchToPropertiesPanel,
   onNewProject,
   onImport,
@@ -84,6 +92,8 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
   validatePriorityConflicts,
   children
 }) => {
+  console.log("🏗️ MainApplicationLayout render - Right panel visible:", isRightPanelVisible, "expanded:", isRightPanelExpanded);
+  
   return (
     <div className="h-screen flex flex-col bg-gray-50 relative">
       <Toolbar
@@ -98,11 +108,13 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
 
       <LeftPanelToggle
         isVisible={isLeftPanelVisible}
+        isExpanded={isLeftPanelExpanded}
         onToggle={onToggleLeftPanel}
       />
 
       <RightPanelToggle
         isVisible={isRightPanelVisible}
+        isExpanded={isRightPanelExpanded}
         onToggle={onToggleRightPanel}
       />
 
@@ -117,7 +129,11 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
       />
 
       <div className="flex-1 flex overflow-hidden">
-        <DesktopSidebar isVisible={isLeftPanelVisible} />
+        <DesktopSidebar 
+          isVisible={isLeftPanelVisible} 
+          isExpanded={isLeftPanelExpanded}
+          onExpand={onExpandLeftPanel}
+        />
         
         <MainCanvasArea
           activePanel={activePanel}
@@ -136,6 +152,8 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
           setShowValidationPanel={setShowValidationPanel}
           validatePriorityConflicts={validatePriorityConflicts}
           isRightPanelVisible={isRightPanelVisible}
+          isRightPanelExpanded={isRightPanelExpanded}
+          onExpandRightPanel={onExpandRightPanel}
           switchToPropertiesPanel={switchToPropertiesPanel}
         >
           {children}

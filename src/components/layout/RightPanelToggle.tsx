@@ -5,12 +5,18 @@ import { PanelRight, PanelRightClose } from 'lucide-react';
 
 interface RightPanelToggleProps {
   isVisible: boolean;
+  isExpanded: boolean;
   onToggle: () => void;
 }
 
-const RightPanelToggle: React.FC<RightPanelToggleProps> = ({ isVisible, onToggle }) => {
+const RightPanelToggle: React.FC<RightPanelToggleProps> = ({ isVisible, isExpanded, onToggle }) => {
+  // Don't show toggle if panel is completely hidden
+  if (!isVisible) {
+    return null;
+  }
+
   // Position the button based on panel state
-  const buttonPosition = isVisible ? 'right-80' : 'right-14';
+  const buttonPosition = isExpanded ? 'right-80' : 'right-14';
   
   return (
     <div className={`absolute top-20 z-20 hidden lg:block transition-all duration-300 ease-in-out ${buttonPosition}`}>
@@ -19,9 +25,9 @@ const RightPanelToggle: React.FC<RightPanelToggleProps> = ({ isVisible, onToggle
         size="sm"
         className="bg-white/95 backdrop-blur-sm shadow-lg border-gray-200 hover:bg-gray-50 text-gray-700 hover:text-gray-900 h-10 w-10 p-0 -ml-5"
         onClick={onToggle}
-        title={isVisible ? 'Collapse Properties Panel' : 'Expand Properties Panel'}
+        title={isExpanded ? 'Collapse Properties Panel' : 'Expand Properties Panel'}
       >
-        {isVisible ? <PanelRightClose className="w-4 h-4" /> : <PanelRight className="w-4 h-4" />}
+        {isExpanded ? <PanelRightClose className="w-4 h-4" /> : <PanelRight className="w-4 h-4" />}
       </Button>
     </div>
   );

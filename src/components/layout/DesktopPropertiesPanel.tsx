@@ -14,6 +14,7 @@ interface DesktopPropertiesPanelProps {
   allEdges: EnhancedEdge[];
   validationResult: ValidationResult;
   showValidationPanel: boolean;
+  isVisible?: boolean;
   isExpanded?: boolean;
   
   onUpdateNode: (nodeId: string, updates: Partial<EnhancedNode>) => void;
@@ -21,6 +22,7 @@ interface DesktopPropertiesPanelProps {
   onDeleteNode: (nodeId: string) => void;
   onDeleteEdge: (edgeId: string) => void;
   setShowValidationPanel: (show: boolean) => void;
+  onExpand?: () => void;
   switchToPropertiesPanel?: () => void;
   validatePriorityConflicts?: (nodeId: string, priority: number, currentEdgeId?: string) => { hasConflict: boolean; conflictingEdges: EnhancedEdge[] };
 }
@@ -32,15 +34,19 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
   allEdges,
   validationResult,
   showValidationPanel,
+  isVisible = true,
   isExpanded = true,
   onUpdateNode,
   onUpdateEdge,
   onDeleteNode,
   onDeleteEdge,
   setShowValidationPanel,
+  onExpand,
   switchToPropertiesPanel,
   validatePriorityConflicts
 }) => {
+  console.log("🎛️ DesktopPropertiesPanel render - visible:", isVisible, "expanded:", isExpanded);
+
   // Smart switching: when user selects a node/edge while validation panel is showing
   useEffect(() => {
     if ((selectedNode || selectedEdge) && showValidationPanel && switchToPropertiesPanel) {
@@ -53,9 +59,16 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
   };
 
   const handleExpand = () => {
-    // This will be handled by the parent component through the toggle button
     console.log('Expand panel requested');
+    if (onExpand) {
+      onExpand();
+    }
   };
+
+  // Don't render anything if not visible
+  if (!isVisible) {
+    return null;
+  }
 
   // Show collapsed panel when not expanded
   if (!isExpanded) {

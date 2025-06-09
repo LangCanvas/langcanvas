@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Canvas from '../components/Canvas';
 import MainApplicationLayout from '../components/layout/MainApplicationLayout';
@@ -124,11 +123,15 @@ const Index = () => {
     showValidationPanel,
     setShowValidationPanel,
     isLeftPanelVisible,
+    isLeftPanelExpanded,
     isRightPanelVisible,
+    isRightPanelExpanded,
     handleMobileMenuToggle,
     handlePanelToggle,
     handleToggleLeftPanel,
     handleToggleRightPanel,
+    handleExpandLeftPanel,
+    handleExpandRightPanel,
     closePanels,
     switchToPropertiesPanel,
   } = useIndexPanelHandlers(clearPendingCreation);
@@ -160,7 +163,9 @@ const Index = () => {
       activePanel={activePanel}
       showValidationPanel={showValidationPanel}
       isLeftPanelVisible={isLeftPanelVisible}
+      isLeftPanelExpanded={isLeftPanelExpanded}
       isRightPanelVisible={isRightPanelVisible}
+      isRightPanelExpanded={isRightPanelExpanded}
       nodes={nodes}
       edges={edges}
       selectedNode={selectedNode}
@@ -170,6 +175,8 @@ const Index = () => {
       onPanelToggle={handlePanelToggle}
       onToggleLeftPanel={handleToggleLeftPanel}
       onToggleRightPanel={handleToggleRightPanel}
+      onExpandLeftPanel={handleExpandLeftPanel}
+      onExpandRightPanel={handleExpandRightPanel}
       closePanels={closePanels}
       setShowValidationPanel={setShowValidationPanel}
       switchToPropertiesPanel={switchToPropertiesPanel}
