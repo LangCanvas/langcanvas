@@ -137,7 +137,7 @@ const NodeComponent: React.FC<NodeComponentProps> = ({
         ...baseStyle,
         width: '80px',
         height: '80px',
-        backgroundColor: '#fff4e6',
+        backgroundColor: isSelected ? '#fed7aa' : '#fff4e6',
         border: `3px solid ${isSelected ? '#d97706' : '#ea580c'}`,
         color: '#9a3412',
         clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
@@ -159,7 +159,7 @@ const NodeComponent: React.FC<NodeComponentProps> = ({
       case 'start':
         return {
           ...regularStyle,
-          backgroundColor: '#f0fdf4',
+          backgroundColor: isSelected ? '#dcfce7' : '#f0fdf4',
           borderColor: isSelected ? '#16a34a' : '#22c55e',
           color: '#15803d',
           borderRadius: '30px',
@@ -167,35 +167,35 @@ const NodeComponent: React.FC<NodeComponentProps> = ({
       case 'agent':
         return {
           ...regularStyle,
-          backgroundColor: '#f0fdf4',
+          backgroundColor: isSelected ? '#dcfce7' : '#f0fdf4',
           borderColor: isSelected ? '#16a34a' : '#22c55e',
           color: '#15803d',
         };
       case 'tool':
         return {
           ...regularStyle,
-          backgroundColor: '#eff6ff',
+          backgroundColor: isSelected ? '#dbeafe' : '#eff6ff',
           borderColor: isSelected ? '#2563eb' : '#3b82f6',
           color: '#1d4ed8',
         };
       case 'function':
         return {
           ...regularStyle,
-          backgroundColor: '#faf5ff',
+          backgroundColor: isSelected ? '#e9d5ff' : '#faf5ff',
           borderColor: isSelected ? '#9333ea' : '#a855f7',
           color: '#7c3aed',
         };
       case 'parallel':
         return {
           ...regularStyle,
-          backgroundColor: '#ecfeff',
+          backgroundColor: isSelected ? '#cffafe' : '#ecfeff',
           borderColor: isSelected ? '#0891b2' : '#06b6d4',
           color: '#0e7490',
         };
       case 'end':
         return {
           ...regularStyle,
-          backgroundColor: '#fef2f2',
+          backgroundColor: isSelected ? '#fecaca' : '#fef2f2',
           borderColor: isSelected ? '#dc2626' : '#ef4444',
           color: '#b91c1c',
           borderRadius: '30px',

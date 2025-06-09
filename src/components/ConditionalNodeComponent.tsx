@@ -141,7 +141,7 @@ const ConditionalNodeComponent: React.FC<ConditionalNodeComponentProps> = ({
     top: node.y,
     width: '80px',
     height: '80px',
-    backgroundColor: '#fff4e6',
+    backgroundColor: isSelected ? '#fed7aa' : '#fff4e6',
     border: `3px solid ${isSelected ? '#d97706' : '#ea580c'}`,
     color: '#9a3412',
     clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',

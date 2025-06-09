@@ -116,7 +116,7 @@ const EnhancedNodeComponent: React.FC<EnhancedNodeComponentProps> = ({
       case 'agent':
         return {
           ...baseStyle,
-          backgroundColor: '#f0fdf4',
+          backgroundColor: isSelected ? '#dcfce7' : '#f0fdf4',
           borderColor: isSelected ? '#16a34a' : '#22c55e',
           color: '#15803d',
           borderRadius: '30px',
@@ -124,21 +124,21 @@ const EnhancedNodeComponent: React.FC<EnhancedNodeComponentProps> = ({
       case 'tool':
         return {
           ...baseStyle,
-          backgroundColor: '#eff6ff',
+          backgroundColor: isSelected ? '#dbeafe' : '#eff6ff',
           borderColor: isSelected ? '#2563eb' : '#3b82f6',
           color: '#1d4ed8',
         };
       case 'function':
         return {
           ...baseStyle,
-          backgroundColor: '#faf5ff',
+          backgroundColor: isSelected ? '#e9d5ff' : '#faf5ff',
           borderColor: isSelected ? '#9333ea' : '#a855f7',
           color: '#7c3aed',
         };
       case 'conditional':
         return {
           ...baseStyle,
-          backgroundColor: '#fff7ed',
+          backgroundColor: isSelected ? '#fed7aa' : '#fff7ed',
           borderColor: isSelected ? '#ea580c' : '#f97316',
           color: '#c2410c',
           transform: 'rotate(45deg)',
@@ -147,14 +147,14 @@ const EnhancedNodeComponent: React.FC<EnhancedNodeComponentProps> = ({
       case 'parallel':
         return {
           ...baseStyle,
-          backgroundColor: '#ecfeff',
+          backgroundColor: isSelected ? '#cffafe' : '#ecfeff',
           borderColor: isSelected ? '#0891b2' : '#06b6d4',
           color: '#0e7490',
         };
       case 'end':
         return {
           ...baseStyle,
-          backgroundColor: '#fef2f2',
+          backgroundColor: isSelected ? '#fecaca' : '#fef2f2',
           borderColor: isSelected ? '#dc2626' : '#ef4444',
           color: '#b91c1c',
           borderRadius: '30px',
