@@ -7,8 +7,8 @@ const Footer: React.FC = () => {
 
   return (
     <footer className="bg-gray-50 border-t border-gray-200 px-4 py-2">
-      <div className="flex justify-center">
-        <span className="text-sm text-gray-500 font-medium">
+      <div className="flex justify-end">
+        <span className="text-xs text-gray-400 font-normal">
           {version}
         </span>
       </div>

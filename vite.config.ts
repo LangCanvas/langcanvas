@@ -9,10 +9,19 @@ import { execSync } from "child_process";
 const getCommitCount = () => {
   try {
     const count = execSync('git rev-list --count HEAD', { encoding: 'utf8' }).trim();
+    console.log(`Git commit count: ${count}`);
     return count;
   } catch (error) {
     console.warn('Could not get git commit count, using fallback');
-    return '1'; // Fallback for development
+    // Try alternative git command
+    try {
+      const altCount = execSync('git log --oneline | wc -l', { encoding: 'utf8' }).trim();
+      console.log(`Git commit count (alternative): ${altCount}`);
+      return altCount;
+    } catch (altError) {
+      console.warn('Alternative git command also failed, using timestamp-based fallback');
+      return Date.now().toString().slice(-3); // Use last 3 digits of timestamp as fallback
+    }
   }
 };
 

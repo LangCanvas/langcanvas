@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,9 +16,9 @@ import {
   X,
   AlertTriangle,
   CheckCircle,
-  Scale,
   ChevronDown,
-  Shield
+  Shield,
+  MoreVertical
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -166,7 +167,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
               className="text-gray-600 hover:text-gray-800 touch-manipulation"
               style={{ minHeight: '44px' }}
             >
-              <Scale className="w-4 h-4 mr-1" />
+              <MoreVertical className="w-4 h-4 mr-1" />
               <span className="hidden md:inline">Menu</span>
               <ChevronDown className="w-3 h-3 ml-1" />
             </Button>
