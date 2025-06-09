@@ -100,9 +100,6 @@ const MobilePanelOverlay: React.FC<MobilePanelOverlayProps> = ({
               onUpdateEdge={onUpdateEdgeProperties}
               onDeleteNode={onDeleteNode}
               onDeleteEdge={onDeleteEdge}
-              validationResult={validationResult}
-              showValidationPanel={showValidationPanel}
-              setShowValidationPanel={setShowValidationPanel}
               validatePriorityConflicts={validatePriorityConflicts}
             />
           )}
