@@ -41,6 +41,7 @@ interface CanvasProps {
   pendingNodeType?: NodeType | null;
   onClearPendingCreation?: () => void;
   hasUnsavedChanges?: boolean;
+  onSelectionStateChange?: (state: { isSelecting: boolean; selectedCount: number }) => void;
 }
 
 const Canvas: React.FC<CanvasProps> = ({ 
@@ -63,7 +64,8 @@ const Canvas: React.FC<CanvasProps> = ({
   getEdgeTooltip,
   pendingNodeType,
   onClearPendingCreation,
-  hasUnsavedChanges = false
+  hasUnsavedChanges = false,
+  onSelectionStateChange
 }) => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -124,6 +126,16 @@ const Canvas: React.FC<CanvasProps> = ({
     onMoveNode,
     nodes,
   });
+
+  // Update parent with selection state changes
+  useEffect(() => {
+    if (onSelectionStateChange) {
+      onSelectionStateChange({
+        isSelecting,
+        selectedCount: selectedNodeIds.length
+      });
+    }
+  }, [isSelecting, selectedNodeIds.length, onSelectionStateChange]);
 
   // Consolidated mouse event handling
   useEffect(() => {
