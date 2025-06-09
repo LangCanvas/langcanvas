@@ -101,6 +101,12 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
         onExport={onExport}
         hasNodes={nodes.length > 0}
         validationResult={validationResult}
+        isLeftPanelVisible={isLeftPanelVisible}
+        isLeftPanelExpanded={isLeftPanelExpanded}
+        isRightPanelVisible={isRightPanelVisible}
+        isRightPanelExpanded={isRightPanelExpanded}
+        onToggleLeftPanel={onToggleLeftPanel}
+        onToggleRightPanel={onToggleRightPanel}
       />
 
       <MobileMenu
