@@ -1,3 +1,4 @@
+
 import { useEffect, useCallback } from 'react';
 import { EnhancedNode, NodeType } from '../types/nodeTypes';
 import { useEnhancedAnalytics } from './useEnhancedAnalytics';
@@ -12,6 +13,7 @@ interface UseCanvasHandlersProps {
   onClearPendingCreation?: () => void;
   onMoveNode: (id: string, x: number, y: number) => void;
   nodes: EnhancedNode[];
+  clearMultiSelection?: () => void;
 }
 
 export const useCanvasHandlers = ({
@@ -24,6 +26,7 @@ export const useCanvasHandlers = ({
   onClearPendingCreation,
   onMoveNode,
   nodes,
+  clearMultiSelection,
 }: UseCanvasHandlersProps) => {
   const analytics = useEnhancedAnalytics();
 
@@ -32,10 +35,11 @@ export const useCanvasHandlers = ({
     console.log('🔄 Clearing all selections');
     onSelectNode(null);
     onSelectEdge(null);
+    clearMultiSelection?.();
     
     // Track selection clearing
     analytics.trackFeatureUsage('selections_cleared');
-  }, [onSelectNode, onSelectEdge, analytics]);
+  }, [onSelectNode, onSelectEdge, clearMultiSelection, analytics]);
 
   // Safe node selection that clears edge selection
   const selectNodeSafely = useCallback((nodeId: string | null) => {
@@ -44,12 +48,13 @@ export const useCanvasHandlers = ({
     onSelectNode(nodeId);
   }, [onSelectNode, onSelectEdge]);
 
-  // Safe edge selection that clears node selection
+  // Safe edge selection that clears node selection and multi-selection
   const selectEdgeSafely = useCallback((edgeId: string | null) => {
-    console.log(`🔗 Selecting edge: ${edgeId}, clearing node selection`);
+    console.log(`🔗 Selecting edge: ${edgeId}, clearing node and multi-selection`);
     onSelectNode(null); // Clear node selection first
+    clearMultiSelection?.(); // Clear multi-selection
     onSelectEdge(edgeId);
-  }, [onSelectNode, onSelectEdge]);
+  }, [onSelectNode, onSelectEdge, clearMultiSelection]);
 
   // Enhanced move handler with analytics
   const handleMoveNode = useCallback((id: string, x: number, y: number) => {
@@ -65,9 +70,6 @@ export const useCanvasHandlers = ({
       });
     }
   }, [onMoveNode, analytics, nodes]);
-
-  // Removed the conflicting click event handler that was interfering with rectangle selection
-  // Canvas click handling is now managed by the rectangle selection logic in Canvas.tsx
 
   return {
     clearAllSelections,

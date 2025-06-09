@@ -16,6 +16,7 @@ export const useMultiSelection = (canvasRef: React.RefObject<HTMLDivElement>) =>
   const [selectionRect, setSelectionRect] = useState<SelectionRectangle | null>(null);
   const selectionRectRef = useRef<SelectionRectangle | null>(null);
   const lastSelectedNodeRef = useRef<string | null>(null);
+  const hasActuallyDragged = useRef<boolean>(false);
 
   const selectSingleNode = useCallback((nodeId: string | null) => {
     console.log('🎯 Multi-selection: selectSingleNode called with:', nodeId);
@@ -26,6 +27,22 @@ export const useMultiSelection = (canvasRef: React.RefObject<HTMLDivElement>) =>
       setSelectedNodeIds([]);
       lastSelectedNodeRef.current = null;
     }
+  }, []);
+
+  const clearSelection = useCallback(() => {
+    console.log('🧹 Multi-selection: clearSelection called');
+    setSelectedNodeIds([]);
+    lastSelectedNodeRef.current = null;
+  }, []);
+
+  // Clear multi-selection when edge is selected
+  const clearMultiSelection = useCallback(() => {
+    console.log('🧹 Multi-selection: clearMultiSelection called (edge selected)');
+    setSelectedNodeIds([]);
+    lastSelectedNodeRef.current = null;
+    setIsSelecting(false);
+    setSelectionRect(null);
+    selectionRectRef.current = null;
   }, []);
 
   const toggleNodeSelection = useCallback((nodeId: string, isCtrlPressed: boolean, isShiftPressed: boolean = false, nodes: EnhancedNode[] = []) => {
@@ -114,18 +131,13 @@ export const useMultiSelection = (canvasRef: React.RefObject<HTMLDivElement>) =>
     }
   }, [canvasRef]);
 
-  const clearSelection = useCallback(() => {
-    console.log('🧹 Multi-selection: clearSelection called');
-    setSelectedNodeIds([]);
-    lastSelectedNodeRef.current = null;
-  }, []);
-
   const startRectangleSelection = useCallback((x: number, y: number) => {
     console.log('🔲 Starting rectangle selection at:', { x, y });
     const rect = { startX: x, startY: y, endX: x, endY: y };
     setIsSelecting(true);
-    setSelectionRect(rect);
+    // Don't set visual rectangle yet - wait for actual drag movement
     selectionRectRef.current = rect;
+    hasActuallyDragged.current = false;
   }, []);
 
   const updateRectangleSelection = useCallback((x: number, y: number) => {
@@ -136,16 +148,24 @@ export const useMultiSelection = (canvasRef: React.RefObject<HTMLDivElement>) =>
     
     console.log('🔲 Updating rectangle selection to:', { x, y });
     const newRect = { ...selectionRectRef.current, endX: x, endY: y };
-    console.log('🔲 New rectangle:', newRect);
+    
+    // Only show visual rectangle if we've actually dragged a meaningful distance
+    const deltaX = Math.abs(newRect.endX - newRect.startX);
+    const deltaY = Math.abs(newRect.endY - newRect.startY);
+    
+    if (deltaX > 3 || deltaY > 3) {
+      hasActuallyDragged.current = true;
+      setSelectionRect(newRect);
+    }
+    
     selectionRectRef.current = newRect;
-    setSelectionRect(newRect);
   }, []);
 
   const endRectangleSelection = useCallback((nodes: EnhancedNode[]) => {
     const currentRect = selectionRectRef.current;
-    console.log('🔲 Ending rectangle selection with current rect:', currentRect);
+    console.log('🔲 Ending rectangle selection with current rect:', currentRect, 'hasActuallyDragged:', hasActuallyDragged.current);
     
-    if (currentRect) {
+    if (currentRect && hasActuallyDragged.current) {
       const width = Math.abs(currentRect.endX - currentRect.startX);
       const height = Math.abs(currentRect.endY - currentRect.startY);
       
@@ -157,11 +177,15 @@ export const useMultiSelection = (canvasRef: React.RefObject<HTMLDivElement>) =>
         console.log('🔲 Rectangle too small, clearing selection instead');
         clearSelection();
       }
+    } else {
+      console.log('🔲 No actual drag detected, clearing selection');
+      clearSelection();
     }
     
     setSelectionRect(null);
     selectionRectRef.current = null;
     setIsSelecting(false);
+    hasActuallyDragged.current = false;
   }, [selectNodesInRectangle, clearSelection]);
 
   return {
@@ -171,6 +195,7 @@ export const useMultiSelection = (canvasRef: React.RefObject<HTMLDivElement>) =>
     selectSingleNode,
     toggleNodeSelection,
     clearSelection,
+    clearMultiSelection,
     startRectangleSelection,
     updateRectangleSelection,
     endRectangleSelection,

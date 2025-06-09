@@ -1,20 +1,24 @@
+
 import { useEffect } from 'react';
-import { EnhancedNode } from '../types/nodeTypes';
 
 interface UseCanvasSelectionProps {
   selectedNodeId: string | null;
+  selectedEdgeId: string | null;
   selectedNodeIds: string[];
   selectSingleNode: (nodeId: string | null) => void;
   selectNodeSafely: (nodeId: string | null) => void;
+  clearMultiSelection: () => void;
   onSelectionStateChange?: (state: { isSelecting: boolean; selectedCount: number }) => void;
   isSelecting: boolean;
 }
 
 export const useCanvasSelection = ({
   selectedNodeId,
+  selectedEdgeId,
   selectedNodeIds,
   selectSingleNode,
   selectNodeSafely,
+  clearMultiSelection,
   onSelectionStateChange,
   isSelecting,
 }: UseCanvasSelectionProps) => {
@@ -27,6 +31,14 @@ export const useCanvasSelection = ({
       });
     }
   }, [isSelecting, selectedNodeIds.length, onSelectionStateChange]);
+
+  // Clear multi-selection when edge is selected
+  useEffect(() => {
+    if (selectedEdgeId) {
+      console.log('🔗 Edge selected, clearing multi-selection');
+      clearMultiSelection();
+    }
+  }, [selectedEdgeId, clearMultiSelection]);
 
   // Sync single selection with multi-selection
   useEffect(() => {
@@ -41,6 +53,6 @@ export const useCanvasSelection = ({
 
   // Debug logging for selection state changes
   useEffect(() => {
-    console.log(`📊 Canvas selection state - Node: ${selectedNodeId}, Multi: [${selectedNodeIds.join(', ')}], Selecting: ${isSelecting}`);
-  }, [selectedNodeId, selectedNodeIds, isSelecting]);
+    console.log(`📊 Canvas selection state - Node: ${selectedNodeId}, Edge: ${selectedEdgeId}, Multi: [${selectedNodeIds.join(', ')}], Selecting: ${isSelecting}`);
+  }, [selectedNodeId, selectedEdgeId, selectedNodeIds, isSelecting]);
 };

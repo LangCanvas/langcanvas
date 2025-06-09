@@ -85,6 +85,7 @@ const Canvas: React.FC<CanvasProps> = ({
     selectSingleNode,
     toggleNodeSelection,
     clearSelection,
+    clearMultiSelection,
     startRectangleSelection,
     updateRectangleSelection,
     endRectangleSelection,
@@ -128,14 +129,17 @@ const Canvas: React.FC<CanvasProps> = ({
     onClearPendingCreation,
     onMoveNode,
     nodes,
+    clearMultiSelection,
   });
 
   // Use custom hooks for selection and events
   useCanvasSelection({
     selectedNodeId,
+    selectedEdgeId,
     selectedNodeIds,
     selectSingleNode,
     selectNodeSafely,
+    clearMultiSelection,
     onSelectionStateChange,
     isSelecting,
   });
