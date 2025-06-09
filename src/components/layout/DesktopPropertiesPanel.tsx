@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import EnhancedPropertiesPanel from '../EnhancedPropertiesPanel';
 import ValidationPanel from '../ValidationPanel';
@@ -55,11 +54,22 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
     }
   }, [selectedNode, selectedEdge, showValidationPanel, switchToPropertiesPanel]);
 
+  // Debug logging
+  useEffect(() => {
+    console.log('🎛️ DesktopPropertiesPanel render state:', {
+      isVisible,
+      isExpanded,
+      onExpand: !!onExpand,
+      onToggle: !!onToggle
+    });
+  }, [isVisible, isExpanded, onExpand, onToggle]);
+
   const handleUpdateEdge = (edgeId: string, updates: Partial<EnhancedEdge>) => {
     onUpdateEdge(edgeId, updates);
   };
 
   const handleExpand = () => {
+    console.log('🎛️ CollapsedPropertiesPanel expand clicked');
     if (onExpand) {
       onExpand();
     }
@@ -67,16 +77,20 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
 
   // If not visible, don't render anything
   if (!isVisible) {
+    console.log('🎛️ DesktopPropertiesPanel not visible, returning null');
     return null;
   }
 
   // Show collapsed panel when not expanded
   if (!isExpanded) {
+    console.log('🎛️ DesktopPropertiesPanel rendering collapsed state');
     return (
       <aside 
         data-panel="desktop-properties" 
-        className="relative w-14 bg-white border-l border-gray-200 flex flex-col transition-all duration-300 ease-in-out"
+        className="relative bg-red-100 border-4 border-red-500 flex flex-col min-w-14 w-14 flex-shrink-0 z-10"
+        style={{ minWidth: '3.5rem', width: '3.5rem' }}
       >
+        <div className="text-xs text-red-600 p-1">COLLAPSED</div>
         <CollapsedPropertiesPanel
           selectedNode={selectedNode}
           selectedEdge={selectedEdge}
@@ -91,10 +105,11 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
   }
 
   // Show expanded panel
+  console.log('🎛️ DesktopPropertiesPanel rendering expanded state');
   return (
     <aside 
       data-panel="desktop-properties" 
-      className="relative w-80 bg-white border-l border-gray-200 flex flex-col transition-all duration-300 ease-in-out"
+      className="relative w-80 bg-white border-l border-gray-200 flex flex-col flex-shrink-0"
     >
       <div className="p-4 border-b border-gray-100 flex items-center justify-between">
         <h2 className="text-sm font-medium text-gray-700">Properties</h2>

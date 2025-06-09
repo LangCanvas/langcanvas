@@ -12,7 +12,7 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
   const [isLeftPanelVisible, setIsLeftPanelVisible] = useState(true);
   const [isLeftPanelExpanded, setIsLeftPanelExpanded] = useState(true);
   const [isRightPanelVisible, setIsRightPanelVisible] = useState(true);
-  const [isRightPanelExpanded, setIsRightPanelExpanded] = useState(true);
+  const [isRightPanelExpanded, setIsRightPanelExpanded] = useState(true); // Start expanded
   
   const analytics = useEnhancedAnalytics();
 
@@ -46,6 +46,7 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
 
   const handleToggleRightPanel = () => {
     const newExpanded = !isRightPanelExpanded;
+    console.log('🎛️ Right panel toggle handler called. Current expanded:', isRightPanelExpanded, 'New expanded:', newExpanded);
     setIsRightPanelExpanded(newExpanded);
 
     analytics.trackFeatureUsage('desktop_right_panel_toggled', { 
@@ -61,6 +62,7 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
   };
 
   const handleExpandRightPanel = () => {
+    console.log('🎛️ Right panel expand handler called');
     setIsRightPanelVisible(true);
     setIsRightPanelExpanded(true);
     

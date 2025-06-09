@@ -18,6 +18,8 @@ const CollapsedPropertiesPanel: React.FC<CollapsedPropertiesPanelProps> = ({
   validationResult,
   onExpand
 }) => {
+  console.log('🎛️ CollapsedPropertiesPanel rendering');
+
   const getSelectedItemSummary = () => {
     if (selectedNode) {
       return {
@@ -52,11 +54,16 @@ const CollapsedPropertiesPanel: React.FC<CollapsedPropertiesPanelProps> = ({
   const summary = getSelectedItemSummary();
 
   return (
-    <div className="flex flex-col items-center py-4 space-y-4">
+    <div className="flex flex-col items-center py-4 space-y-4 bg-blue-100 border-2 border-blue-500 h-full">
+      <div className="text-xs text-blue-600">COLLAPSED PANEL</div>
+      
       {/* Expand button */}
       <button
-        onClick={onExpand}
-        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
+        onClick={() => {
+          console.log('🎛️ Expand button clicked in CollapsedPropertiesPanel');
+          onExpand();
+        }}
+        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors bg-yellow-200 border border-yellow-600"
         title="Expand Properties Panel"
       >
         <FileText className="w-4 h-4 text-blue-600" />
