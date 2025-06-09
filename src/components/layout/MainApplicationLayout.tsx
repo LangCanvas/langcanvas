@@ -106,7 +106,12 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
               onExpand={onExpandLeftPanel}
             />
 
-            <MainCanvasArea>
+            <MainCanvasArea
+              isLeftPanelVisible={isLeftPanelVisible}
+              isLeftPanelExpanded={isLeftPanelExpanded}
+              isRightPanelVisible={isRightPanelVisible}
+              isRightPanelExpanded={isRightPanelExpanded}
+            >
               {children}
             </MainCanvasArea>
 
@@ -135,7 +140,12 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
         {/* Mobile Layout */}
         {isMobile && (
           <>
-            <MainCanvasArea>
+            <MainCanvasArea
+              isLeftPanelVisible={false}
+              isLeftPanelExpanded={false}
+              isRightPanelVisible={false}
+              isRightPanelExpanded={false}
+            >
               {children}
             </MainCanvasArea>
 
