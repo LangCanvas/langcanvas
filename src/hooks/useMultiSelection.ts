@@ -1,5 +1,4 @@
-
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { EnhancedNode } from '../types/nodeTypes';
 import { isNodeInRectangle, getNodesBoundingBox } from '../utils/canvasCoordinates';
 
@@ -14,7 +13,6 @@ export const useMultiSelection = (canvasRef: React.RefObject<HTMLDivElement>) =>
   const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
   const [isSelecting, setIsSelecting] = useState(false);
   const [selectionRect, setSelectionRect] = useState<SelectionRectangle | null>(null);
-  const selectionStartRef = useRef<{ x: number; y: number } | null>(null);
   const lastSelectedNodeRef = useRef<string | null>(null);
 
   const selectSingleNode = useCallback((nodeId: string | null) => {
@@ -41,7 +39,6 @@ export const useMultiSelection = (canvasRef: React.RefObject<HTMLDivElement>) =>
     lastSelectedNodeRef.current = null;
     setIsSelecting(false);
     setSelectionRect(null);
-    selectionStartRef.current = null;
   }, []);
 
   const toggleNodeSelection = useCallback((nodeId: string, isCtrlPressed: boolean, isShiftPressed: boolean = false, nodes: EnhancedNode[] = []) => {
@@ -100,15 +97,11 @@ export const useMultiSelection = (canvasRef: React.RefObject<HTMLDivElement>) =>
     }
   }, [canvasRef]);
 
-  const selectNodesInRectangle = useCallback((nodes: EnhancedNode[], rect: SelectionRectangle) => {
-    console.log('🔍 Selecting nodes in rectangle:', rect, 'Nodes available:', nodes.length);
-    
+  const updateNodesSelectionInRealTime = useCallback((nodes: EnhancedNode[], rect: SelectionRectangle) => {
     const rectLeft = Math.min(rect.startX, rect.endX);
     const rectRight = Math.max(rect.startX, rect.endX);
     const rectTop = Math.min(rect.startY, rect.endY);
     const rectBottom = Math.max(rect.startY, rect.endY);
-
-    console.log('🔍 Rectangle bounds:', { rectLeft, rectRight, rectTop, rectBottom });
 
     const selectedNodes = nodes.filter(node => {
       return isNodeInRectangle(
@@ -122,7 +115,6 @@ export const useMultiSelection = (canvasRef: React.RefObject<HTMLDivElement>) =>
     });
 
     const newSelection = selectedNodes.map(node => node.id);
-    console.log('🎯 Selected nodes result:', newSelection);
     setSelectedNodeIds(newSelection);
     
     if (newSelection.length > 0) {
@@ -132,68 +124,66 @@ export const useMultiSelection = (canvasRef: React.RefObject<HTMLDivElement>) =>
 
   const startRectangleSelection = useCallback((x: number, y: number) => {
     console.log('🔲 Starting rectangle selection at:', { x, y });
-    // Only set isSelecting and store start coordinates - don't create rectangle yet
     setIsSelecting(true);
-    selectionStartRef.current = { x, y };
-    setSelectionRect(null); // Ensure no rectangle is shown initially
+    // Immediately create and show the rectangle
+    const newRect = { startX: x, startY: y, endX: x, endY: y };
+    setSelectionRect(newRect);
   }, []);
 
-  const updateRectangleSelection = useCallback((x: number, y: number) => {
-    const startCoords = selectionStartRef.current;
-    if (!startCoords) {
-      console.warn('🚨 updateRectangleSelection called with no start coordinates');
+  const updateRectangleSelection = useCallback((x: number, y: number, nodes: EnhancedNode[]) => {
+    if (!selectionRect) {
+      console.warn('🚨 updateRectangleSelection called with no selection rectangle');
       return;
     }
     
     console.log('🔲 Updating rectangle selection to:', { x, y });
     
-    // Calculate rectangle dimensions
-    const width = Math.abs(x - startCoords.x);
-    const height = Math.abs(y - startCoords.y);
+    // Update rectangle immediately
+    const newRect = { 
+      startX: selectionRect.startX, 
+      startY: selectionRect.startY, 
+      endX: x, 
+      endY: y 
+    };
+    setSelectionRect(newRect);
     
-    // Only show rectangle if it's larger than minimum threshold (10px)
-    if (width > 10 || height > 10) {
-      const newRect = { 
-        startX: startCoords.x, 
-        startY: startCoords.y, 
-        endX: x, 
-        endY: y 
-      };
-      setSelectionRect(newRect);
-    } else {
-      // Don't show rectangle for small movements
-      setSelectionRect(null);
-    }
+    // Update selected nodes in real-time
+    updateNodesSelectionInRealTime(nodes, newRect);
+  }, [selectionRect, updateNodesSelectionInRealTime]);
+
+  const endRectangleSelection = useCallback(() => {
+    console.log('🔲 Ending rectangle selection');
+    
+    // Keep the current selection and just clean up the rectangle
+    setSelectionRect(null);
+    setIsSelecting(false);
   }, []);
 
-  const endRectangleSelection = useCallback((nodes: EnhancedNode[]) => {
-    const startCoords = selectionStartRef.current;
-    const currentRect = selectionRect;
+  const cancelRectangleSelection = useCallback(() => {
+    console.log('🔲 Canceling rectangle selection');
     
-    console.log('🔲 Ending rectangle selection with:', { startCoords, currentRect });
-    
-    if (currentRect && startCoords) {
-      const width = Math.abs(currentRect.endX - currentRect.startX);
-      const height = Math.abs(currentRect.endY - currentRect.startY);
-      
-      console.log('🔲 Selection rectangle size:', { width, height });
-      
-      if (width > 10 || height > 10) {
-        selectNodesInRectangle(nodes, currentRect);
-      } else {
-        console.log('🔲 Rectangle too small, clearing selection instead');
-        clearSelection();
-      }
-    } else {
-      console.log('🔲 No rectangle found, clearing selection');
-      clearSelection();
-    }
-    
-    // Reset all selection state
+    // Clear everything
     setSelectionRect(null);
-    selectionStartRef.current = null;
     setIsSelecting(false);
-  }, [selectionRect, selectNodesInRectangle, clearSelection]);
+    setSelectedNodeIds([]);
+    lastSelectedNodeRef.current = null;
+  }, []);
+
+  // Add escape key handling
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isSelecting) {
+        console.log('🔲 Escape pressed during selection - canceling');
+        event.preventDefault();
+        cancelRectangleSelection();
+      }
+    };
+
+    if (isSelecting) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isSelecting, cancelRectangleSelection]);
 
   return {
     selectedNodeIds,
@@ -206,5 +196,6 @@ export const useMultiSelection = (canvasRef: React.RefObject<HTMLDivElement>) =>
     startRectangleSelection,
     updateRectangleSelection,
     endRectangleSelection,
+    cancelRectangleSelection,
   };
 };

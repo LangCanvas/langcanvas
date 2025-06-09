@@ -21,11 +21,6 @@ const RectangleSelector: React.FC<RectangleSelectorProps> = ({
   const width = Math.abs(selectionRect.endX - selectionRect.startX);
   const height = Math.abs(selectionRect.endY - selectionRect.startY);
 
-  // Additional safety check - don't render very small rectangles
-  if (width < 10 && height < 10) {
-    return null;
-  }
-
   return (
     <div
       className="absolute border-2 border-blue-500 border-dashed bg-blue-100 bg-opacity-30 pointer-events-none"

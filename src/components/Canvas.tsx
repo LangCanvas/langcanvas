@@ -151,7 +151,7 @@ const Canvas: React.FC<CanvasProps> = ({
     pendingNodeType,
     nodes,
     startRectangleSelection,
-    updateRectangleSelection,
+    updateRectangleSelection: (x: number, y: number) => updateRectangleSelection(x, y, nodes),
     endRectangleSelection,
     clearSelection,
     selectNodeSafely,

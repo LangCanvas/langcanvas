@@ -10,8 +10,8 @@ interface UseCanvasMouseEventsProps {
   pendingNodeType: string | null;
   nodes: EnhancedNode[];
   startRectangleSelection: (x: number, y: number) => void;
-  updateRectangleSelection: (x: number, y: number) => void;
-  endRectangleSelection: (nodes: EnhancedNode[]) => void;
+  updateRectangleSelection: (x: number, y: number, nodes: EnhancedNode[]) => void;
+  endRectangleSelection: () => void;
   clearSelection: () => void;
   selectNodeSafely: (nodeId: string | null) => void;
 }
@@ -33,8 +33,6 @@ export const useCanvasMouseEvents = ({
     if (!canvas) return;
 
     let isMouseDown = false;
-    let startCoords: { x: number; y: number } | null = null;
-    let hasStartedDragging = false;
 
     const handleMouseDown = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
@@ -66,40 +64,28 @@ export const useCanvasMouseEvents = ({
         event.preventDefault();
         
         isMouseDown = true;
-        hasStartedDragging = false;
-        startCoords = getCanvasCoordinates(event, canvasRef);
+        const coords = getCanvasCoordinates(event, canvasRef);
         
-        console.log('🔲 Mouse down at canvas coords:', startCoords);
+        console.log('🔲 Starting rectangle selection immediately at:', coords);
+        startRectangleSelection(coords.x, coords.y);
       }
     };
 
     const handleMouseMove = (event: MouseEvent) => {
-      if (!isMouseDown || !startCoords) return;
+      if (!isMouseDown || !isSelecting) return;
 
       const currentCoords = getCanvasCoordinates(event, canvasRef);
-      const deltaX = Math.abs(currentCoords.x - startCoords.x);
-      const deltaY = Math.abs(currentCoords.y - startCoords.y);
-
-      // Start rectangle selection when minimum movement is reached
-      if (!hasStartedDragging && (deltaX > 3 || deltaY > 3)) {
-        console.log('🔲 Starting rectangle selection due to movement');
-        hasStartedDragging = true;
-        startRectangleSelection(startCoords.x, startCoords.y);
-      }
-      
-      // Update rectangle selection if we've started dragging
-      if (hasStartedDragging) {
-        updateRectangleSelection(currentCoords.x, currentCoords.y);
-      }
+      console.log('🔲 Updating rectangle selection to:', currentCoords);
+      updateRectangleSelection(currentCoords.x, currentCoords.y, nodes);
     };
 
     const handleMouseUp = (event: MouseEvent) => {
-      console.log('🖱️ Mouse up:', { isMouseDown, hasStartedDragging, isSelecting });
+      console.log('🖱️ Mouse up:', { isMouseDown, isSelecting });
       
       if (isMouseDown) {
-        if (hasStartedDragging) {
+        if (isSelecting) {
           console.log('🔲 Ending rectangle selection');
-          endRectangleSelection(nodes);
+          endRectangleSelection();
         } else {
           // Simple click on canvas background without any dragging - clear all selections
           console.log('🧹 Canvas background click - clearing all selections');
@@ -110,8 +96,6 @@ export const useCanvasMouseEvents = ({
       
       // Reset state
       isMouseDown = false;
-      hasStartedDragging = false;
-      startCoords = null;
     };
 
     canvas.addEventListener('mousedown', handleMouseDown);
