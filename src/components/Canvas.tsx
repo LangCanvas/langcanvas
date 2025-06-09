@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState } from 'react';
 import { EnhancedNode, NodeType } from '../types/nodeTypes';
 import { EnhancedEdge } from '../types/edgeTypes';
@@ -15,8 +14,8 @@ import CanvasBackground from './canvas/CanvasBackground';
 import EdgePreview from './canvas/EdgePreview';
 import KeyboardHandler from './canvas/KeyboardHandler';
 import RectangleSelector from './canvas/RectangleSelector';
-import NodeComponent from './Node';
-import ConditionalNodeComponent from './ConditionalNodeComponent';
+import RegularNode from './nodes/RegularNode';
+import ConditionalNode from './nodes/ConditionalNode';
 import EnhancedEdgeRenderer from './EnhancedEdgeRenderer';
 import BottomStatusBar from './layout/BottomStatusBar';
 
@@ -341,7 +340,7 @@ const Canvas: React.FC<CanvasProps> = ({
                           } transition-all duration-200`}
                         >
                           {node.type === 'conditional' ? (
-                            <ConditionalNodeComponent
+                            <ConditionalNode
                               node={node}
                               outgoingEdges={edges.filter(e => e.source === node.id)}
                               isSelected={isSelected}
@@ -355,7 +354,7 @@ const Canvas: React.FC<CanvasProps> = ({
                               validationTooltip={getNodeTooltip?.(node.id) || ''}
                             />
                           ) : (
-                            <NodeComponent
+                            <RegularNode
                               node={node}
                               isSelected={isSelected}
                               canCreateEdge={canCreateEdge(node)}
