@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { EnhancedNode } from '../types/nodeTypes';
 import { usePointerEvents } from '../hooks/usePointerEvents';
@@ -45,10 +46,20 @@ const EnhancedNodeComponent: React.FC<EnhancedNodeComponentProps> = ({
     }
     
     const rect = nodeRef.current?.getBoundingClientRect();
-    if (rect) {
+    const canvas = document.getElementById('canvas');
+    const canvasRect = canvas?.getBoundingClientRect();
+    const scrollContainer = document.querySelector('[data-radix-scroll-area-viewport]');
+    
+    if (rect && canvasRect && scrollContainer) {
+      const scrollLeft = scrollContainer.scrollLeft || 0;
+      const scrollTop = scrollContainer.scrollTop || 0;
+      
+      const canvasX = pointerEvent.clientX - canvasRect.left + scrollLeft;
+      const canvasY = pointerEvent.clientY - canvasRect.top + scrollTop;
+      
       setDragOffset({
-        x: pointerEvent.clientX - rect.left,
-        y: pointerEvent.clientY - rect.top
+        x: canvasX - node.x,
+        y: canvasY - node.y
       });
       setIsDragging(true);
     }
@@ -68,15 +79,22 @@ const EnhancedNodeComponent: React.FC<EnhancedNodeComponentProps> = ({
     const handlePointerMove = (pointerEvent: any) => {
       const canvas = document.getElementById('canvas');
       const canvasRect = canvas?.getBoundingClientRect();
+      const scrollContainer = document.querySelector('[data-radix-scroll-area-viewport]');
       
-      if (canvasRect) {
+      if (canvasRect && scrollContainer) {
+        const scrollLeft = scrollContainer.scrollLeft || 0;
+        const scrollTop = scrollContainer.scrollTop || 0;
+        
+        const canvasX = pointerEvent.clientX - canvasRect.left + scrollLeft;
+        const canvasY = pointerEvent.clientY - canvasRect.top + scrollTop;
+        
         const newX = Math.max(0, Math.min(
-          pointerEvent.clientX - canvasRect.left - dragOffset.x,
-          canvasRect.width - 120 // Node width
+          canvasX - dragOffset.x,
+          3000 - 120
         ));
         const newY = Math.max(0, Math.min(
-          pointerEvent.clientY - canvasRect.top - dragOffset.y,
-          canvasRect.height - 60 // Node height
+          canvasY - dragOffset.y,
+          3000 - 60
         ));
         
         onMove(node.id, newX, newY);
@@ -116,47 +134,47 @@ const EnhancedNodeComponent: React.FC<EnhancedNodeComponentProps> = ({
       case 'agent':
         return {
           ...baseStyle,
-          backgroundColor: isSelected ? '#dcfce7' : '#f0fdf4',
+          backgroundColor: isSelected ? '#22c55e' : '#f0fdf4',
           borderColor: isSelected ? '#16a34a' : '#22c55e',
-          color: '#15803d',
+          color: isSelected ? '#ffffff' : '#15803d',
           borderRadius: '30px',
         };
       case 'tool':
         return {
           ...baseStyle,
-          backgroundColor: isSelected ? '#dbeafe' : '#eff6ff',
+          backgroundColor: isSelected ? '#3b82f6' : '#eff6ff',
           borderColor: isSelected ? '#2563eb' : '#3b82f6',
-          color: '#1d4ed8',
+          color: isSelected ? '#ffffff' : '#1d4ed8',
         };
       case 'function':
         return {
           ...baseStyle,
-          backgroundColor: isSelected ? '#e9d5ff' : '#faf5ff',
+          backgroundColor: isSelected ? '#7c3aed' : '#faf5ff',
           borderColor: isSelected ? '#9333ea' : '#a855f7',
-          color: '#7c3aed',
+          color: isSelected ? '#ffffff' : '#7c3aed',
         };
       case 'conditional':
         return {
           ...baseStyle,
-          backgroundColor: isSelected ? '#fed7aa' : '#fff7ed',
+          backgroundColor: isSelected ? '#ea580c' : '#fff7ed',
           borderColor: isSelected ? '#ea580c' : '#f97316',
-          color: '#c2410c',
+          color: isSelected ? '#ffffff' : '#c2410c',
           transform: 'rotate(45deg)',
           fontSize: '12px',
         };
       case 'parallel':
         return {
           ...baseStyle,
-          backgroundColor: isSelected ? '#cffafe' : '#ecfeff',
+          backgroundColor: isSelected ? '#06b6d4' : '#ecfeff',
           borderColor: isSelected ? '#0891b2' : '#06b6d4',
-          color: '#0e7490',
+          color: isSelected ? '#ffffff' : '#0e7490',
         };
       case 'end':
         return {
           ...baseStyle,
-          backgroundColor: isSelected ? '#fecaca' : '#fef2f2',
+          backgroundColor: isSelected ? '#ef4444' : '#fef2f2',
           borderColor: isSelected ? '#dc2626' : '#ef4444',
-          color: '#b91c1c',
+          color: isSelected ? '#ffffff' : '#b91c1c',
           borderRadius: '30px',
         };
       default:
