@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Canvas from '../components/Canvas';
 import MainApplicationLayout from '../components/layout/MainApplicationLayout';
@@ -65,11 +64,31 @@ const Index = () => {
       nodeCreation.setPendingCreation(event.detail);
     };
 
+    const handleOpenPropertiesPanel = (event: CustomEvent) => {
+      const { nodeId, edgeId, type } = event.detail;
+      
+      // Select the appropriate item
+      if (type === 'node' && nodeId) {
+        indexHandlers.handleSelectNode(nodeId);
+      } else if (type === 'edge' && edgeId) {
+        indexHandlers.handleSelectEdge(edgeId);
+      }
+      
+      // Open right panel and expand it
+      panelHandlers.handleExpandRightPanel();
+      
+      // Switch to properties panel if needed
+      panelHandlers.switchToPropertiesPanel();
+    };
+
     window.addEventListener('setPendingCreation', handlePendingCreation as EventListener);
+    window.addEventListener('openPropertiesPanel', handleOpenPropertiesPanel as EventListener);
+    
     return () => {
       window.removeEventListener('setPendingCreation', handlePendingCreation as EventListener);
+      window.removeEventListener('openPropertiesPanel', handleOpenPropertiesPanel as EventListener);
     };
-  }, [nodeCreation.setPendingCreation]);
+  }, [nodeCreation.setPendingCreation, indexHandlers.handleSelectNode, indexHandlers.handleSelectEdge, panelHandlers.handleExpandRightPanel, panelHandlers.switchToPropertiesPanel]);
 
   const handleUpdateEdgeWithCondition = (edgeId: string, updates: Partial<EnhancedEdge>) => {
     indexHandlers.handleUpdateEdgeProperties(edgeId, updates);

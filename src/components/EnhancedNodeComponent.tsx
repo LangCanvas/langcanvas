@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { EnhancedNode } from '../types/nodeTypes';
 import { usePointerEvents } from '../hooks/usePointerEvents';
@@ -9,7 +8,9 @@ interface EnhancedNodeComponentProps {
   isSelected: boolean;
   canCreateEdge: boolean;
   onSelect: (id: string) => void;
+  onDoubleClick?: () => void;
   onMove: (id: string, x: number, y: number) => void;
+  onDragStart?: (event: React.MouseEvent) => void;
   onStartConnection: (sourceNode: EnhancedNode, startX: number, startY: number) => void;
   validationClass?: string;
   validationTooltip?: string;
@@ -20,7 +21,9 @@ const EnhancedNodeComponent: React.FC<EnhancedNodeComponentProps> = ({
   isSelected, 
   canCreateEdge, 
   onSelect, 
+  onDoubleClick,
   onMove, 
+  onDragStart,
   onStartConnection,
   validationClass = '',
   validationTooltip = ''
@@ -33,7 +36,13 @@ const EnhancedNodeComponent: React.FC<EnhancedNodeComponentProps> = ({
   const handlePointerDown = (e: React.MouseEvent | React.TouchEvent) => {
     const pointerEvent = getPointerEvent(e);
     pointerEvent.preventDefault();
+    
     onSelect(node.id);
+    
+    // Call onDragStart for multi-node dragging
+    if (onDragStart && 'clientX' in e) {
+      onDragStart(e as React.MouseEvent);
+    }
     
     const rect = nodeRef.current?.getBoundingClientRect();
     if (rect) {
@@ -42,6 +51,14 @@ const EnhancedNodeComponent: React.FC<EnhancedNodeComponentProps> = ({
         y: pointerEvent.clientY - rect.top
       });
       setIsDragging(true);
+    }
+  };
+
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onDoubleClick) {
+      onDoubleClick();
     }
   };
 
@@ -156,6 +173,7 @@ const EnhancedNodeComponent: React.FC<EnhancedNodeComponentProps> = ({
       style={getNodeStyle()}
       onMouseDown={handlePointerDown}
       onTouchStart={handlePointerDown}
+      onDoubleClick={handleDoubleClick}
       className={`node ${node.type}-node ${isSelected ? 'selected' : ''} ${validationClass}`}
       data-node-id={node.id}
       data-node-type={node.type}
