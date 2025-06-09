@@ -43,7 +43,7 @@ interface MainApplicationLayoutProps {
   onDeleteEdge: (id: string) => void;
   onUpdateNodeProperties: (id: string, updates: Partial<EnhancedNode>) => void;
   onUpdateEdgeProperties: (id: string, updates: Partial<EnhancedEdge>) => void;
-  validatePriorityConflicts: (sourceNodeId: string, excludeEdgeId?: string) => string[];
+  validatePriorityConflicts: (nodeId: string, priority: number, currentEdgeId?: string) => { hasConflict: boolean; conflictingEdges: EnhancedEdge[] };
 }
 
 const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
