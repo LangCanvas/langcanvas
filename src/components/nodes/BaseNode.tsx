@@ -25,7 +25,12 @@ const BaseNode: React.FC<BaseNodeComponentProps> = ({
   const sanitizedLabel = sanitizeNodeLabel(node.label);
 
   const handlePointerDown = (e: React.MouseEvent | React.TouchEvent) => {
-    onSelect(node.id);
+    // Pass the event to onSelect for multi-selection support
+    if ('clientX' in e) {
+      onSelect(node.id, e as React.MouseEvent);
+    } else {
+      onSelect(node.id);
+    }
     
     if (onDragStart && 'clientX' in e) {
       onDragStart(e as React.MouseEvent);

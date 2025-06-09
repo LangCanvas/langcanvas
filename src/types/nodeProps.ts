@@ -5,7 +5,7 @@ export interface BaseNodeProps {
   node: EnhancedNode;
   isSelected: boolean;
   canCreateEdge: boolean;
-  onSelect: (id: string) => void;
+  onSelect: (id: string, event?: React.MouseEvent) => void;
   onDoubleClick?: () => void;
   onMove: (id: string, x: number, y: number) => void;
   onDragStart?: (event: React.MouseEvent) => void;

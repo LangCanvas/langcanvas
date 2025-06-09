@@ -1,6 +1,7 @@
 
 import { useState, useCallback } from 'react';
 import { EnhancedNode } from '../types/nodeTypes';
+import { getNodeDimensions, isNodeInRectangle } from '../utils/canvasCoordinates';
 
 export interface SelectionRectangle {
   startX: number;
@@ -15,6 +16,7 @@ export const useMultiSelection = () => {
   const [selectionRect, setSelectionRect] = useState<SelectionRectangle | null>(null);
 
   const selectSingleNode = useCallback((nodeId: string | null) => {
+    console.log('🎯 Multi-selection: selectSingleNode called with:', nodeId);
     if (nodeId) {
       setSelectedNodeIds([nodeId]);
     } else {
@@ -23,23 +25,19 @@ export const useMultiSelection = () => {
   }, []);
 
   const toggleNodeSelection = useCallback((nodeId: string, isCtrlPressed: boolean) => {
+    console.log('🎯 Multi-selection: toggleNodeSelection called with:', { nodeId, isCtrlPressed });
     if (isCtrlPressed) {
-      setSelectedNodeIds(prev => 
-        prev.includes(nodeId) 
+      setSelectedNodeIds(prev => {
+        const newSelection = prev.includes(nodeId) 
           ? prev.filter(id => id !== nodeId)
-          : [...prev, nodeId]
-      );
+          : [...prev, nodeId];
+        console.log('🎯 Multi-selection: Ctrl+click result:', newSelection);
+        return newSelection;
+      });
     } else {
       setSelectedNodeIds([nodeId]);
     }
   }, []);
-
-  const getNodeDimensions = (node: EnhancedNode) => {
-    if (node.type === 'conditional') {
-      return { width: 80, height: 80 };
-    }
-    return { width: 120, height: 60 };
-  };
 
   const selectNodesInRectangle = useCallback((nodes: EnhancedNode[], rect: SelectionRectangle) => {
     console.log('🔍 Selecting nodes in rectangle:', rect, 'Nodes available:', nodes.length);
@@ -52,30 +50,25 @@ export const useMultiSelection = () => {
     console.log('🔍 Rectangle bounds:', { rectLeft, rectRight, rectTop, rectBottom });
 
     const selectedNodes = nodes.filter(node => {
-      const { width, height } = getNodeDimensions(node);
-      const nodeLeft = node.x;
-      const nodeRight = node.x + width;
-      const nodeTop = node.y;
-      const nodeBottom = node.y + height;
-
-      // Check if node overlaps with rectangle
-      const isIntersecting = (
-        nodeLeft < rectRight &&
-        nodeRight > rectLeft &&
-        nodeTop < rectBottom &&
-        nodeBottom > rectTop
+      const { width, height } = getNodeDimensions(node.id);
+      
+      const intersects = isNodeInRectangle(
+        node.x, node.y, width, height,
+        rectLeft, rectTop, rectRight, rectBottom
       );
 
-      console.log(`Node ${node.id} at (${nodeLeft}, ${nodeTop}, ${nodeRight}, ${nodeBottom}) - ${isIntersecting ? 'SELECTED' : 'not selected'}`);
+      console.log(`Node ${node.id} at (${node.x}, ${node.y}, ${node.x + width}, ${node.y + height}) - ${intersects ? 'SELECTED' : 'not selected'}`);
       
-      return isIntersecting;
+      return intersects;
     });
 
-    console.log('🎯 Selected nodes:', selectedNodes.map(n => n.id));
-    setSelectedNodeIds(selectedNodes.map(node => node.id));
+    const newSelection = selectedNodes.map(node => node.id);
+    console.log('🎯 Selected nodes result:', newSelection);
+    setSelectedNodeIds(newSelection);
   }, []);
 
   const clearSelection = useCallback(() => {
+    console.log('🧹 Multi-selection: clearSelection called');
     setSelectedNodeIds([]);
   }, []);
 
@@ -86,25 +79,37 @@ export const useMultiSelection = () => {
   }, []);
 
   const updateRectangleSelection = useCallback((x: number, y: number) => {
-    if (selectionRect) {
-      setSelectionRect(prev => prev ? { ...prev, endX: x, endY: y } : null);
-    }
-  }, [selectionRect]);
+    console.log('🔲 Updating rectangle selection to:', { x, y });
+    setSelectionRect(prev => {
+      if (!prev) {
+        console.warn('🚨 updateRectangleSelection called with no active selection');
+        return null;
+      }
+      return { ...prev, endX: x, endY: y };
+    });
+  }, []);
 
   const endRectangleSelection = useCallback((nodes: EnhancedNode[]) => {
-    console.log('🔲 Ending rectangle selection with rect:', selectionRect);
-    if (selectionRect) {
-      // Only select if we've actually dragged a meaningful distance
-      const width = Math.abs(selectionRect.endX - selectionRect.startX);
-      const height = Math.abs(selectionRect.endY - selectionRect.startY);
-      
-      if (width > 10 || height > 10) {
-        selectNodesInRectangle(nodes, selectionRect);
+    console.log('🔲 Ending rectangle selection');
+    setSelectionRect(prev => {
+      if (prev) {
+        // Only select if we've actually dragged a meaningful distance
+        const width = Math.abs(prev.endX - prev.startX);
+        const height = Math.abs(prev.endY - prev.startY);
+        
+        console.log('🔲 Selection rectangle size:', { width, height });
+        
+        if (width > 10 || height > 10) {
+          selectNodesInRectangle(nodes, prev);
+        } else {
+          console.log('🔲 Rectangle too small, not selecting nodes');
+        }
       }
-    }
+      return null;
+    });
+    
     setIsSelecting(false);
-    setSelectionRect(null);
-  }, [selectionRect, selectNodesInRectangle]);
+  }, [selectNodesInRectangle]);
 
   return {
     selectedNodeIds,

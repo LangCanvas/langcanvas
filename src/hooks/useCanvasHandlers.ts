@@ -1,4 +1,3 @@
-
 import { useEffect, useCallback } from 'react';
 import { EnhancedNode, NodeType } from '../types/nodeTypes';
 import { useEnhancedAnalytics } from './useEnhancedAnalytics';
@@ -67,65 +66,8 @@ export const useCanvasHandlers = ({
     }
   }, [onMoveNode, analytics, nodes]);
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const handleClick = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      
-      // Don't handle clicks on SVG elements (edges) - they have their own handlers
-      if (target.tagName === 'line' || target.tagName === 'svg' || target.closest('svg')) {
-        console.log('🚫 Canvas ignoring SVG click - handled by EdgeRenderer');
-        return;
-      }
-      
-      // Check if we're trying to place a node (mobile)
-      const nodeType = (pendingNodeType || canvas.getAttribute('data-node-type')) as NodeType;
-      
-      if (nodeType && (target === canvas || target.closest('.canvas-background'))) {
-        event.preventDefault();
-        event.stopPropagation();
-        
-        const rect = canvas.getBoundingClientRect();
-        const scrollContainer = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
-        const scrollLeft = scrollContainer?.scrollLeft || 0;
-        const scrollTop = scrollContainer?.scrollTop || 0;
-        
-        const x = event.clientX - rect.left + scrollLeft;
-        const y = event.clientY - rect.top + scrollTop;
-        
-        console.log(`🎯 Canvas click: placing ${nodeType} at (${x}, ${y})`);
-        
-        const result = createNodeWithAnalytics(nodeType, x, y);
-        
-        if (result && onClearPendingCreation) {
-          onClearPendingCreation();
-        }
-        
-        return;
-      }
-      
-      // Regular selection logic - only if no pending node creation and not clicking on nodes
-      if (!nodeType && (target === canvas || target.closest('.canvas-background'))) {
-        console.log('🎯 Canvas click: clearing all selections');
-        clearAllSelections();
-      }
-    };
-
-    canvas.addEventListener('click', handleClick, { capture: true });
-    return () => canvas.removeEventListener('click', handleClick, { capture: true });
-  }, [
-    canvasRef,
-    scrollAreaRef,
-    onSelectNode,
-    onSelectEdge,
-    createNodeWithAnalytics,
-    pendingNodeType,
-    onClearPendingCreation,
-    analytics,
-    clearAllSelections
-  ]);
+  // Removed the conflicting click event handler that was interfering with rectangle selection
+  // Canvas click handling is now managed by the rectangle selection logic in Canvas.tsx
 
   return {
     clearAllSelections,

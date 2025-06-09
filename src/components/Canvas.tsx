@@ -124,65 +124,98 @@ const Canvas: React.FC<CanvasProps> = ({
     nodes,
   });
 
-  // Helper function to get proper coordinates with scroll offset
-  const getCanvasCoordinates = (event: MouseEvent) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return { x: 0, y: 0 };
-
-    const rect = canvas.getBoundingClientRect();
-    const scrollContainer = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
-    const scrollLeft = scrollContainer?.scrollLeft || 0;
-    const scrollTop = scrollContainer?.scrollTop || 0;
-    
-    return {
-      x: event.clientX - rect.left + scrollLeft,
-      y: event.clientY - rect.top + scrollTop
-    };
-  };
-
-  // Handle mouse events for rectangle selection
+  // Handle mouse events for rectangle selection with improved logic
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    let isMouseDown = false;
+    let hasStartedSelection = false;
+
+    const getCoordinates = (event: MouseEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      const scrollContainer = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+      const scrollLeft = scrollContainer?.scrollLeft || 0;
+      const scrollTop = scrollContainer?.scrollTop || 0;
+      
+      return {
+        x: event.clientX - rect.left + scrollLeft,
+        y: event.clientY - rect.top + scrollTop
+      };
+    };
+
     const handleMouseDown = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
       
-      // Don't start selection if clicking on nodes, edges, or UI elements
-      if (target.closest('.node') || target.closest('svg') || target.closest('.connection-handle')) {
+      console.log('🖱️ Canvas mousedown:', {
+        target: target.tagName,
+        className: target.className,
+        hasNode: !!target.closest('.node'),
+        hasSVG: !!target.closest('svg'),
+        hasHandle: !!target.closest('.connection-handle'),
+        pendingNodeType
+      });
+      
+      // Don't start selection if:
+      // 1. Clicking on nodes, edges, or UI elements
+      // 2. Placing a node
+      // 3. Already selecting or dragging
+      if (target.closest('.node') || 
+          target.closest('svg') || 
+          target.closest('.connection-handle') ||
+          pendingNodeType ||
+          isSelecting ||
+          isMultiDragging) {
+        console.log('🚫 Mousedown ignored - invalid target or state');
         return;
       }
 
-      // Don't start selection if placing a node
-      if (pendingNodeType) {
-        return;
-      }
-
-      // Start rectangle selection if clicking on canvas background
+      // Only start selection if clicking on canvas background
       if (target === canvas || target.closest('.canvas-background')) {
         event.preventDefault();
+        event.stopPropagation();
         
-        const { x, y } = getCanvasCoordinates(event);
+        isMouseDown = true;
+        hasStartedSelection = false;
         
-        console.log('🔲 Starting rectangle selection at:', { x, y });
-        startRectangleSelection(x, y);
+        console.log('🔲 Mouse down on canvas background');
       }
     };
 
     const handleMouseMove = (event: MouseEvent) => {
-      if (isSelecting) {
-        const { x, y } = getCanvasCoordinates(event);
+      if (!isMouseDown) return;
+
+      const { x, y } = getCoordinates(event);
+
+      if (!hasStartedSelection) {
+        // Start selection on first mouse move after mousedown
+        startRectangleSelection(x, y);
+        hasStartedSelection = true;
+        console.log('🔲 Started rectangle selection on mouse move');
+      } else if (isSelecting) {
         updateRectangleSelection(x, y);
       }
     };
 
     const handleMouseUp = (event: MouseEvent) => {
-      if (isSelecting) {
-        console.log('🔲 Ending rectangle selection, nodes to check:', nodes.length);
-        endRectangleSelection(nodes);
+      if (isMouseDown) {
+        isMouseDown = false;
+        
+        if (hasStartedSelection && isSelecting) {
+          console.log('🔲 Ending rectangle selection');
+          endRectangleSelection(nodes);
+        } else if (!hasStartedSelection) {
+          // This was just a click without drag - clear selections
+          console.log('🧹 Single click on canvas - clearing selections');
+          clearSelection();
+          selectNodeSafely(null);
+        }
+        
+        hasStartedSelection = false;
       }
     };
 
+    // Add event listeners
     canvas.addEventListener('mousedown', handleMouseDown);
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
@@ -192,7 +225,7 @@ const Canvas: React.FC<CanvasProps> = ({
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isSelecting, pendingNodeType, nodes, startRectangleSelection, updateRectangleSelection, endRectangleSelection]);
+  }, [isSelecting, isMultiDragging, pendingNodeType, nodes, startRectangleSelection, updateRectangleSelection, endRectangleSelection, clearSelection, selectNodeSafely]);
 
   // Handle global mouse events for multi-node dragging
   useEffect(() => {
@@ -219,18 +252,22 @@ const Canvas: React.FC<CanvasProps> = ({
   useEffect(() => {
     if (selectedNodeId && !selectedNodeIds.includes(selectedNodeId)) {
       selectSingleNode(selectedNodeId);
-    } else if (!selectedNodeId && selectedNodeIds.length > 0) {
-      clearSelection();
+    } else if (!selectedNodeId && selectedNodeIds.length === 1) {
+      // Don't clear multi-selection if user has selected multiple nodes
+    } else if (!selectedNodeId && selectedNodeIds.length > 1) {
+      // Keep multi-selection intact
     }
-  }, [selectedNodeId, selectedNodeIds, selectSingleNode, clearSelection]);
+  }, [selectedNodeId, selectedNodeIds, selectSingleNode]);
 
   // Debug logging for selection state changes
   useEffect(() => {
-    console.log(`📊 Canvas selection state - Node: ${selectedNodeId}, Edge: ${selectedEdgeId}, Multi: [${selectedNodeIds.join(', ')}], Selecting: ${isSelecting}`);
-  }, [selectedNodeId, selectedEdgeId, selectedNodeIds, isSelecting]);
+    console.log(`📊 Canvas selection state - Node: ${selectedNodeId}, Edge: ${selectedEdgeId}, Multi: [${selectedNodeIds.join(', ')}], Selecting: ${isSelecting}, MultiDragging: ${isMultiDragging}`);
+  }, [selectedNodeId, selectedEdgeId, selectedNodeIds, isSelecting, isMultiDragging]);
 
   const handleNodeSelect = (nodeId: string, event?: React.MouseEvent) => {
     const isCtrlPressed = event?.ctrlKey || event?.metaKey || false;
+    
+    console.log('🎯 Node select called:', { nodeId, isCtrlPressed, currentSelection: selectedNodeIds });
     
     if (selectedNodeIds.length > 1 || isCtrlPressed) {
       toggleNodeSelection(nodeId, isCtrlPressed);
@@ -345,7 +382,7 @@ const Canvas: React.FC<CanvasProps> = ({
                               outgoingEdges={edges.filter(e => e.source === node.id)}
                               isSelected={isSelected}
                               canCreateEdge={canCreateEdge(node)}
-                              onSelect={(id) => handleNodeSelect(id)}
+                              onSelect={(id, event) => handleNodeSelect(id, event)}
                               onDoubleClick={() => handleNodeDoubleClick(node.id)}
                               onMove={handleMoveNode}
                               onDragStart={(event) => handleNodeDragStart(node.id, event)}
@@ -358,7 +395,7 @@ const Canvas: React.FC<CanvasProps> = ({
                               node={node}
                               isSelected={isSelected}
                               canCreateEdge={canCreateEdge(node)}
-                              onSelect={(id) => handleNodeSelect(id)}
+                              onSelect={(id, event) => handleNodeSelect(id, event)}
                               onDoubleClick={() => handleNodeDoubleClick(node.id)}
                               onMove={handleMoveNode}
                               onDragStart={(event) => handleNodeDragStart(node.id, event)}
