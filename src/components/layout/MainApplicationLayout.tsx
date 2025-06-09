@@ -106,31 +106,27 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
               onExpand={onExpandLeftPanel}
             />
 
-            <MainCanvasArea
-              isLeftPanelVisible={isLeftPanelVisible}
-              isLeftPanelExpanded={isLeftPanelExpanded}
-              isRightPanelVisible={isRightPanelVisible}
-              isRightPanelExpanded={isRightPanelExpanded}
-            >
+            <MainCanvasArea>
               {children}
             </MainCanvasArea>
 
             <DesktopPropertiesPanel
-              isVisible={isRightPanelVisible}
-              isExpanded={isRightPanelExpanded}
-              activePanel={activePanel}
-              showValidationPanel={showValidationPanel}
               selectedNode={selectedNode}
               selectedEdge={selectedEdge}
+              allNodes={nodes}
+              allEdges={edges}
               validationResult={validationResult}
-              onToggle={onToggleRightPanel}
-              onExpand={onExpandRightPanel}
-              onPanelToggle={onPanelToggle}
-              setShowValidationPanel={setShowValidationPanel}
+              showValidationPanel={showValidationPanel}
+              isVisible={isRightPanelVisible}
+              isExpanded={isRightPanelExpanded}
+              onUpdateNode={onUpdateNodeProperties}
+              onUpdateEdge={onUpdateEdgeProperties}
               onDeleteNode={onDeleteNode}
               onDeleteEdge={onDeleteEdge}
-              onUpdateNodeProperties={onUpdateNodeProperties}
-              onUpdateEdgeProperties={onUpdateEdgeProperties}
+              setShowValidationPanel={setShowValidationPanel}
+              onToggle={onToggleRightPanel}
+              onExpand={onExpandRightPanel}
+              switchToPropertiesPanel={switchToPropertiesPanel}
               validatePriorityConflicts={validatePriorityConflicts}
             />
           </>
@@ -139,12 +135,7 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
         {/* Mobile Layout */}
         {isMobile && (
           <>
-            <MainCanvasArea
-              isLeftPanelVisible={false}
-              isLeftPanelExpanded={false}
-              isRightPanelVisible={false}
-              isRightPanelExpanded={false}
-            >
+            <MainCanvasArea>
               {children}
             </MainCanvasArea>
 
