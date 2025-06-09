@@ -9,41 +9,38 @@ import { EnhancedNode } from '../../types/nodeTypes';
 import { EnhancedEdge } from '../../types/edgeTypes';
 
 interface MobilePanelOverlayProps {
-  activePanel: 'palette' | 'properties' | null;
-  onClose: () => void;
-  onPanelToggle: (panel: 'palette' | 'properties') => void;
+  activePanel: 'palette' | 'properties' | 'validation' | null;
+  showValidationPanel: boolean;
   selectedNode: EnhancedNode | null;
   selectedEdge: EnhancedEdge | null;
+  validationResult: ValidationResult;
+  onClose: () => void;
   onDeleteNode: (nodeId: string) => void;
   onDeleteEdge: (edgeId: string) => void;
   onUpdateNodeProperties: (nodeId: string, updates: Partial<EnhancedNode>) => void;
   onUpdateEdgeProperties: (edgeId: string, updates: Partial<EnhancedEdge>) => void;
-  allNodes: EnhancedNode[];
-  allEdges: EnhancedEdge[];
-  validationResult: ValidationResult;
-  showValidationPanel: boolean;
-  setShowValidationPanel: (show: boolean) => void;
-  validatePriorityConflicts?: (nodeId: string, priority: number, currentEdgeId?: string) => { hasConflict: boolean; conflictingEdges: EnhancedEdge[] };
+  validatePriorityConflicts: (nodeId: string, priority: number, currentEdgeId?: string) => { hasConflict: boolean; conflictingEdges: EnhancedEdge[] };
 }
 
 const MobilePanelOverlay: React.FC<MobilePanelOverlayProps> = ({
   activePanel,
-  onClose,
-  onPanelToggle,
+  showValidationPanel,
   selectedNode,
   selectedEdge,
+  validationResult,
+  onClose,
   onDeleteNode,
   onDeleteEdge,
   onUpdateNodeProperties,
   onUpdateEdgeProperties,
-  allNodes,
-  allEdges,
-  validationResult,
-  showValidationPanel,
-  setShowValidationPanel,
   validatePriorityConflicts
 }) => {
   if (!activePanel) return null;
+
+  const handlePanelToggle = (panel: 'palette' | 'properties') => {
+    // This is simplified for mobile - no validation panel toggle in overlay
+    onClose();
+  };
 
   return (
     <div 
@@ -64,7 +61,7 @@ const MobilePanelOverlay: React.FC<MobilePanelOverlayProps> = ({
               <Button 
                 variant="ghost" 
                 size="sm"
-                onClick={() => onPanelToggle(activePanel === 'palette' ? 'properties' : 'palette')}
+                onClick={() => handlePanelToggle(activePanel === 'palette' ? 'properties' : 'palette')}
                 className="touch-manipulation"
                 style={{ minHeight: '44px' }}
               >
@@ -94,8 +91,8 @@ const MobilePanelOverlay: React.FC<MobilePanelOverlayProps> = ({
             <EnhancedPropertiesPanel 
               selectedNode={selectedNode}
               selectedEdge={selectedEdge}
-              allNodes={allNodes}
-              allEdges={allEdges}
+              allNodes={[]}
+              allEdges={[]}
               onUpdateNode={onUpdateNodeProperties}
               onUpdateEdge={onUpdateEdgeProperties}
               onDeleteNode={onDeleteNode}

@@ -154,6 +154,8 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
               onNewProject={onNewProject}
               onImport={onImport}
               onExport={onExport}
+              onPanelToggle={onPanelToggle}
+              hasNodes={nodes.length > 0}
             />
 
             <MobilePanelOverlay

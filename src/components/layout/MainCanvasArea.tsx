@@ -1,106 +1,31 @@
 
 import React from 'react';
-import MobilePanelOverlay from './MobilePanelOverlay';
-import DesktopPropertiesPanel from './DesktopPropertiesPanel';
-import { EnhancedNode } from '../../types/nodeTypes';
-import { EnhancedEdge } from '../../types/edgeTypes';
-import { ValidationResult } from '../../hooks/useValidation';
 
 interface MainCanvasAreaProps {
-  activePanel: 'palette' | 'properties' | null;
-  selectedNode: EnhancedNode | null;
-  selectedEdge: EnhancedEdge | null;
-  allNodes: EnhancedNode[];
-  allEdges: EnhancedEdge[];
-  validationResult: ValidationResult;
-  showValidationPanel: boolean;
-  isRightPanelVisible?: boolean;
-  isRightPanelExpanded?: boolean;
-  
-  onClose: () => void;
-  onPanelToggle: (panel: 'palette' | 'properties') => void;
-  onDeleteNode: (nodeId: string) => void;
-  onDeleteEdge: (edgeId: string) => void;
-  onUpdateNodeProperties: (nodeId: string, updates: Partial<EnhancedNode>) => void;
-  onUpdateEdgeProperties: (edgeId: string, updates: Partial<EnhancedEdge>) => void;
-  setShowValidationPanel: (show: boolean) => void;
-  onExpandRightPanel?: () => void;
-  onToggleRightPanel?: () => void;
-  switchToPropertiesPanel?: () => void;
-  validatePriorityConflicts?: (nodeId: string, priority: number, currentEdgeId?: string) => { hasConflict: boolean; conflictingEdges: EnhancedEdge[] };
-  
   children: React.ReactNode;
+  isLeftPanelVisible: boolean;
+  isLeftPanelExpanded: boolean;
+  isRightPanelVisible: boolean;
+  isRightPanelExpanded: boolean;
 }
 
 const MainCanvasArea: React.FC<MainCanvasAreaProps> = ({
-  activePanel,
-  selectedNode,
-  selectedEdge,
-  allNodes,
-  allEdges,
-  validationResult,
-  showValidationPanel,
-  isRightPanelVisible = true,
-  isRightPanelExpanded = true,
-  onClose,
-  onPanelToggle,
-  onDeleteNode,
-  onDeleteEdge,
-  onUpdateNodeProperties,
-  onUpdateEdgeProperties,
-  setShowValidationPanel,
-  onExpandRightPanel,
-  onToggleRightPanel,
-  switchToPropertiesPanel,
-  validatePriorityConflicts,
-  children
+  children,
+  isLeftPanelVisible,
+  isLeftPanelExpanded,
+  isRightPanelVisible,
+  isRightPanelExpanded,
 }) => {
-  console.log('🏗️ MainCanvasArea render - Right panel:', { isRightPanelVisible, isRightPanelExpanded });
-  
+  // Calculate margins for the canvas based on panel states
+  const leftMargin = isLeftPanelVisible ? (isLeftPanelExpanded ? 'ml-80' : 'ml-14') : 'ml-0';
+  const rightMargin = isRightPanelVisible ? (isRightPanelExpanded ? 'mr-80' : 'mr-14') : 'mr-0';
+
   return (
-    <div className="flex-1 flex min-w-0">
-      <div className="flex-1 relative min-w-0">
-        {children}
-      </div>
-
-      <MobilePanelOverlay
-        activePanel={activePanel}
-        selectedNode={selectedNode}
-        selectedEdge={selectedEdge}
-        onClose={onClose}
-        onPanelToggle={onPanelToggle}
-        onDeleteNode={onDeleteNode}
-        onDeleteEdge={onDeleteEdge}
-        onUpdateNodeProperties={onUpdateNodeProperties}
-        onUpdateEdgeProperties={onUpdateEdgeProperties}
-        allNodes={allNodes}
-        allEdges={allEdges}
-        validationResult={validationResult}
-        showValidationPanel={showValidationPanel}
-        setShowValidationPanel={setShowValidationPanel}
-        validatePriorityConflicts={validatePriorityConflicts}
-      />
-
-      <DesktopPropertiesPanel
-        selectedNode={selectedNode}
-        selectedEdge={selectedEdge}
-        allNodes={allNodes}
-        allEdges={allEdges}
-        validationResult={validationResult}
-        showValidationPanel={showValidationPanel}
-        isVisible={isRightPanelVisible}
-        isExpanded={isRightPanelExpanded}
-        onUpdateNode={onUpdateNodeProperties}
-        onUpdateEdge={onUpdateEdgeProperties}
-        onDeleteNode={onDeleteNode}
-        onDeleteEdge={onDeleteEdge}
-        setShowValidationPanel={setShowValidationPanel}
-        onExpand={onExpandRightPanel}
-        onToggle={onToggleRightPanel}
-        switchToPropertiesPanel={switchToPropertiesPanel}
-        validatePriorityConflicts={validatePriorityConflicts}
-      />
-    </div>
+    <main 
+      className={`flex-1 relative min-w-0 transition-all duration-200 ${leftMargin} ${rightMargin}`}
+    >
+      {children}
+    </main>
   );
 };
 

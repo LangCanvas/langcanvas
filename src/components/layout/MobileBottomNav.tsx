@@ -2,18 +2,20 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Menu, File } from 'lucide-react';
-import { ValidationResult } from '../../utils/graphValidation';
+import { ValidationResult } from '../../hooks/useValidation';
 
 interface MobileBottomNavProps {
-  onPanelToggle: (panel: 'palette' | 'properties') => void;
-  hasNodes: boolean;
+  activePanel: 'palette' | 'properties' | 'validation';
   validationResult: ValidationResult;
+  onPanelToggle: (panel: 'palette' | 'properties' | 'validation') => void;
+  setShowValidationPanel: (show: boolean) => void;
 }
 
 const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
+  activePanel,
+  validationResult,
   onPanelToggle,
-  hasNodes,
-  validationResult
+  setShowValidationPanel
 }) => {
   return (
     <div className="lg:hidden bg-white border-t border-gray-200 p-2">
