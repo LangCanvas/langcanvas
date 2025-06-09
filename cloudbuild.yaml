@@ -7,9 +7,9 @@ steps:
     args:
       - '-c'
       - |
-        COMMIT_COUNT=$(git rev-list --count HEAD)
-        echo "Commit count: $COMMIT_COUNT"
-        echo "$COMMIT_COUNT" > /workspace/commit_count.txt
+        commit_count=$(git rev-list --count HEAD)
+        echo "Commit count: $commit_count"
+        echo "$commit_count" > /workspace/commit_count.txt
 
   # Step 2: Build the Docker image with commit count
   - name: 'gcr.io/cloud-builders/docker'
