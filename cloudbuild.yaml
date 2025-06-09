@@ -1,16 +1,29 @@
+
 # cloudbuild.yaml
 steps:
-  # Step 1: Build the Docker image
+  # Step 1: Get git commit count and set as environment variable
+  - name: 'gcr.io/cloud-builders/git'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        COMMIT_COUNT=$(git rev-list --count HEAD)
+        echo "Commit count: $COMMIT_COUNT"
+        echo "$COMMIT_COUNT" > /workspace/commit_count.txt
+
+  # Step 2: Build the Docker image with commit count
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'build'
+      - '--build-arg'
+      - 'VITE_COMMIT_COUNT=$(cat /workspace/commit_count.txt)'
       - '-t'
       - 'europe-west4-docker.pkg.dev/${PROJECT_ID}/langcanvas-repo/langcanvas-app:${COMMIT_SHA}' # Updated region for Artifact Registry
       - '-t'
       - 'europe-west4-docker.pkg.dev/${PROJECT_ID}/langcanvas-repo/langcanvas-app:latest' # Updated region for Artifact Registry
       - '.'
 
-  # Step 2: Push the Docker image to Google Artifact Registry
+  # Step 3: Push the Docker image to Google Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
@@ -20,7 +33,7 @@ steps:
       - 'push'
       - 'europe-west4-docker.pkg.dev/${PROJECT_ID}/langcanvas-repo/langcanvas-app:latest' # Updated region for Artifact Registry
 
-  # Step 3: Deploy the container image to Cloud Run
+  # Step 4: Deploy the container image to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     args:
       - 'run'

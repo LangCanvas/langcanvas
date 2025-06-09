@@ -1,13 +1,15 @@
 
 // Version utility to get application version information
 export const getAppVersion = () => {
-  // Simulate a realistic version number with Major.Minor.Patch.Build format
-  const major = 3;
-  const minor = 4;
-  const patch = 203;
-  const build = 42343;
+  const major = 0;
+  const minor = 0;
   
-  return `v${major}.${minor}.${patch}.${build}`;
+  // Get patch version from environment variable (set during build)
+  // or fall back to a development default
+  const commitCount = import.meta.env.VITE_COMMIT_COUNT;
+  const patch = commitCount ? parseInt(commitCount, 10) : 1;
+  
+  return `v${major}.${minor}.${patch}`;
 };
 
 export const getVersionInfo = () => {

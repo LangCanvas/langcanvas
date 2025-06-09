@@ -1,7 +1,12 @@
+
 # Stage 1: Build the React application
 FROM node:20-alpine as build-stage
 
 WORKDIR /app
+
+# Accept build argument for commit count
+ARG VITE_COMMIT_COUNT=1
+ENV VITE_COMMIT_COUNT=$VITE_COMMIT_COUNT
 
 COPY package*.json ./
 # Install all dependencies, including devDependencies, so vite is available for the build
