@@ -10,6 +10,11 @@ import { useChangeTracking } from '../hooks/useChangeTracking';
 import { EnhancedEdge } from '../types/edgeTypes';
 
 const Index = () => {
+  const [selectionState, setSelectionState] = React.useState({
+    isSelecting: false,
+    selectedCount: 0
+  });
+
   const {
     nodeState,
     edgeState,
@@ -177,6 +182,8 @@ const Index = () => {
         selectedNode={nodeState.selectedNode}
         selectedEdge={edgeState.selectedEdge}
         validationResult={validation.validationResult}
+        isSelecting={selectionState.isSelecting}
+        selectedCount={selectionState.selectedCount}
         onMobileMenuToggle={panelHandlers.handleMobileMenuToggle}
         onPanelToggle={panelHandlers.handlePanelToggle}
         onToggleLeftPanel={panelHandlers.handleToggleLeftPanel}
@@ -215,6 +222,7 @@ const Index = () => {
           pendingNodeType={nodeCreation.pendingNodeType}
           onClearPendingCreation={nodeCreation.clearPendingCreation}
           hasUnsavedChanges={hasUnsavedChanges}
+          onSelectionStateChange={setSelectionState}
         />
       </MainApplicationLayout>
     </div>

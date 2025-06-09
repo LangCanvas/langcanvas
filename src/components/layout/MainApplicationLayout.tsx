@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Toolbar from './Toolbar';
 import DesktopSidebar from './DesktopSidebar';
@@ -11,7 +10,6 @@ import { EnhancedNode } from '../../types/nodeTypes';
 import { EnhancedEdge } from '../../types/edgeTypes';
 import { ValidationResult } from '../../hooks/useValidation';
 import { useMobileDetection } from '../../hooks/useMobileDetection';
-import { useMultiSelection } from '../../hooks/useMultiSelection';
 
 interface MainApplicationLayoutProps {
   children: React.ReactNode;
@@ -27,6 +25,8 @@ interface MainApplicationLayoutProps {
   selectedNode: EnhancedNode | null;
   selectedEdge: EnhancedEdge | null;
   validationResult: ValidationResult;
+  isSelecting?: boolean;
+  selectedCount?: number;
   onMobileMenuToggle: () => void;
   onPanelToggle: (panel: 'palette' | 'properties' | 'validation') => void;
   onToggleLeftPanel: () => void;
@@ -60,6 +60,8 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
   selectedNode,
   selectedEdge,
   validationResult,
+  isSelecting = false,
+  selectedCount = 0,
   onMobileMenuToggle,
   onPanelToggle,
   onToggleLeftPanel,
@@ -79,7 +81,6 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
   validatePriorityConflicts,
 }) => {
   const isMobile = useMobileDetection();
-  const { selectedNodeIds, isSelecting } = useMultiSelection();
 
   // Calculate margins for desktop layout
   const getLeftMargin = () => {
@@ -101,7 +102,7 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
         hasNodes={nodes.length > 0}
         validationResult={validationResult}
         isSelecting={isSelecting}
-        selectedCount={selectedNodeIds.length}
+        selectedCount={selectedCount}
         onMobileMenuToggle={onMobileMenuToggle}
         onNewProject={onNewProject}
         onImport={onImport}
