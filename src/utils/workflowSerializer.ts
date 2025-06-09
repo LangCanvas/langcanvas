@@ -1,5 +1,5 @@
 import { EnhancedNode } from '../types/nodeTypes';
-import { Edge } from '../hooks/useEdges';
+import { EnhancedEdge } from '../types/edgeTypes';
 import { sanitizeNodeLabel } from './security';
 
 export interface WorkflowJSON {
@@ -39,13 +39,13 @@ export interface WorkflowJSON {
     source: string;
     target: string;
     label?: string;
-    value?: string;
+    conditional?: EnhancedEdge['conditional']; // Store the whole conditional object
   }>;
   entryPoint?: string;
   version: string;
 }
 
-export const exportToJSON = (nodes: EnhancedNode[], edges: Edge[]): WorkflowJSON => {
+export const exportToJSON = (nodes: EnhancedNode[], edges: EnhancedEdge[]): WorkflowJSON => {
   // Find the entry point (target of start node's outgoing edge)
   const startNode = nodes.find(node => node.type === 'start');
   let entryPoint: string | undefined;
@@ -82,8 +82,8 @@ export const exportToJSON = (nodes: EnhancedNode[], edges: Edge[]): WorkflowJSON
       id: edge.id,
       source: sourceNode?.label || edge.source,
       target: targetNode?.label || edge.target,
-      label: edge.label || undefined,
-      value: edge.value || undefined
+      label: edge.label,
+      conditional: edge.conditional,
     };
   });
 
@@ -98,9 +98,9 @@ export const exportToJSON = (nodes: EnhancedNode[], edges: Edge[]): WorkflowJSON
 export const importFromJSON = (
   jsonData: string | WorkflowJSON,
   addNode: (type: EnhancedNode['type'], x: number, y: number) => EnhancedNode | null,
-  addEdge: (sourceNode: EnhancedNode, targetNode: EnhancedNode) => { success: boolean; error?: string },
+  addEdge: (sourceNode: EnhancedNode, targetNode: EnhancedNode) => { success: boolean; error?: string; edge?: EnhancedEdge },
   updateNodeProperties: (nodeId: string, updates: Partial<EnhancedNode>) => void,
-  updateEdgeProperties: (edgeId: string, updates: Partial<Edge>) => void,
+  updateEdgeProperties: (edgeId: string, updates: Partial<EnhancedEdge>) => void,
   clearWorkflow: () => void
 ): { success: boolean; errors: string[] } => {
   const errors: string[] = [];
@@ -208,6 +208,20 @@ export const importFromJSON = (
       if (!result.success) {
         errors.push(`Failed to create edge from ${sanitizedSource} to ${sanitizedTarget}: ${result.error}`);
         continue;
+      }
+
+      // After creating the edge, update it with properties from the JSON
+      const createdEdge = result.edge;
+      const updates: Partial<EnhancedEdge> = {};
+      if (jsonEdge.label) {
+        updates.label = jsonEdge.label;
+      }
+      if (jsonEdge.conditional) {
+        updates.conditional = jsonEdge.conditional;
+      }
+
+      if (Object.keys(updates).length > 0) {
+        updateEdgeProperties(createdEdge.id, updates);
       }
     }
 
