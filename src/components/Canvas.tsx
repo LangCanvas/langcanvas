@@ -125,7 +125,7 @@ const Canvas: React.FC<CanvasProps> = ({
     nodes,
   });
 
-  // Fixed mouse event handling for rectangle selection
+  // Mouse event handling for rectangle selection
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -143,12 +143,12 @@ const Canvas: React.FC<CanvasProps> = ({
         hasNode: !!target.closest('.node'),
         hasSVG: !!target.closest('svg'),
         hasHandle: !!target.closest('.connection-handle'),
-        pendingNodeType,
-        isSelecting,
-        isMultiDragging
+        ctrlKey: event.ctrlKey,
+        shiftKey: event.shiftKey,
+        metaKey: event.metaKey
       });
       
-      // Don't start selection if clicking on interactive elements or if already in special modes
+      // Don't start selection if clicking on interactive elements
       if (target.closest('.node') || 
           target.closest('svg') || 
           target.closest('.connection-handle') ||
@@ -267,12 +267,13 @@ const Canvas: React.FC<CanvasProps> = ({
 
   const handleNodeSelect = (nodeId: string, event?: React.MouseEvent) => {
     const isCtrlPressed = event?.ctrlKey || event?.metaKey || false;
+    const isShiftPressed = event?.shiftKey || false;
     
-    console.log('🎯 Node select called:', { nodeId, isCtrlPressed, currentSelection: selectedNodeIds });
+    console.log('🎯 Node select called:', { nodeId, isCtrlPressed, isShiftPressed, currentSelection: selectedNodeIds });
     
-    if (selectedNodeIds.length > 1 || isCtrlPressed) {
-      toggleNodeSelection(nodeId, isCtrlPressed);
-      if (!isCtrlPressed) {
+    if (selectedNodeIds.length > 1 || isCtrlPressed || isShiftPressed) {
+      toggleNodeSelection(nodeId, isCtrlPressed, isShiftPressed, nodes);
+      if (!isCtrlPressed && !isShiftPressed) {
         selectNodeSafely(nodeId);
       }
     } else {

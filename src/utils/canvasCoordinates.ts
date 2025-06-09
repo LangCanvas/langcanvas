@@ -29,40 +29,18 @@ export const getNodeDimensions = (nodeId: string) => {
   const nodeElement = document.querySelector(`[data-node-id="${nodeId}"]`) as HTMLElement;
   if (!nodeElement) {
     console.warn(`Node element not found for ID: ${nodeId}`);
-    // Return fallback dimensions based on node type if we can determine it
-    // Since we can't access the element, we'll use conservative estimates
     return { width: 120, height: 60 };
   }
   
   const rect = nodeElement.getBoundingClientRect();
   
-  // Get canvas element to convert to canvas coordinates
-  const canvas = document.getElementById('canvas');
-  if (!canvas) {
-    console.warn('Canvas element not found, using screen coordinates');
-    return { width: rect.width, height: rect.height };
-  }
-  
-  const canvasRect = canvas.getBoundingClientRect();
-  const scrollContainer = document.querySelector('[data-radix-scroll-area-viewport]');
-  const scrollLeft = scrollContainer?.scrollLeft || 0;
-  const scrollTop = scrollContainer?.scrollTop || 0;
-  
-  // Convert node position to canvas coordinates
-  const canvasX = rect.left - canvasRect.left + scrollLeft;
-  const canvasY = rect.top - canvasRect.top + scrollTop;
-  
   console.log(`📏 Node ${nodeId} dimensions:`, {
-    domRect: { x: rect.left, y: rect.top, width: rect.width, height: rect.height },
-    canvasCoords: { x: canvasX, y: canvasY, width: rect.width, height: rect.height },
-    scroll: { scrollLeft, scrollTop }
+    domRect: { x: rect.left, y: rect.top, width: rect.width, height: rect.height }
   });
   
   return { 
     width: rect.width, 
-    height: rect.height,
-    canvasX,
-    canvasY
+    height: rect.height
   };
 };
 
