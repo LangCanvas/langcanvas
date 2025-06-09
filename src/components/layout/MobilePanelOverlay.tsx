@@ -20,8 +20,10 @@ interface MobilePanelOverlayProps {
   onUpdateEdgeProperties: (edgeId: string, updates: Partial<EnhancedEdge>) => void;
   allNodes: EnhancedNode[];
   allEdges: EnhancedEdge[];
-  nodeOutgoingEdges: EnhancedEdge[];
   validationResult: ValidationResult;
+  showValidationPanel: boolean;
+  setShowValidationPanel: (show: boolean) => void;
+  validatePriorityConflicts?: (nodeId: string, priority: number, currentEdgeId?: string) => { hasConflict: boolean; conflictingEdges: EnhancedEdge[] };
 }
 
 const MobilePanelOverlay: React.FC<MobilePanelOverlayProps> = ({
@@ -36,8 +38,10 @@ const MobilePanelOverlay: React.FC<MobilePanelOverlayProps> = ({
   onUpdateEdgeProperties,
   allNodes,
   allEdges,
-  nodeOutgoingEdges,
-  validationResult
+  validationResult,
+  showValidationPanel,
+  setShowValidationPanel,
+  validatePriorityConflicts
 }) => {
   if (!activePanel) return null;
 
@@ -80,7 +84,12 @@ const MobilePanelOverlay: React.FC<MobilePanelOverlayProps> = ({
         </div>
         
         <div className="flex-1 overflow-auto">
-          {activePanel === 'palette' && <NodePalette />}
+          {activePanel === 'palette' && (
+            <NodePalette onNodeTypeSelect={(type) => {
+              const event = new CustomEvent('setPendingCreation', { detail: type });
+              window.dispatchEvent(event);
+            }} />
+          )}
           {activePanel === 'properties' && (
             <EnhancedPropertiesPanel 
               selectedNode={selectedNode}
@@ -91,6 +100,10 @@ const MobilePanelOverlay: React.FC<MobilePanelOverlayProps> = ({
               onUpdateEdge={onUpdateEdgeProperties}
               onDeleteNode={onDeleteNode}
               onDeleteEdge={onDeleteEdge}
+              validationResult={validationResult}
+              showValidationPanel={showValidationPanel}
+              setShowValidationPanel={setShowValidationPanel}
+              validatePriorityConflicts={validatePriorityConflicts}
             />
           )}
         </div>
