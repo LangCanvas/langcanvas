@@ -5,26 +5,6 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { execSync } from "child_process";
 
-// Get git commit count for patch version
-const getCommitCount = () => {
-  try {
-    const count = execSync('git rev-list --count HEAD', { encoding: 'utf8' }).trim();
-    console.log(`Git commit count: ${count}`);
-    return count;
-  } catch (error) {
-    console.warn('Could not get git commit count, using fallback');
-    // Try alternative git command
-    try {
-      const altCount = execSync('git log --oneline | wc -l', { encoding: 'utf8' }).trim();
-      console.log(`Git commit count (alternative): ${altCount}`);
-      return altCount;
-    } catch (altError) {
-      console.warn('Alternative git command also failed, using timestamp-based fallback');
-      return Date.now().toString().slice(-3); // Use last 3 digits of timestamp as fallback
-    }
-  }
-};
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
@@ -42,6 +22,6 @@ export default defineConfig(({ mode }) => ({
     },
   },
   define: {
-    'import.meta.env.VITE_COMMIT_COUNT': JSON.stringify(getCommitCount()),
+    'import.meta.env.VITE_COMMIT_COUNT': JSON.stringify(process.env.VITE_COMMIT_COUNT || 'dev'),
   },
 }));
