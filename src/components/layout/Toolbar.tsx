@@ -59,13 +59,15 @@ const Toolbar: React.FC<ToolbarProps> = ({
           />
         )}
 
-        <ToolbarValidation validationResult={validationResult} />
+        <ToolbarValidation 
+          validationResult={validationResult} 
+          hasNodes={hasNodes}
+        />
         
         <ToolbarActions 
           onNewProject={onNewProject}
           onImport={onImport}
           onExport={onExport}
-          hasNodes={hasNodes}
         />
       </div>
     </header>
