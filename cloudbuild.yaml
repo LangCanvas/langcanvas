@@ -7,6 +7,7 @@ steps:
     args:
       - '-c'
       - |
+        git fetch --unshallow || true # Fetch full history. "|| true" prevents failure if not a shallow clone.
         commit_count=$(git rev-list --count HEAD)
         echo "Commit count: $commit_count"
         echo "$commit_count" > /workspace/commit_count.txt
