@@ -7,6 +7,7 @@ import { useEnhancedAnalytics } from '../hooks/useEnhancedAnalytics';
 import { useCanvasHandlers } from '../hooks/useCanvasHandlers';
 import { useMultiSelection } from '../hooks/useMultiSelection';
 import { useMultiNodeDrag } from '../hooks/useMultiNodeDrag';
+import { getCanvasCoordinates } from '../utils/canvasCoordinates';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import DragDropHandler from './canvas/DragDropHandler';
 import EdgeCreationHandler from './canvas/EdgeCreationHandler';
@@ -124,25 +125,14 @@ const Canvas: React.FC<CanvasProps> = ({
     nodes,
   });
 
-  // Handle mouse events for rectangle selection with improved logic
+  // Fixed mouse event handling for rectangle selection
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     let isMouseDown = false;
-    let hasStartedSelection = false;
-
-    const getCoordinates = (event: MouseEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      const scrollContainer = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
-      const scrollLeft = scrollContainer?.scrollLeft || 0;
-      const scrollTop = scrollContainer?.scrollTop || 0;
-      
-      return {
-        x: event.clientX - rect.left + scrollLeft,
-        y: event.clientY - rect.top + scrollTop
-      };
-    };
+    let isDragging = false;
+    let startCoords: { x: number; y: number } | null = null;
 
     const handleMouseDown = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
@@ -153,13 +143,12 @@ const Canvas: React.FC<CanvasProps> = ({
         hasNode: !!target.closest('.node'),
         hasSVG: !!target.closest('svg'),
         hasHandle: !!target.closest('.connection-handle'),
-        pendingNodeType
+        pendingNodeType,
+        isSelecting,
+        isMultiDragging
       });
       
-      // Don't start selection if:
-      // 1. Clicking on nodes, edges, or UI elements
-      // 2. Placing a node
-      // 3. Already selecting or dragging
+      // Don't start selection if clicking on interactive elements or if already in special modes
       if (target.closest('.node') || 
           target.closest('svg') || 
           target.closest('.connection-handle') ||
@@ -170,48 +159,60 @@ const Canvas: React.FC<CanvasProps> = ({
         return;
       }
 
-      // Only start selection if clicking on canvas background
+      // Only start on canvas background
       if (target === canvas || target.closest('.canvas-background')) {
+        console.log('✅ Valid mousedown on canvas background');
         event.preventDefault();
         event.stopPropagation();
         
         isMouseDown = true;
-        hasStartedSelection = false;
+        isDragging = false;
+        startCoords = getCanvasCoordinates(event, canvasRef);
         
-        console.log('🔲 Mouse down on canvas background');
+        console.log('🔲 Mouse down at canvas coords:', startCoords);
       }
     };
 
     const handleMouseMove = (event: MouseEvent) => {
-      if (!isMouseDown) return;
+      if (!isMouseDown || !startCoords) return;
 
-      const { x, y } = getCoordinates(event);
+      const currentCoords = getCanvasCoordinates(event, canvasRef);
+      const deltaX = Math.abs(currentCoords.x - startCoords.x);
+      const deltaY = Math.abs(currentCoords.y - startCoords.y);
+      
+      console.log('🖱️ Mouse move:', { currentCoords, deltaX, deltaY, isDragging });
 
-      if (!hasStartedSelection) {
-        // Start selection on first mouse move after mousedown
-        startRectangleSelection(x, y);
-        hasStartedSelection = true;
-        console.log('🔲 Started rectangle selection on mouse move');
-      } else if (isSelecting) {
-        updateRectangleSelection(x, y);
+      // Start dragging only after moving a minimum distance
+      if (!isDragging && (deltaX > 5 || deltaY > 5)) {
+        console.log('🔲 Starting rectangle selection');
+        isDragging = true;
+        startRectangleSelection(startCoords.x, startCoords.y);
+      }
+      
+      if (isDragging && isSelecting) {
+        console.log('🔲 Updating rectangle selection');
+        updateRectangleSelection(currentCoords.x, currentCoords.y);
       }
     };
 
     const handleMouseUp = (event: MouseEvent) => {
+      console.log('🖱️ Mouse up:', { isMouseDown, isDragging, isSelecting });
+      
       if (isMouseDown) {
-        isMouseDown = false;
-        
-        if (hasStartedSelection && isSelecting) {
+        if (isDragging && isSelecting) {
           console.log('🔲 Ending rectangle selection');
           endRectangleSelection(nodes);
-        } else if (!hasStartedSelection) {
+        } else if (!isDragging) {
           // This was just a click without drag - clear selections
           console.log('🧹 Single click on canvas - clearing selections');
           clearSelection();
           selectNodeSafely(null);
         }
         
-        hasStartedSelection = false;
+        // Reset state
+        isMouseDown = false;
+        isDragging = false;
+        startCoords = null;
       }
     };
 

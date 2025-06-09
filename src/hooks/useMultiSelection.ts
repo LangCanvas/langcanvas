@@ -50,14 +50,22 @@ export const useMultiSelection = () => {
     console.log('🔍 Rectangle bounds:', { rectLeft, rectRight, rectTop, rectBottom });
 
     const selectedNodes = nodes.filter(node => {
-      const { width, height } = getNodeDimensions(node.id);
+      const dimensions = getNodeDimensions(node.id);
       
+      // Use node's stored position (which should be in canvas coordinates)
+      // and the dimensions from DOM measurement
       const intersects = isNodeInRectangle(
-        node.x, node.y, width, height,
-        rectLeft, rectTop, rectRight, rectBottom
+        node.x, 
+        node.y, 
+        dimensions.width, 
+        dimensions.height,
+        rectLeft, 
+        rectTop, 
+        rectRight, 
+        rectBottom
       );
 
-      console.log(`Node ${node.id} at (${node.x}, ${node.y}, ${node.x + width}, ${node.y + height}) - ${intersects ? 'SELECTED' : 'not selected'}`);
+      console.log(`Node ${node.id} at stored position (${node.x}, ${node.y}) with size (${dimensions.width}x${dimensions.height}) - ${intersects ? 'SELECTED' : 'not selected'}`);
       
       return intersects;
     });
@@ -85,31 +93,31 @@ export const useMultiSelection = () => {
         console.warn('🚨 updateRectangleSelection called with no active selection');
         return null;
       }
-      return { ...prev, endX: x, endY: y };
+      const newRect = { ...prev, endX: x, endY: y };
+      console.log('🔲 New rectangle:', newRect);
+      return newRect;
     });
   }, []);
 
   const endRectangleSelection = useCallback((nodes: EnhancedNode[]) => {
-    console.log('🔲 Ending rectangle selection');
-    setSelectionRect(prev => {
-      if (prev) {
-        // Only select if we've actually dragged a meaningful distance
-        const width = Math.abs(prev.endX - prev.startX);
-        const height = Math.abs(prev.endY - prev.startY);
-        
-        console.log('🔲 Selection rectangle size:', { width, height });
-        
-        if (width > 10 || height > 10) {
-          selectNodesInRectangle(nodes, prev);
-        } else {
-          console.log('🔲 Rectangle too small, not selecting nodes');
-        }
+    console.log('🔲 Ending rectangle selection with current rect:', selectionRect);
+    if (selectionRect) {
+      // Only select if we've actually dragged a meaningful distance
+      const width = Math.abs(selectionRect.endX - selectionRect.startX);
+      const height = Math.abs(selectionRect.endY - selectionRect.startY);
+      
+      console.log('🔲 Selection rectangle size:', { width, height });
+      
+      if (width > 10 || height > 10) {
+        selectNodesInRectangle(nodes, selectionRect);
+      } else {
+        console.log('🔲 Rectangle too small, not selecting nodes');
       }
-      return null;
-    });
+    }
     
+    setSelectionRect(null);
     setIsSelecting(false);
-  }, [selectNodesInRectangle]);
+  }, [selectionRect, selectNodesInRectangle]);
 
   return {
     selectedNodeIds,
