@@ -22,7 +22,7 @@ const CollapsedPropertiesPanel: React.FC<CollapsedPropertiesPanelProps> = ({
     if (selectedNode) {
       return {
         type: selectedNode.type,
-        name: selectedNode.data.label || selectedNode.id,
+        name: selectedNode.label || selectedNode.id,
         icon: getNodeTypeIcon(selectedNode.type)
       };
     }
