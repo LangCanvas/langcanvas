@@ -50,7 +50,7 @@ const MainCanvasArea: React.FC<MainCanvasAreaProps> = ({
   children
 }) => {
   return (
-    <div className="flex-1 flex flex-col relative">
+    <div className="flex-1 flex">
       <div className="flex-1 relative">
         {children}
       </div>
@@ -67,10 +67,6 @@ const MainCanvasArea: React.FC<MainCanvasAreaProps> = ({
         onUpdateEdgeProperties={onUpdateEdgeProperties}
         allNodes={allNodes}
         allEdges={allEdges}
-        validationResult={validationResult}
-        showValidationPanel={showValidationPanel}
-        setShowValidationPanel={setShowValidationPanel}
-        validatePriorityConflicts={validatePriorityConflicts}
       />
 
       <DesktopPropertiesPanel

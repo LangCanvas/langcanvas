@@ -10,11 +10,11 @@ interface RightPanelToggleProps {
 
 const RightPanelToggle: React.FC<RightPanelToggleProps> = ({ isVisible, onToggle }) => {
   return (
-    <div className="absolute top-16 right-2 z-20 hidden lg:block">
+    <div className="absolute top-20 right-4 z-20 hidden lg:block">
       <Button
         variant="outline"
         size="sm"
-        className="bg-white shadow-md border-gray-300 hover:bg-gray-50 text-gray-600 hover:text-gray-800"
+        className="bg-white/95 backdrop-blur-sm shadow-lg border-gray-200 hover:bg-gray-50 text-gray-700 hover:text-gray-900 h-8 w-8 p-0"
         onClick={onToggle}
         title={isVisible ? 'Hide Properties Panel' : 'Show Properties Panel'}
       >

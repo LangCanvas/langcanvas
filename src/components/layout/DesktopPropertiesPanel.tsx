@@ -51,49 +51,41 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
     onUpdateEdge(edgeId, updates);
   };
 
+  if (!isVisible) {
+    return null;
+  }
+
   return (
-    <aside 
-      className={`hidden lg:flex bg-white border-l border-gray-200 flex-col transition-all duration-300 ease-in-out ${
-        isVisible ? 'w-80 translate-x-0' : 'w-0 translate-x-full'
-      }`}
-      style={{ 
-        overflow: isVisible ? 'visible' : 'hidden',
-        opacity: isVisible ? 1 : 0
-      }}
-    >
-      {isVisible && (
-        <>
-          <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-            <h2 className="text-sm font-medium text-gray-700">Properties</h2>
-            {validationResult.issues.length > 0 && (
-              <button
-                onClick={() => setShowValidationPanel(!showValidationPanel)}
-                className="text-xs px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 transition-colors"
-              >
-                <ValidationPanel validationResult={validationResult} compact />
-              </button>
-            )}
-          </div>
-          
-          {showValidationPanel ? (
-            <ValidationPanel 
-              validationResult={validationResult} 
-              onClose={() => setShowValidationPanel(false)}
-            />
-          ) : (
-            <EnhancedPropertiesPanel 
-              selectedNode={selectedNode}
-              selectedEdge={selectedEdge}
-              allNodes={allNodes}
-              allEdges={allEdges}
-              onUpdateNode={onUpdateNode}
-              onUpdateEdge={handleUpdateEdge}
-              onDeleteNode={onDeleteNode}
-              onDeleteEdge={onDeleteEdge}
-              validatePriorityConflicts={validatePriorityConflicts}
-            />
-          )}
-        </>
+    <aside className="w-80 bg-white border-l border-gray-200 flex flex-col hidden lg:flex">
+      <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+        <h2 className="text-sm font-medium text-gray-700">Properties</h2>
+        {validationResult.issues.length > 0 && (
+          <button
+            onClick={() => setShowValidationPanel(!showValidationPanel)}
+            className="text-xs px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 transition-colors"
+          >
+            <ValidationPanel validationResult={validationResult} compact />
+          </button>
+        )}
+      </div>
+      
+      {showValidationPanel ? (
+        <ValidationPanel 
+          validationResult={validationResult} 
+          onClose={() => setShowValidationPanel(false)}
+        />
+      ) : (
+        <EnhancedPropertiesPanel 
+          selectedNode={selectedNode}
+          selectedEdge={selectedEdge}
+          allNodes={allNodes}
+          allEdges={allEdges}
+          onUpdateNode={onUpdateNode}
+          onUpdateEdge={handleUpdateEdge}
+          onDeleteNode={onDeleteNode}
+          onDeleteEdge={onDeleteEdge}
+          validatePriorityConflicts={validatePriorityConflicts}
+        />
       )}
     </aside>
   );
