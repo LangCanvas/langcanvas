@@ -156,7 +156,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
         </div>
       </div>
 
-      {/* Legal Menu */}
+      {/* Menu */}
       <div className="flex items-center space-x-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -167,7 +167,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
               style={{ minHeight: '44px' }}
             >
               <Scale className="w-4 h-4 mr-1" />
-              <span className="hidden md:inline">Legal</span>
+              <span className="hidden md:inline">Menu</span>
               <ChevronDown className="w-3 h-3 ml-1" />
             </Button>
           </DropdownMenuTrigger>

@@ -1,9 +1,11 @@
+
 import React from 'react';
 import Toolbar from './Toolbar';
 import MobileMenu from './MobileMenu';
 import DesktopSidebar from './DesktopSidebar';
 import MainCanvasArea from './MainCanvasArea';
 import MobileBottomNav from './MobileBottomNav';
+import Footer from './Footer';
 import { EnhancedNode } from '../../types/nodeTypes';
 import { EnhancedEdge } from '../../types/edgeTypes';
 import { ValidationResult } from '../../hooks/useValidation';
@@ -119,6 +121,8 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
         hasNodes={nodes.length > 0}
         validationResult={validationResult}
       />
+
+      <Footer />
     </div>
   );
 };
