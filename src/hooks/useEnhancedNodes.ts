@@ -1,10 +1,32 @@
-import { useState, useCallback } from 'react';
+
+import { useState, useCallback, useEffect } from 'react';
 import { EnhancedNode, NodeType } from '../types/nodeTypes';
 import { createDefaultNode } from '../utils/nodeDefaults';
+import { saveWorkflowToStorage, loadWorkflowFromStorage } from '../utils/workflowStorage';
 
 export const useEnhancedNodes = () => {
   const [nodes, setNodes] = useState<EnhancedNode[]>([]);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Load nodes from localStorage on mount
+  useEffect(() => {
+    const { nodes: storedNodes } = loadWorkflowFromStorage();
+    if (storedNodes.length > 0) {
+      setNodes(storedNodes);
+      console.log('📂 Loaded', storedNodes.length, 'nodes from storage');
+    }
+    setIsLoaded(true);
+  }, []);
+
+  // Save nodes to localStorage whenever they change (but not on initial load)
+  useEffect(() => {
+    if (isLoaded) {
+      // Get current edges from storage to save together
+      const { edges } = loadWorkflowFromStorage();
+      saveWorkflowToStorage(nodes, edges);
+    }
+  }, [nodes, isLoaded]);
 
   const addNode = useCallback((type: NodeType, x: number, y: number) => {
     // Prevent adding multiple start nodes

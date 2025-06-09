@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 import { EnhancedNode } from '../types/nodeTypes';
 import { Edge } from './useEdges';
 import { exportToJSON, importFromJSON, validateWorkflowJSON, WorkflowJSON } from '../utils/workflowSerializer';
+import { clearWorkflowFromStorage } from '../utils/workflowStorage';
 
 interface UseWorkflowSerializerProps {
   nodes: EnhancedNode[];
@@ -42,6 +43,10 @@ export const useWorkflowSerializer = ({
     // Delete all nodes
     const nodeIds = nodes.map(node => node.id);
     nodeIds.forEach(nodeId => deleteNode(nodeId));
+    
+    // Clear localStorage
+    clearWorkflowFromStorage();
+    console.log('🗑️ Workflow and storage cleared');
   }, [nodes, edges, deleteNode, deleteEdge, selectNode, selectEdge]);
 
   const exportWorkflow = useCallback((): WorkflowJSON => {

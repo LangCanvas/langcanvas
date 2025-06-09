@@ -1,6 +1,6 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useEnhancedAnalytics } from './useEnhancedAnalytics';
+import { savePanelSettingsToStorage, loadPanelSettingsFromStorage } from '../utils/panelStorage';
 
 export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
   // Mobile states (existing)
@@ -8,13 +8,26 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
   const [activePanel, setActivePanel] = useState<'palette' | 'properties' | null>(null);
   const [showValidationPanel, setShowValidationPanel] = useState(false);
   
-  // Desktop panel states - both panels should be visible and expanded by default
-  const [isLeftPanelVisible, setIsLeftPanelVisible] = useState(true);
-  const [isLeftPanelExpanded, setIsLeftPanelExpanded] = useState(true);
-  const [isRightPanelVisible, setIsRightPanelVisible] = useState(true);
-  const [isRightPanelExpanded, setIsRightPanelExpanded] = useState(true); // Start expanded
+  // Load panel settings from localStorage
+  const storedSettings = loadPanelSettingsFromStorage();
+  
+  // Desktop panel states - load from storage or use defaults
+  const [isLeftPanelVisible, setIsLeftPanelVisible] = useState(storedSettings.isLeftPanelVisible);
+  const [isLeftPanelExpanded, setIsLeftPanelExpanded] = useState(storedSettings.isLeftPanelExpanded);
+  const [isRightPanelVisible, setIsRightPanelVisible] = useState(storedSettings.isRightPanelVisible);
+  const [isRightPanelExpanded, setIsRightPanelExpanded] = useState(storedSettings.isRightPanelExpanded);
   
   const analytics = useEnhancedAnalytics();
+
+  // Save panel settings to localStorage whenever they change
+  useEffect(() => {
+    savePanelSettingsToStorage({
+      isLeftPanelVisible,
+      isLeftPanelExpanded,
+      isRightPanelVisible,
+      isRightPanelExpanded
+    });
+  }, [isLeftPanelVisible, isLeftPanelExpanded, isRightPanelVisible, isRightPanelExpanded]);
 
   const handleMobileMenuToggle = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
