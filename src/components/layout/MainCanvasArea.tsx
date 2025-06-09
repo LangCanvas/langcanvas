@@ -25,6 +25,7 @@ interface MainCanvasAreaProps {
   onUpdateEdgeProperties: (edgeId: string, updates: Partial<EnhancedEdge>) => void;
   setShowValidationPanel: (show: boolean) => void;
   onExpandRightPanel?: () => void;
+  onToggleRightPanel?: () => void;
   switchToPropertiesPanel?: () => void;
   validatePriorityConflicts?: (nodeId: string, priority: number, currentEdgeId?: string) => { hasConflict: boolean; conflictingEdges: EnhancedEdge[] };
   
@@ -49,6 +50,7 @@ const MainCanvasArea: React.FC<MainCanvasAreaProps> = ({
   onUpdateEdgeProperties,
   setShowValidationPanel,
   onExpandRightPanel,
+  onToggleRightPanel,
   switchToPropertiesPanel,
   validatePriorityConflicts,
   children
@@ -79,7 +81,6 @@ const MainCanvasArea: React.FC<MainCanvasAreaProps> = ({
         validatePriorityConflicts={validatePriorityConflicts}
       />
 
-      {/* Always render the desktop properties panel - it handles its own visibility */}
       <DesktopPropertiesPanel
         selectedNode={selectedNode}
         selectedEdge={selectedEdge}
@@ -95,6 +96,7 @@ const MainCanvasArea: React.FC<MainCanvasAreaProps> = ({
         onDeleteEdge={onDeleteEdge}
         setShowValidationPanel={setShowValidationPanel}
         onExpand={onExpandRightPanel}
+        onToggle={onToggleRightPanel}
         switchToPropertiesPanel={switchToPropertiesPanel}
         validatePriorityConflicts={validatePriorityConflicts}
       />

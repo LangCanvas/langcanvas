@@ -2,17 +2,20 @@
 import React from 'react';
 import NodePalette from '../NodePalette';
 import CollapsedNodePalette from './CollapsedNodePalette';
+import LeftPanelToggle from './LeftPanelToggle';
 
 interface DesktopSidebarProps {
   isVisible?: boolean;
   isExpanded?: boolean;
   onExpand?: () => void;
+  onToggle?: () => void;
 }
 
 const DesktopSidebar: React.FC<DesktopSidebarProps> = ({ 
   isVisible = true, 
   isExpanded = true,
-  onExpand
+  onExpand,
+  onToggle
 }) => {
   // If not visible at all, don't render anything
   if (!isVisible) {
@@ -29,16 +32,26 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
 
   // Show collapsed panel when not expanded
   if (!isExpanded) {
-    return <CollapsedNodePalette onExpand={handleExpand} />;
+    return (
+      <aside className="relative w-14 bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out">
+        <CollapsedNodePalette onExpand={handleExpand} />
+        {onToggle && (
+          <LeftPanelToggle isExpanded={isExpanded} onToggle={onToggle} />
+        )}
+      </aside>
+    );
   }
 
   // Show expanded panel
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out">
+    <aside className="relative w-64 bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out">
       <NodePalette onNodeTypeSelect={(type) => {
         const event = new CustomEvent('setPendingCreation', { detail: type });
         window.dispatchEvent(event);
       }} />
+      {onToggle && (
+        <LeftPanelToggle isExpanded={isExpanded} onToggle={onToggle} />
+      )}
     </aside>
   );
 };

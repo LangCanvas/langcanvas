@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import EnhancedPropertiesPanel from '../EnhancedPropertiesPanel';
 import ValidationPanel from '../ValidationPanel';
 import CollapsedPropertiesPanel from './CollapsedPropertiesPanel';
+import RightPanelToggle from './RightPanelToggle';
 import { EnhancedNode } from '../../types/nodeTypes';
 import { EnhancedEdge } from '../../types/edgeTypes';
 import { ValidationResult } from '../../hooks/useValidation';
@@ -23,6 +24,7 @@ interface DesktopPropertiesPanelProps {
   onDeleteEdge: (edgeId: string) => void;
   setShowValidationPanel: (show: boolean) => void;
   onExpand?: () => void;
+  onToggle?: () => void;
   switchToPropertiesPanel?: () => void;
   validatePriorityConflicts?: (nodeId: string, priority: number, currentEdgeId?: string) => { hasConflict: boolean; conflictingEdges: EnhancedEdge[] };
 }
@@ -42,6 +44,7 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
   onDeleteEdge,
   setShowValidationPanel,
   onExpand,
+  onToggle,
   switchToPropertiesPanel,
   validatePriorityConflicts
 }) => {
@@ -73,18 +76,23 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
   // Show collapsed panel when not expanded
   if (!isExpanded) {
     return (
-      <CollapsedPropertiesPanel
-        selectedNode={selectedNode}
-        selectedEdge={selectedEdge}
-        validationResult={validationResult}
-        onExpand={handleExpand}
-      />
+      <aside className="relative w-14 bg-white border-l border-gray-200 flex flex-col transition-all duration-300 ease-in-out">
+        <CollapsedPropertiesPanel
+          selectedNode={selectedNode}
+          selectedEdge={selectedEdge}
+          validationResult={validationResult}
+          onExpand={handleExpand}
+        />
+        {onToggle && (
+          <RightPanelToggle isExpanded={isExpanded} onToggle={onToggle} />
+        )}
+      </aside>
     );
   }
 
   // Show expanded panel
   return (
-    <aside className="w-80 bg-white border-l border-gray-200 flex flex-col transition-all duration-300 ease-in-out">
+    <aside className="relative w-80 bg-white border-l border-gray-200 flex flex-col transition-all duration-300 ease-in-out">
       <div className="p-4 border-b border-gray-100 flex items-center justify-between">
         <h2 className="text-sm font-medium text-gray-700">Properties</h2>
         {validationResult.issues.length > 0 && (
@@ -114,6 +122,10 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
           onDeleteEdge={onDeleteEdge}
           validatePriorityConflicts={validatePriorityConflicts}
         />
+      )}
+      
+      {onToggle && (
+        <RightPanelToggle isExpanded={isExpanded} onToggle={onToggle} />
       )}
     </aside>
   );

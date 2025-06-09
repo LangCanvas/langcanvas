@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Toolbar from './Toolbar';
 import MobileMenu from './MobileMenu';
@@ -6,8 +5,6 @@ import DesktopSidebar from './DesktopSidebar';
 import MainCanvasArea from './MainCanvasArea';
 import MobileBottomNav from './MobileBottomNav';
 import Footer from './Footer';
-import LeftPanelToggle from './LeftPanelToggle';
-import RightPanelToggle from './RightPanelToggle';
 import { EnhancedNode } from '../../types/nodeTypes';
 import { EnhancedEdge } from '../../types/edgeTypes';
 import { ValidationResult } from '../../hooks/useValidation';
@@ -106,18 +103,6 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
         validationResult={validationResult}
       />
 
-      <LeftPanelToggle
-        isVisible={isLeftPanelVisible}
-        isExpanded={isLeftPanelExpanded}
-        onToggle={onToggleLeftPanel}
-      />
-
-      <RightPanelToggle
-        isVisible={isRightPanelVisible}
-        isExpanded={isRightPanelExpanded}
-        onToggle={onToggleRightPanel}
-      />
-
       <MobileMenu
         isOpen={isMobileMenuOpen}
         onClose={closePanels}
@@ -133,6 +118,7 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
           isVisible={isLeftPanelVisible} 
           isExpanded={isLeftPanelExpanded}
           onExpand={onExpandLeftPanel}
+          onToggle={onToggleLeftPanel}
         />
         
         <MainCanvasArea
@@ -154,6 +140,7 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
           isRightPanelVisible={isRightPanelVisible}
           isRightPanelExpanded={isRightPanelExpanded}
           onExpandRightPanel={onExpandRightPanel}
+          onToggleRightPanel={onToggleRightPanel}
           switchToPropertiesPanel={switchToPropertiesPanel}
         >
           {children}
