@@ -43,10 +43,14 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
   // Show expanded panel
   return (
     <aside className="relative w-64 bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out">
-      <NodePalette onNodeTypeSelect={(type) => {
-        const event = new CustomEvent('setPendingCreation', { detail: type });
-        window.dispatchEvent(event);
-      }} />
+      <NodePalette 
+        onNodeTypeSelect={(type) => {
+          const event = new CustomEvent('setPendingCreation', { detail: type });
+          window.dispatchEvent(event);
+        }}
+        onToggle={handleToggle}
+        isExpanded={isExpanded}
+      />
     </aside>
   );
 };

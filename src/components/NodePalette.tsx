@@ -1,13 +1,17 @@
+
 import React from 'react';
+import { PanelLeftClose } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { NodeType } from '../types/nodeTypes';
 import { useEnhancedAnalytics } from '../hooks/useEnhancedAnalytics';
 
 interface NodePaletteProps {
   onNodeTypeSelect?: (type: NodeType) => void;
+  onToggle?: () => void;
+  isExpanded?: boolean;
 }
 
-const NodePalette: React.FC<NodePaletteProps> = ({ onNodeTypeSelect }) => {
+const NodePalette: React.FC<NodePaletteProps> = ({ onNodeTypeSelect, onToggle, isExpanded = true }) => {
   const analytics = useEnhancedAnalytics();
   
   const nodeTypes = [
@@ -166,7 +170,19 @@ const NodePalette: React.FC<NodePaletteProps> = ({ onNodeTypeSelect }) => {
 
   return (
     <div className="p-4">
-      <h2 className="text-sm font-medium text-gray-700 mb-4">Node Palette</h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-sm font-medium text-gray-700">Node Palette</h2>
+        {onToggle && (
+          <button
+            onClick={onToggle}
+            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
+            title="Collapse Node Palette"
+          >
+            <PanelLeftClose className="w-4 h-4 text-gray-700" />
+          </button>
+        )}
+      </div>
+      
       <div className="space-y-3">
         {nodeTypes.map(({ type, label, color }) => (
           <Button
