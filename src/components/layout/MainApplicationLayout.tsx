@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Toolbar from './Toolbar';
 import MobileMenu from './MobileMenu';
@@ -39,6 +38,9 @@ interface MainApplicationLayoutProps {
   onUpdateNodeProperties: (nodeId: string, updates: Partial<EnhancedNode>) => void;
   onUpdateEdgeProperties: (edgeId: string, updates: Partial<EnhancedEdge>) => void;
   
+  // Validation
+  validatePriorityConflicts?: (nodeId: string, priority: number, currentEdgeId?: string) => { hasConflict: boolean; conflictingEdges: EnhancedEdge[] };
+  
   // Other props
   children: React.ReactNode;
 }
@@ -63,6 +65,7 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
   onDeleteEdge,
   onUpdateNodeProperties,
   onUpdateEdgeProperties,
+  validatePriorityConflicts,
   children
 }) => {
   return (
@@ -105,6 +108,7 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
           validationResult={validationResult}
           showValidationPanel={showValidationPanel}
           setShowValidationPanel={setShowValidationPanel}
+          validatePriorityConflicts={validatePriorityConflicts}
         >
           {children}
         </MainCanvasArea>
