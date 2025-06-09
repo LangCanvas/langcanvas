@@ -38,25 +38,50 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
   };
 
   const handleToggleLeftPanel = () => {
-    console.log("Desktop left panel toggle clicked, current expanded:", isLeftPanelExpanded);
-    setIsLeftPanelExpanded(!isLeftPanelExpanded);
+    console.log("Desktop left panel toggle clicked, current state - visible:", isLeftPanelVisible, "expanded:", isLeftPanelExpanded);
+    
+    if (isLeftPanelVisible && isLeftPanelExpanded) {
+      // If visible and expanded, collapse it
+      setIsLeftPanelExpanded(false);
+    } else if (isLeftPanelVisible && !isLeftPanelExpanded) {
+      // If visible but collapsed, hide it completely
+      setIsLeftPanelVisible(false);
+    } else {
+      // If hidden, show it expanded
+      setIsLeftPanelVisible(true);
+      setIsLeftPanelExpanded(true);
+    }
     
     analytics.trackFeatureUsage('desktop_left_panel_toggled', { 
-      isExpanded: !isLeftPanelExpanded 
+      wasVisible: isLeftPanelVisible,
+      wasExpanded: isLeftPanelExpanded
     });
   };
 
   const handleToggleRightPanel = () => {
-    console.log("Desktop right panel toggle clicked, current expanded:", isRightPanelExpanded);
-    setIsRightPanelExpanded(!isRightPanelExpanded);
+    console.log("Desktop right panel toggle clicked, current state - visible:", isRightPanelVisible, "expanded:", isRightPanelExpanded);
+    
+    if (isRightPanelVisible && isRightPanelExpanded) {
+      // If visible and expanded, collapse it
+      setIsRightPanelExpanded(false);
+    } else if (isRightPanelVisible && !isRightPanelExpanded) {
+      // If visible but collapsed, hide it completely
+      setIsRightPanelVisible(false);
+    } else {
+      // If hidden, show it expanded
+      setIsRightPanelVisible(true);
+      setIsRightPanelExpanded(true);
+    }
     
     analytics.trackFeatureUsage('desktop_right_panel_toggled', { 
-      isExpanded: !isRightPanelExpanded 
+      wasVisible: isRightPanelVisible,
+      wasExpanded: isRightPanelExpanded
     });
   };
 
   const handleExpandLeftPanel = () => {
     console.log("Left panel expand requested");
+    setIsLeftPanelVisible(true);
     setIsLeftPanelExpanded(true);
     
     analytics.trackFeatureUsage('desktop_left_panel_expanded');
@@ -64,6 +89,7 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
 
   const handleExpandRightPanel = () => {
     console.log("Right panel expand requested");
+    setIsRightPanelVisible(true);
     setIsRightPanelExpanded(true);
     
     analytics.trackFeatureUsage('desktop_right_panel_expanded');

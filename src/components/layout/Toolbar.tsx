@@ -1,65 +1,72 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Menu, X } from 'lucide-react';
-import { ValidationResult } from '../../utils/graphValidation';
 import ToolbarBrand from './toolbar/ToolbarBrand';
-import ToolbarValidation from './toolbar/ToolbarValidation';
-import ToolbarActions from './toolbar/ToolbarActions';
 import ToolbarMenu from './toolbar/ToolbarMenu';
+import ToolbarActions from './toolbar/ToolbarActions';
+import ToolbarPanelToggles from './toolbar/ToolbarPanelToggles';
+import ToolbarValidation from './toolbar/ToolbarValidation';
+import { ValidationResult } from '../../hooks/useValidation';
 
 interface ToolbarProps {
   isMobileMenuOpen: boolean;
+  hasNodes: boolean;
+  validationResult: ValidationResult;
+  isLeftPanelVisible?: boolean;
+  isLeftPanelExpanded?: boolean;
+  isRightPanelVisible?: boolean;
+  isRightPanelExpanded?: boolean;
   onMobileMenuToggle: () => void;
   onNewProject: () => void;
   onImport: () => void;
   onExport: () => void;
-  hasNodes: boolean;
-  validationResult?: ValidationResult;
-  isLeftPanelVisible?: boolean;
-  isRightPanelVisible?: boolean;
   onToggleLeftPanel?: () => void;
   onToggleRightPanel?: () => void;
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({
   isMobileMenuOpen,
+  hasNodes,
+  validationResult,
+  isLeftPanelVisible = true,
+  isLeftPanelExpanded = true,
+  isRightPanelVisible = true,
+  isRightPanelExpanded = true,
   onMobileMenuToggle,
   onNewProject,
   onImport,
   onExport,
-  hasNodes,
-  validationResult
+  onToggleLeftPanel,
+  onToggleRightPanel,
 }) => {
   return (
-    <header className="bg-gray-100 border-b border-gray-200 px-2 sm:px-4 py-2 flex items-center justify-between shadow-sm">
-      <div className="flex items-center space-x-1">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="lg:hidden touch-manipulation"
-          onClick={onMobileMenuToggle}
-          style={{ minHeight: '44px', minWidth: '44px' }}
-        >
-          {isMobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
-        </Button>
-        
-        <ToolbarBrand />
-        
-        <ToolbarValidation 
-          validationResult={validationResult}
-          hasNodes={hasNodes}
-        />
+    <header className="bg-white border-b border-gray-200 h-14 flex items-center px-4 relative z-50">
+      <ToolbarBrand />
+      
+      <ToolbarMenu 
+        isMobileMenuOpen={isMobileMenuOpen}
+        onMobileMenuToggle={onMobileMenuToggle}
+      />
+
+      <div className="flex items-center gap-2 ml-auto">
+        {onToggleLeftPanel && onToggleRightPanel && (
+          <ToolbarPanelToggles
+            isLeftPanelVisible={isLeftPanelVisible}
+            isLeftPanelExpanded={isLeftPanelExpanded}
+            isRightPanelVisible={isRightPanelVisible}
+            isRightPanelExpanded={isRightPanelExpanded}
+            onToggleLeftPanel={onToggleLeftPanel}
+            onToggleRightPanel={onToggleRightPanel}
+          />
+        )}
+
+        <ToolbarValidation validationResult={validationResult} />
         
         <ToolbarActions 
           onNewProject={onNewProject}
           onImport={onImport}
           onExport={onExport}
+          hasNodes={hasNodes}
         />
-      </div>
-
-      <div className="flex items-center space-x-2">
-        <ToolbarMenu />
       </div>
     </header>
   );
