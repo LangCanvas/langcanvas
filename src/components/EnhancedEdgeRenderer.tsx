@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { EnhancedEdge } from '../types/edgeTypes';
 import { EnhancedNode } from '../types/nodeTypes';
@@ -76,6 +77,12 @@ const EnhancedEdgeRenderer: React.FC<EnhancedEdgeRendererProps> = ({
       className="absolute inset-0 pointer-events-none z-1"
       style={{ width: '100%', height: '100%' }}
     >
+      <defs>
+        <marker id="arrowhead" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="rgb(75, 85, 99)" />
+        </marker>
+      </defs>
+      
       {edges.map((edge) => {
         const sourceNode = nodes.find((node) => node.id === edge.source);
         const targetNode = nodes.find((node) => node.id === edge.target);
@@ -105,8 +112,9 @@ const EnhancedEdgeRenderer: React.FC<EnhancedEdgeRendererProps> = ({
               className={`pointer-events-auto cursor-pointer ${validationClass}`}
               onClick={(e) => handleEdgeClick(e, edge.id)}
               onDoubleClick={(e) => handleEdgeDoubleClick(e, edge.id)}
-              title={tooltip}
-            />
+            >
+              {tooltip && <title>{tooltip}</title>}
+            </line>
             {isSelected && (
               <line
                 x1={startX}
@@ -118,9 +126,6 @@ const EnhancedEdgeRenderer: React.FC<EnhancedEdgeRendererProps> = ({
                 className="pointer-events-none"
               />
             )}
-            <marker id="arrowhead" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill={strokeColor} />
-            </marker>
             <line
               x1={endX - 10}
               y1={endY - 10}

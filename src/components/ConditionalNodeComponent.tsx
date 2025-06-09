@@ -11,7 +11,9 @@ interface ConditionalNodeComponentProps {
   isSelected: boolean;
   canCreateEdge: boolean;
   onSelect: (id: string) => void;
+  onDoubleClick?: () => void;
   onMove: (id: string, x: number, y: number) => void;
+  onDragStart?: (event: React.MouseEvent) => void;
   onStartConnection: (sourceNode: EnhancedNode, startX: number, startY: number) => void;
   validationClass?: string;
   validationTooltip?: string;
@@ -23,7 +25,9 @@ const ConditionalNodeComponent: React.FC<ConditionalNodeComponentProps> = ({
   isSelected, 
   canCreateEdge, 
   onSelect, 
+  onDoubleClick,
   onMove, 
+  onDragStart,
   onStartConnection,
   validationClass = '',
   validationTooltip = ''
@@ -40,6 +44,11 @@ const ConditionalNodeComponent: React.FC<ConditionalNodeComponentProps> = ({
     const pointerEvent = getPointerEvent(e);
     pointerEvent.preventDefault();
     onSelect(node.id);
+    
+    // Call onDragStart for multi-node dragging
+    if (onDragStart && 'clientX' in e) {
+      onDragStart(e as React.MouseEvent);
+    }
     
     const rect = nodeRef.current?.getBoundingClientRect();
     const canvas = document.getElementById('canvas');
@@ -58,6 +67,14 @@ const ConditionalNodeComponent: React.FC<ConditionalNodeComponentProps> = ({
         y: canvasY - node.y
       });
       setIsDragging(true);
+    }
+  };
+
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onDoubleClick) {
+      onDoubleClick();
     }
   };
 
@@ -149,6 +166,7 @@ const ConditionalNodeComponent: React.FC<ConditionalNodeComponentProps> = ({
       style={nodeStyle}
       onMouseDown={handlePointerDown}
       onTouchStart={handlePointerDown}
+      onDoubleClick={handleDoubleClick}
       className={`conditional-node ${isSelected ? 'selected' : ''} ${validationClass}`}
       data-node-id={node.id}
       data-node-type={node.type}
