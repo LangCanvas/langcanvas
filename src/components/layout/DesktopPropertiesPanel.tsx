@@ -56,7 +56,7 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
   }
 
   return (
-    <aside className="w-80 bg-white border-l border-gray-200 flex flex-col hidden lg:flex">
+    <aside className="w-80 bg-white border-l border-gray-200 flex flex-col lg:flex">
       <div className="p-4 border-b border-gray-100 flex items-center justify-between">
         <h2 className="text-sm font-medium text-gray-700">Properties</h2>
         {validationResult.issues.length > 0 && (

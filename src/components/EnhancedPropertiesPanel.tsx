@@ -1,4 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { EnhancedNode } from '../types/nodeTypes';
 import { EnhancedEdge } from '../types/edgeTypes';
 import { validateNodeConfiguration } from '../utils/nodeDefaults';
@@ -60,43 +62,47 @@ const EnhancedPropertiesPanel: React.FC<EnhancedPropertiesPanelProps> = ({
       const allConditionalEdges = allEdges.filter(edge => edge.conditional);
       
       return (
-        <div className="p-4 space-y-6 max-h-full overflow-y-auto">
-          <ConditionalEdgePropertiesForm
-            selectedEdge={selectedEdge}
-            nodes={allNodes}
-            allConditionalEdges={allConditionalEdges}
-            onUpdateEdge={onUpdateEdge}
-            onUpdateEdgeCondition={(edgeId, condition) => {
-              const currentEdge = selectedEdge;
-              if (currentEdge.conditional) {
-                onUpdateEdge(edgeId, {
-                  conditional: {
-                    ...currentEdge.conditional,
-                    condition: { ...currentEdge.conditional.condition, ...condition }
-                  },
-                  label: condition.functionName || currentEdge.label
-                });
-              }
-            }}
-            onDeleteEdge={onDeleteEdge}
-            onReorderEdges={(nodeId, edgeIds) => {
-              console.log('Reorder edges for node:', nodeId, edgeIds);
-            }}
-            onUpdateNode={onUpdateNode}
-            validatePriorityConflicts={validatePriorityConflicts || (() => ({ hasConflict: false, conflictingEdges: [] }))}
-          />
-        </div>
+        <ScrollArea className="flex-1">
+          <div className="p-4 space-y-6">
+            <ConditionalEdgePropertiesForm
+              selectedEdge={selectedEdge}
+              nodes={allNodes}
+              allConditionalEdges={allConditionalEdges}
+              onUpdateEdge={onUpdateEdge}
+              onUpdateEdgeCondition={(edgeId, condition) => {
+                const currentEdge = selectedEdge;
+                if (currentEdge.conditional) {
+                  onUpdateEdge(edgeId, {
+                    conditional: {
+                      ...currentEdge.conditional,
+                      condition: { ...currentEdge.conditional.condition, ...condition }
+                    },
+                    label: condition.functionName || currentEdge.label
+                  });
+                }
+              }}
+              onDeleteEdge={onDeleteEdge}
+              onReorderEdges={(nodeId, edgeIds) => {
+                console.log('Reorder edges for node:', nodeId, edgeIds);
+              }}
+              onUpdateNode={onUpdateNode}
+              validatePriorityConflicts={validatePriorityConflicts || (() => ({ hasConflict: false, conflictingEdges: [] }))}
+            />
+          </div>
+        </ScrollArea>
       );
     } else {
       return (
-        <div className="p-4 space-y-6 max-h-full overflow-y-auto">
-          <EdgePropertiesForm
-            selectedEdge={selectedEdge}
-            nodes={allNodes}
-            onUpdateEdge={onUpdateEdge}
-            onDeleteEdge={onDeleteEdge}
-          />
-        </div>
+        <ScrollArea className="flex-1">
+          <div className="p-4 space-y-6">
+            <EdgePropertiesForm
+              selectedEdge={selectedEdge}
+              nodes={allNodes}
+              onUpdateEdge={onUpdateEdge}
+              onDeleteEdge={onDeleteEdge}
+            />
+          </div>
+        </ScrollArea>
       );
     }
   }
@@ -129,29 +135,31 @@ const EnhancedPropertiesPanel: React.FC<EnhancedPropertiesPanelProps> = ({
     };
 
     return (
-      <div className="p-4 space-y-6 max-h-full overflow-y-auto">
-        <ValidationErrorsDisplay errors={validationErrors} />
-        
-        <BasicPropertiesForm 
-          selectedNode={selectedNode}
-          onUpdateNode={updateNode}
-          onUpdateFunction={updateFunction}
-        />
+      <ScrollArea className="flex-1">
+        <div className="p-4 space-y-6">
+          <ValidationErrorsDisplay errors={validationErrors} />
+          
+          <BasicPropertiesForm 
+            selectedNode={selectedNode}
+            onUpdateNode={updateNode}
+            onUpdateFunction={updateFunction}
+          />
 
-        <InputSchemaEditor 
-          selectedNode={selectedNode}
-          onUpdateFunction={updateFunction}
-        />
+          <InputSchemaEditor 
+            selectedNode={selectedNode}
+            onUpdateFunction={updateFunction}
+          />
 
-        <AdvancedConfigurationForm 
-          selectedNode={selectedNode}
-          showAdvanced={showAdvanced}
-          onToggleAdvanced={toggleAdvanced}
-          onUpdateConfig={updateConfig}
-        />
+          <AdvancedConfigurationForm 
+            selectedNode={selectedNode}
+            showAdvanced={showAdvanced}
+            onToggleAdvanced={toggleAdvanced}
+            onUpdateConfig={updateConfig}
+          />
 
-        <NodeDeleteButton onDeleteNode={handleDeleteNode} />
-      </div>
+          <NodeDeleteButton onDeleteNode={handleDeleteNode} />
+        </div>
+      </ScrollArea>
     );
   }
 
