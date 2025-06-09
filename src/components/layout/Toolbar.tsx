@@ -3,7 +3,6 @@ import React from 'react';
 import ToolbarBrand from './toolbar/ToolbarBrand';
 import ToolbarMenu from './toolbar/ToolbarMenu';
 import ToolbarActions from './toolbar/ToolbarActions';
-import ToolbarPanelToggles from './toolbar/ToolbarPanelToggles';
 import ToolbarValidation from './toolbar/ToolbarValidation';
 import { ValidationResult } from '../../hooks/useValidation';
 
@@ -11,32 +10,20 @@ interface ToolbarProps {
   isMobileMenuOpen: boolean;
   hasNodes: boolean;
   validationResult: ValidationResult;
-  isLeftPanelVisible?: boolean;
-  isLeftPanelExpanded?: boolean;
-  isRightPanelVisible?: boolean;
-  isRightPanelExpanded?: boolean;
   onMobileMenuToggle: () => void;
   onNewProject: () => void;
   onImport: () => void;
   onExport: () => void;
-  onToggleLeftPanel?: () => void;
-  onToggleRightPanel?: () => void;
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({
   isMobileMenuOpen,
   hasNodes,
   validationResult,
-  isLeftPanelVisible = true,
-  isLeftPanelExpanded = true,
-  isRightPanelVisible = true,
-  isRightPanelExpanded = true,
   onMobileMenuToggle,
   onNewProject,
   onImport,
   onExport,
-  onToggleLeftPanel,
-  onToggleRightPanel,
 }) => {
   return (
     <header className="bg-white border-b border-gray-200 h-14 flex items-center px-4 relative z-50">
@@ -45,17 +32,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
       <ToolbarMenu />
 
       <div className="flex items-center gap-2 ml-auto">
-        {onToggleLeftPanel && onToggleRightPanel && (
-          <ToolbarPanelToggles
-            isLeftPanelVisible={isLeftPanelVisible}
-            isLeftPanelExpanded={isLeftPanelExpanded}
-            isRightPanelVisible={isRightPanelVisible}
-            isRightPanelExpanded={isRightPanelExpanded}
-            onToggleLeftPanel={onToggleLeftPanel}
-            onToggleRightPanel={onToggleRightPanel}
-          />
-        )}
-
         <ToolbarValidation 
           validationResult={validationResult} 
           hasNodes={hasNodes}
