@@ -1,30 +1,14 @@
-
 import React from 'react';
-import { Button } from '@/components/ui/button';
-import { PanelLeft, PanelLeftClose } from 'lucide-react';
+
+// This component is no longer used since we removed panel toggles from toolbar
+// Keeping the file for now in case it's needed later, but it's not imported anywhere
 
 interface ToolbarPanelTogglesProps {
-  isLeftPanelVisible: boolean;
-  isLeftPanelExpanded: boolean;
-  onToggleLeftPanel: () => void;
+  // No props needed since this component is unused
 }
 
-const ToolbarPanelToggles: React.FC<ToolbarPanelTogglesProps> = ({
-  isLeftPanelVisible,
-  isLeftPanelExpanded,
-  onToggleLeftPanel
-}) => {
-  return (
-    <Button
-      variant="ghost"
-      size="sm"
-      className="hidden lg:flex text-gray-600 hover:text-gray-800 hover:bg-yellow-100"
-      onClick={onToggleLeftPanel}
-      title={isLeftPanelVisible && isLeftPanelExpanded ? 'Collapse Node Palette' : 'Show Node Palette'}
-    >
-      {isLeftPanelVisible && isLeftPanelExpanded ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeft className="w-4 h-4" />}
-    </Button>
-  );
+const ToolbarPanelToggles: React.FC<ToolbarPanelTogglesProps> = () => {
+  return null;
 };
 
 export default ToolbarPanelToggles;
