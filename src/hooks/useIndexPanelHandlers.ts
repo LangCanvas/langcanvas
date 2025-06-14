@@ -19,7 +19,8 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
   // Desktop panel states - left panel is ALWAYS visible, right panel defaults to visible
   const [isLeftPanelVisible] = useState(true); // Always true, no setter needed
   const [isRightPanelVisible, setIsRightPanelVisible] = useState(() => {
-    // Safeguard: ensure right panel defaults to visible
+    // Explicit default to true - right panel should be visible by default
+    // Only hide if explicitly set to false in storage
     return storedSettings.isRightPanelVisible !== false;
   });
   
