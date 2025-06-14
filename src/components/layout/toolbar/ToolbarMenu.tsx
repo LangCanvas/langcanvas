@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -14,20 +14,40 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const ToolbarMenu: React.FC = () => {
   const navigate = useNavigate();
-  const { isAdmin, isAuthenticated, user } = useAuth();
+  const { isAdmin, isAuthenticated, user, validateSession } = useAuth();
+  const [authState, setAuthState] = useState({ isAdmin: false, isAuthenticated: false });
 
-  // Add debug logging to understand the auth state
-  console.log('🔧 ToolbarMenu auth state:', { isAdmin, isAuthenticated, userEmail: user?.email });
+  // Track auth state changes with local state to ensure we have the latest values
+  useEffect(() => {
+    console.log('🔧 ToolbarMenu auth state updated:', { isAdmin, isAuthenticated, userEmail: user?.email });
+    setAuthState({ isAdmin, isAuthenticated });
+  }, [isAdmin, isAuthenticated, user]);
 
   const handleAdminDashboard = () => {
-    console.log('🔧 Admin Dashboard clicked - navigating to /admin');
-    navigate('/admin');
+    console.log('🔧 Admin Dashboard clicked - Current auth state:', authState);
+    console.log('🔧 Validating session before navigation...');
+    
+    // Validate session before navigation
+    const isSessionValid = validateSession();
+    console.log('🔧 Session validation result:', isSessionValid);
+    
+    if (isSessionValid && authState.isAuthenticated && authState.isAdmin) {
+      console.log('🔧 Session valid - navigating to /admin');
+      navigate('/admin');
+    } else {
+      console.log('🔧 Session invalid or not admin - redirecting to admin login');
+      navigate('/admin-login');
+    }
   };
 
   const handleAdminLogin = () => {
     console.log('🔧 Admin Login clicked - navigating to /admin-login');
     navigate('/admin-login');
   };
+
+  // Double-check auth state for rendering
+  const shouldShowAdminDashboard = authState.isAuthenticated && authState.isAdmin;
+  console.log('🔧 ToolbarMenu render decision:', { shouldShowAdminDashboard, authState });
 
   return (
     <DropdownMenu>
@@ -59,7 +79,7 @@ const ToolbarMenu: React.FC = () => {
         
         <DropdownMenuSeparator />
         
-        {isAuthenticated && isAdmin ? (
+        {shouldShowAdminDashboard ? (
           <DropdownMenuItem onClick={handleAdminDashboard}>
             <Shield className="w-4 h-4 mr-2" />
             Admin Dashboard
