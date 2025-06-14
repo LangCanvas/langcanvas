@@ -5,7 +5,10 @@ import { EnhancedNode } from '../types/nodeTypes';
 import GridDebugOverlay from './canvas/GridDebugOverlay';
 import EdgeMarkerDefinitions from './canvas/EdgeMarkerDefinitions';
 import IndividualEdgeRenderer from './canvas/IndividualEdgeRenderer';
+import MultiEdgeRenderer from './canvas/MultiEdgeRenderer';
+import EdgeSelectionHandler from './canvas/EdgeSelectionHandler';
 import { getEnhancedEdgeCalculator } from '../utils/enhancedEdgeCalculations';
+import { MultiEdgeCalculator } from '../utils/multiEdgeCalculations';
 import { usePathfindingSettings } from '../hooks/usePathfindingSettings';
 import { usePathAnimations } from '../hooks/usePathAnimations';
 import { useEdgeBundling } from '../hooks/useEdgeBundling';
@@ -23,6 +26,8 @@ interface EnhancedEdgeRendererProps {
   onSelectEdge?: (edgeId: string | null) => void;
   getEdgeValidationClass?: (edgeId: string) => string;
   getEdgeTooltip?: (edgeId: string) => string;
+  enableMultiEdge?: boolean;
+  onSelectionChange?: (selectedEdges: EnhancedEdge[]) => void;
 }
 
 const EnhancedEdgeRenderer: React.FC<EnhancedEdgeRendererProps> = ({ 
@@ -35,7 +40,9 @@ const EnhancedEdgeRenderer: React.FC<EnhancedEdgeRendererProps> = ({
   onDoubleClick,
   onSelectEdge,
   getEdgeValidationClass,
-  getEdgeTooltip
+  getEdgeTooltip,
+  enableMultiEdge = true,
+  onSelectionChange
 }) => {
   const { settings } = usePathfindingSettings();
   const { getAnimationProgress, isAnimating } = usePathAnimations(
@@ -44,7 +51,17 @@ const EnhancedEdgeRenderer: React.FC<EnhancedEdgeRendererProps> = ({
   );
   const bundling = useEdgeBundling(edges, nodes);
 
-  const handleEdgeClick = (e: React.MouseEvent, edgeId: string) => {
+  // Group parallel edges for multi-edge rendering
+  const multiEdgeGroups = enableMultiEdge ? MultiEdgeCalculator.groupParallelEdges(edges) : [];
+  const parallelEdgeIds = new Set(
+    multiEdgeGroups.flatMap(group => group.edges.map(edge => edge.id))
+  );
+  
+  // Filter out edges that are part of multi-edge groups and bundles
+  const unbundledEdges = bundling.getUnbundledEdges();
+  const individualEdges = unbundledEdges.filter(edge => !parallelEdgeIds.has(edge.id));
+
+  const handleLegacyEdgeClick = (e: React.MouseEvent, edgeId: string) => {
     e.preventDefault();
     e.stopPropagation();
     
@@ -61,7 +78,7 @@ const EnhancedEdgeRenderer: React.FC<EnhancedEdgeRendererProps> = ({
     console.log(`🔗 Enhanced edge clicked: ${edgeId}`);
   };
 
-  const handleEdgeDoubleClick = (e: React.MouseEvent, edgeId: string) => {
+  const handleLegacyEdgeDoubleClick = (e: React.MouseEvent, edgeId: string) => {
     e.preventDefault();
     e.stopPropagation();
     
@@ -76,8 +93,6 @@ const EnhancedEdgeRenderer: React.FC<EnhancedEdgeRendererProps> = ({
     const progress = getAnimationProgress(edgeId);
     return 0.3 + (0.7 * progress);
   };
-
-  const unbundledEdges = bundling.getUnbundledEdges();
 
   if (edges.length === 0 && !settings.enableDebugGrid) return null;
 
@@ -101,6 +116,7 @@ const EnhancedEdgeRenderer: React.FC<EnhancedEdgeRendererProps> = ({
           />
         )}
         
+        {/* Bundled edges rendering */}
         {bundling.settings.enabled && bundling.bundles.length > 0 && (
           <BundledEdgeRenderer
             bundles={bundling.bundles}
@@ -111,7 +127,29 @@ const EnhancedEdgeRenderer: React.FC<EnhancedEdgeRendererProps> = ({
           />
         )}
         
-        {unbundledEdges.map(edge => {
+        {/* Multi-edge rendering with advanced selection */}
+        {enableMultiEdge && multiEdgeGroups.length > 0 && (
+          <EdgeSelectionHandler
+            edges={edges}
+            onSelectionChange={onSelectionChange}
+            onEdgeDoubleClick={onDoubleClick}
+          >
+            {({ selectedEdgeIds: advancedSelectedIds, onEdgeClick, onEdgeDoubleClick: advancedDoubleClick }) => (
+              <MultiEdgeRenderer
+                multiEdgeGroups={multiEdgeGroups}
+                nodes={nodes}
+                selectedEdgeIds={[...selectedEdgeIds, ...advancedSelectedIds]}
+                onEdgeClick={onEdgeClick}
+                onEdgeDoubleClick={advancedDoubleClick}
+                getEdgeValidationClass={getEdgeValidationClass}
+                getEdgeTooltip={getEdgeTooltip}
+              />
+            )}
+          </EdgeSelectionHandler>
+        )}
+        
+        {/* Individual edges rendering */}
+        {individualEdges.map(edge => {
           const sourceNode = nodes.find(n => n.id === edge.source);
           const targetNode = nodes.find(n => n.id === edge.target);
           
@@ -135,8 +173,8 @@ const EnhancedEdgeRenderer: React.FC<EnhancedEdgeRendererProps> = ({
               tooltip={tooltip}
               animatedOpacity={animatedOpacity}
               animatePathChanges={settings.animatePathChanges}
-              onEdgeClick={handleEdgeClick}
-              onEdgeDoubleClick={handleEdgeDoubleClick}
+              onEdgeClick={handleLegacyEdgeClick}
+              onEdgeDoubleClick={handleLegacyEdgeDoubleClick}
             />
           );
         })}

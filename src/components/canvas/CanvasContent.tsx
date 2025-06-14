@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { EnhancedNode } from '../../types/nodeTypes';
 import { EnhancedEdge } from '../../types/edgeTypes';
 import CanvasBackground from './CanvasBackground';
@@ -57,8 +57,11 @@ const CanvasContent: React.FC<CanvasContentProps> = ({
   hoveredNodeId,
   handleStartConnection
 }) => {
+  const [advancedSelectedEdges, setAdvancedSelectedEdges] = useState<EnhancedEdge[]>([]);
+
   const handleSelectSingleEdge = (edgeId: string | null) => {
     canvasHandlers.selectEdgeSafely(edgeId);
+    setAdvancedSelectedEdges(edgeId ? edges.filter(e => e.id === edgeId) : []);
   };
   
   const handleToggleEdgeSelection = (edgeId: string, isCtrlOrShiftPressed: boolean) => {
@@ -70,6 +73,15 @@ const CanvasContent: React.FC<CanvasContentProps> = ({
       detail: { edgeId, type: 'edge' } 
     }));
   };
+
+  const handleAdvancedEdgeSelection = useCallback((selectedEdges: EnhancedEdge[]) => {
+    setAdvancedSelectedEdges(selectedEdges);
+    console.log(`🔗 Advanced edge selection: ${selectedEdges.length} edges selected`);
+  }, []);
+
+  const totalSelectedCount = multiSelection.selectedNodeIds.length + 
+                            multiSelection.selectedEdgeIds.length + 
+                            advancedSelectedEdges.length;
 
   return (
     <>
@@ -96,6 +108,8 @@ const CanvasContent: React.FC<CanvasContentProps> = ({
         onDoubleClick={handleEdgeDoubleClick}
         getEdgeValidationClass={getEdgeValidationClass}
         getEdgeTooltip={getEdgeTooltip}
+        enableMultiEdge={true}
+        onSelectionChange={handleAdvancedEdgeSelection}
       />
 
       <RectangleSelector
@@ -124,7 +138,7 @@ const CanvasContent: React.FC<CanvasContentProps> = ({
 
       <BottomStatusBar
         isSelecting={multiSelection.isSelecting}
-        selectedCount={multiSelection.selectedNodeIds.length + multiSelection.selectedEdgeIds.length}
+        selectedCount={totalSelectedCount}
         pendingNodeType={pendingNodeType}
         isCreatingEdge={isCreatingEdge}
         hasUnsavedChanges={hasUnsavedChanges}
