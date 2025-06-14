@@ -37,10 +37,16 @@ export const useAuthHandlers = (onAuthSuccess?: () => void) => {
       setRetryCount(0);
       debugLogger.addLog(`Enhanced authentication successful for: ${userData.email}`);
       
-      // Trigger immediate navigation if callback provided
+      // Immediate navigation trigger with more robust callback handling
       if (onAuthSuccess) {
-        debugLogger.addLog('Triggering navigation callback after successful authentication');
-        onAuthSuccess();
+        debugLogger.addLog('Triggering immediate navigation callback after successful authentication');
+        // Use setTimeout to ensure state updates are processed
+        setTimeout(() => {
+          debugLogger.addLog('Executing delayed navigation callback');
+          onAuthSuccess();
+        }, 100);
+      } else {
+        debugLogger.addLog('Warning: No navigation callback provided');
       }
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Authentication failed';

@@ -32,32 +32,36 @@ const AdminLogin = () => {
   const [isAlternativeSignIn, setIsAlternativeSignIn] = useState(false);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
 
-  // Create navigation callback
+  // Create navigation callback with enhanced logging
   const navigateToAdmin = useCallback(() => {
     console.log('🔐 Navigation callback triggered - redirecting to admin dashboard');
+    console.log('🔐 Current auth state:', { isAuthenticated, isAdmin });
     navigate('/admin');
     toast({
       title: "Welcome Back",
       description: "Successfully signed in to admin dashboard.",
     });
-  }, [navigate, toast]);
+  }, [navigate, toast, isAuthenticated, isAdmin]);
 
   // Set up the navigation callback when component mounts
   useEffect(() => {
+    console.log('🔐 Setting up auth success callback in AdminLogin');
     setAuthSuccessCallback(navigateToAdmin);
     
     // Cleanup callback when component unmounts
     return () => {
+      console.log('🔐 Cleaning up auth success callback');
       setAuthSuccessCallback(null);
     };
   }, [setAuthSuccessCallback, navigateToAdmin]);
 
-  // Enhanced redirect effect with logging
+  // Enhanced redirect effect with more aggressive detection
   useEffect(() => {
-    console.log('🔐 AdminLogin state check:', { isAuthenticated, isAdmin });
+    console.log('🔐 AdminLogin auth state changed:', { isAuthenticated, isAdmin });
     
     if (isAuthenticated && isAdmin) {
-      console.log('🔐 User is authenticated and admin - redirecting to dashboard');
+      console.log('🔐 User is authenticated and admin - triggering immediate redirect');
+      // Immediate redirect without delay
       navigate('/admin');
       toast({
         title: "Already Signed In",
@@ -72,13 +76,14 @@ const AdminLogin = () => {
       console.log('🔐 Enhanced admin login attempt started');
       await signIn();
       
-      // Navigation should happen via callback, but as fallback:
+      // Enhanced fallback navigation with shorter timeout
       setTimeout(() => {
+        console.log('🔐 Fallback check - Auth state:', { isAuthenticated, isAdmin });
         if (isAuthenticated && isAdmin) {
           console.log('🔐 Fallback navigation triggered');
           navigateToAdmin();
         }
-      }, 1000);
+      }, 500);
       
     } catch (error) {
       console.error('🔐 Enhanced admin login failed:', error);
@@ -100,13 +105,14 @@ const AdminLogin = () => {
       console.log('🔐 Alternative enhanced admin login attempt started');
       await signInWithButton();
       
-      // Navigation should happen via callback, but as fallback:
+      // Enhanced fallback navigation with shorter timeout
       setTimeout(() => {
+        console.log('🔐 Alternative fallback check - Auth state:', { isAuthenticated, isAdmin });
         if (isAuthenticated && isAdmin) {
-          console.log('🔐 Fallback navigation triggered for alternative sign-in');
+          console.log('🔐 Alternative fallback navigation triggered');
           navigateToAdmin();
         }
-      }, 1000);
+      }, 500);
       
     } catch (error) {
       console.error('🔐 Alternative enhanced admin login failed:', error);
