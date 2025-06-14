@@ -2,19 +2,14 @@
 import React from 'react';
 import { EnhancedEdge } from '../types/edgeTypes';
 import { EnhancedNode } from '../types/nodeTypes';
-import GridDebugOverlay from './canvas/GridDebugOverlay';
-import EdgeMarkerDefinitions from './canvas/EdgeMarkerDefinitions';
-import IndividualEdgeRenderer from './canvas/IndividualEdgeRenderer';
-import MultiEdgeRenderer from './canvas/MultiEdgeRenderer';
-import EdgeSelectionHandler from './canvas/EdgeSelectionHandler';
-import EdgeVirtualization from './canvas/EdgeVirtualization';
-import { getEnhancedEdgeCalculator } from '../utils/enhancedEdgeCalculations';
 import { MultiEdgeCalculator } from '../utils/multiEdgeCalculations';
-import { EdgePerformanceOptimizer, EdgeLODManager } from '../utils/edgePerformance';
 import { usePathfindingSettings } from '../hooks/usePathfindingSettings';
 import { useEdgeBundling } from '../hooks/useEdgeBundling';
 import EdgeAnimationHandler from './canvas/EdgeAnimationHandler';
-import BundledEdgeRenderer from './canvas/BundledEdgeRenderer';
+import EdgeVirtualization from './canvas/EdgeVirtualization';
+import EdgeRenderingManager from './canvas/EdgeRenderingManager';
+import EdgeGroupRenderer from './canvas/EdgeGroupRenderer';
+import IndividualEdgesRenderer from './canvas/IndividualEdgesRenderer';
 
 interface EnhancedEdgeRendererProps {
   edges: EnhancedEdge[];
@@ -96,8 +91,6 @@ const EnhancedEdgeRenderer: React.FC<EnhancedEdgeRendererProps> = ({
     }
   };
 
-  if (edges.length === 0 && !settings.enableDebugGrid) return null;
-
   return (
     <EdgeVirtualization
       edges={edges}
@@ -111,114 +104,48 @@ const EnhancedEdgeRenderer: React.FC<EnhancedEdgeRendererProps> = ({
           animatePathChanges={settings.animatePathChanges}
           enableDataFlow={settings.enableDataFlow}
         >
-          {({ 
-            getAnimationProgress, 
-            isAnimating, 
-            hoveredEdgeId, 
-            setEdgeHover,
-            startDataFlow,
-            stopDataFlow,
-            getDataFlowParticles 
-          }) => (
-            <svg 
-              className="absolute inset-0 z-10" 
-              style={{ width: '100%', height: '100%', pointerEvents: 'none' }}
+          {(animationProps) => (
+            <EdgeRenderingManager
+              edges={visibleEdges}
+              nodes={nodes}
+              enableDebugGrid={settings.enableDebugGrid}
             >
-              <EdgeMarkerDefinitions />
+              <EdgeGroupRenderer
+                bundling={bundling}
+                multiEdgeGroups={multiEdgeGroups}
+                visibleEdges={visibleEdges}
+                nodes={nodes}
+                selectedEdgeId={selectedEdgeId}
+                selectedEdgeIds={selectedEdgeIds}
+                onSelectEdge={onSelectEdge}
+                onSelectSingleEdge={onSelectSingleEdge}
+                onSelectionChange={onSelectionChange}
+                onDoubleClick={onDoubleClick}
+                getEdgeValidationClass={getEdgeValidationClass}
+                getEdgeTooltip={getEdgeTooltip}
+                enableMultiEdge={enableMultiEdge}
+              />
               
-              {settings.enableDebugGrid && (
-                <GridDebugOverlay 
-                  grid={getEnhancedEdgeCalculator().getGridSystem()} 
-                  visible={settings.enableDebugGrid}
-                  opacity={0.2}
-                />
-              )}
-              
-              {/* Bundled edges rendering */}
-              {bundling.settings.enabled && bundling.bundles.length > 0 && (
-                <BundledEdgeRenderer
-                  bundles={bundling.bundles}
-                  nodes={nodes}
-                  selectedEdgeId={selectedEdgeId}
-                  onSelectEdge={onSelectEdge || onSelectSingleEdge}
-                  getEdgeValidationClass={getEdgeValidationClass}
-                />
-              )}
-              
-              {/* Multi-edge rendering with advanced selection */}
-              {enableMultiEdge && multiEdgeGroups.length > 0 && (
-                <EdgeSelectionHandler
-                  edges={visibleEdges}
-                  onSelectionChange={onSelectionChange}
-                  onEdgeDoubleClick={onDoubleClick}
-                >
-                  {({ selectedEdgeIds: advancedSelectedIds, onEdgeClick, onEdgeDoubleClick: advancedDoubleClick }) => (
-                    <MultiEdgeRenderer
-                      multiEdgeGroups={multiEdgeGroups.filter(group => 
-                        group.edges.some(edge => visibleEdges.includes(edge))
-                      )}
-                      nodes={nodes}
-                      selectedEdgeIds={[...selectedEdgeIds, ...advancedSelectedIds]}
-                      onEdgeClick={onEdgeClick}
-                      onEdgeDoubleClick={advancedDoubleClick}
-                      getEdgeValidationClass={getEdgeValidationClass}
-                      getEdgeTooltip={getEdgeTooltip}
-                    />
-                  )}
-                </EdgeSelectionHandler>
-              )}
-              
-              {/* Individual edges rendering with LOD optimization */}
-              {EdgePerformanceOptimizer.optimizeRenderList(
-                individualEdges.filter(edge => visibleEdges.includes(edge)),
-                edge => edge.id,
-                () => true,
-                lodLevel === 'low' ? 50 : lodLevel === 'medium' ? 100 : 200
-              ).map(edge => {
-                const sourceNode = nodes.find(n => n.id === edge.source);
-                const targetNode = nodes.find(n => n.id === edge.target);
-                
-                if (!sourceNode || !targetNode) return null;
-                
-                const isSelected = selectedEdgeId === edge.id;
-                const isMultiSelected = selectedEdgeIds.includes(edge.id);
-                const isHovered = hoveredEdgeId === edge.id;
-                const validationClass = getEdgeValidationClass?.(edge.id) || '';
-                const tooltip = getEdgeTooltip?.(edge.id) || '';
-                
-                // Get animation progress
-                const creationProgress = getAnimationProgress(edge.id, 'create');
-                const updateProgress = getAnimationProgress(edge.id, 'update');
-                const hoverProgress = getAnimationProgress(edge.id, 'hover');
-                
-                // Calculate animated opacity and scale
-                const baseOpacity = isAnimating(edge.id, 'create') ? creationProgress : 1;
-                const hoverOpacity = isHovered ? 0.8 + (0.2 * hoverProgress) : 1;
-                const animatedOpacity = baseOpacity * hoverOpacity;
-                
-                return (
-                  <IndividualEdgeRenderer
-                    key={edge.id}
-                    edge={edge}
-                    sourceNode={sourceNode}
-                    targetNode={targetNode}
-                    isSelected={isSelected}
-                    isMultiSelected={isMultiSelected}
-                    validationClass={validationClass}
-                    tooltip={tooltip}
-                    animatedOpacity={animatedOpacity}
-                    animatePathChanges={settings.animatePathChanges}
-                    lodLevel={lodLevel}
-                    onEdgeClick={handleLegacyEdgeClick}
-                    onEdgeDoubleClick={handleLegacyEdgeDoubleClick}
-                    onEdgeHover={setEdgeHover}
-                    startDataFlow={startDataFlow}
-                    stopDataFlow={stopDataFlow}
-                    dataFlowParticles={getDataFlowParticles(edge.id)}
-                  />
-                );
-              })}
-            </svg>
+              <IndividualEdgesRenderer
+                edges={individualEdges.filter(edge => visibleEdges.includes(edge))}
+                nodes={nodes}
+                selectedEdgeId={selectedEdgeId}
+                selectedEdgeIds={selectedEdgeIds}
+                hoveredEdgeId={animationProps.hoveredEdgeId}
+                lodLevel={lodLevel}
+                settings={settings}
+                getAnimationProgress={animationProps.getAnimationProgress}
+                isAnimating={animationProps.isAnimating}
+                setEdgeHover={animationProps.setEdgeHover}
+                startDataFlow={animationProps.startDataFlow}
+                stopDataFlow={animationProps.stopDataFlow}
+                getDataFlowParticles={animationProps.getDataFlowParticles}
+                onEdgeClick={handleLegacyEdgeClick}
+                onEdgeDoubleClick={handleLegacyEdgeDoubleClick}
+                getEdgeValidationClass={getEdgeValidationClass}
+                getEdgeTooltip={getEdgeTooltip}
+              />
+            </EdgeRenderingManager>
           )}
         </EdgeAnimationHandler>
       )}
