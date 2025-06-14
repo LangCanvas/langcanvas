@@ -1,15 +1,14 @@
+
 import { useState, useCallback, useRef, useEffect } from 'react';
 
 export const PANEL_BREAKPOINTS = {
-  ICON_ONLY: 56,
-  ULTRA_COMPACT: 120,
-  COMPACT: 200,
-  STANDARD: 300,
-  WIDE: 400,
+  MIN: 200,
+  DEFAULT_LEFT: 256,
+  DEFAULT_RIGHT: 320,
   MAX: 500
 } as const;
 
-export type PanelLayout = 'icon-only' | 'ultra-compact' | 'compact' | 'standard' | 'wide';
+export type PanelLayout = 'compact' | 'standard' | 'wide';
 
 interface PanelWidthSettings {
   leftPanelWidth: number;
@@ -19,16 +18,11 @@ interface PanelWidthSettings {
 }
 
 const PANEL_WIDTH_STORAGE_KEY = 'langcanvas_panel_widths';
-const PANEL_WIDTH_VERSION = '1.0';
-
-const DEFAULT_WIDTHS = {
-  leftPanelWidth: 256,
-  rightPanelWidth: 320
-};
+const PANEL_WIDTH_VERSION = '2.0';
 
 export const useAdaptivePanelWidths = () => {
-  const [leftPanelWidth, setLeftPanelWidth] = useState(256); // Default to 256px like before
-  const [rightPanelWidth, setRightPanelWidth] = useState(320);
+  const [leftPanelWidth, setLeftPanelWidth] = useState(PANEL_BREAKPOINTS.DEFAULT_LEFT);
+  const [rightPanelWidth, setRightPanelWidth] = useState(PANEL_BREAKPOINTS.DEFAULT_RIGHT);
   const debounceRef = useRef<NodeJS.Timeout>();
 
   // Load panel widths from storage on mount
@@ -38,45 +32,14 @@ export const useAdaptivePanelWidths = () => {
       if (stored) {
         const data: PanelWidthSettings = JSON.parse(stored);
         if (data.version === PANEL_WIDTH_VERSION) {
-          setLeftPanelWidth(Math.max(PANEL_BREAKPOINTS.ICON_ONLY, Math.min(PANEL_BREAKPOINTS.MAX, data.leftPanelWidth)));
-          setRightPanelWidth(Math.max(PANEL_BREAKPOINTS.ICON_ONLY, Math.min(PANEL_BREAKPOINTS.MAX, data.rightPanelWidth)));
+          setLeftPanelWidth(Math.max(PANEL_BREAKPOINTS.MIN, Math.min(PANEL_BREAKPOINTS.MAX, data.leftPanelWidth)));
+          setRightPanelWidth(Math.max(PANEL_BREAKPOINTS.MIN, Math.min(PANEL_BREAKPOINTS.MAX, data.rightPanelWidth)));
         }
       }
     } catch (error) {
       console.warn('Failed to load panel widths from storage:', error);
     }
   }, []);
-
-  // Listen for external width changes (from toggle handlers)
-  useEffect(() => {
-    const handleLeftPanelResize = (event: CustomEvent) => {
-      const { width, expanding, collapsing } = event.detail;
-      console.log('🎛️ Left panel resize event:', { width, expanding, collapsing });
-      
-      if (expanding || collapsing) {
-        setLeftPanelWidth(width);
-        saveWidthsToStorage(width, rightPanelWidth);
-      }
-    };
-
-    const handleRightPanelResize = (event: CustomEvent) => {
-      const { width, expanding, collapsing } = event.detail;
-      console.log('🎛️ Right panel resize event:', { width, expanding, collapsing });
-      
-      if (expanding || collapsing) {
-        setRightPanelWidth(width);
-        saveWidthsToStorage(leftPanelWidth, width);
-      }
-    };
-
-    window.addEventListener('leftPanelResize', handleLeftPanelResize as EventListener);
-    window.addEventListener('rightPanelResize', handleRightPanelResize as EventListener);
-
-    return () => {
-      window.removeEventListener('leftPanelResize', handleLeftPanelResize as EventListener);
-      window.removeEventListener('rightPanelResize', handleRightPanelResize as EventListener);
-    };
-  }, [leftPanelWidth, rightPanelWidth]);
 
   // Save panel widths to storage (debounced)
   const saveWidthsToStorage = useCallback((leftWidth: number, rightWidth: number) => {
@@ -99,45 +62,43 @@ export const useAdaptivePanelWidths = () => {
     }, 300);
   }, []);
 
-  const handleLeftPanelResize = useCallback((width: number) => {
-    const constrainedWidth = Math.max(PANEL_BREAKPOINTS.ICON_ONLY, Math.min(PANEL_BREAKPOINTS.MAX, width));
+  // Convert pixel width to percentage for ResizablePanelGroup
+  const getInitialPercentage = useCallback((pixelWidth: number, isVisible: boolean) => {
+    if (!isVisible) return 0;
+    // Use a fixed reference width for consistent percentage calculation
+    const referenceWidth = 1400;
+    return Math.max(15, Math.min(35, (pixelWidth / referenceWidth) * 100));
+  }, []);
+
+  // Convert percentage back to pixels (from ResizablePanelGroup onResize)
+  const convertPercentageToPixels = useCallback((percentage: number) => {
+    const referenceWidth = 1400;
+    return Math.round((percentage / 100) * referenceWidth);
+  }, []);
+
+  const handleLeftPanelResize = useCallback((percentage: number) => {
+    const pixelWidth = convertPercentageToPixels(percentage);
+    const constrainedWidth = Math.max(PANEL_BREAKPOINTS.MIN, Math.min(PANEL_BREAKPOINTS.MAX, pixelWidth));
     setLeftPanelWidth(constrainedWidth);
     saveWidthsToStorage(constrainedWidth, rightPanelWidth);
-    
-    // Store as last expanded width if it's larger than icon-only
-    if (constrainedWidth > PANEL_BREAKPOINTS.ICON_ONLY) {
-      window.dispatchEvent(new CustomEvent('updateLastExpandedWidth', { 
-        detail: { side: 'left', width: constrainedWidth } 
-      }));
-    }
-  }, [rightPanelWidth, saveWidthsToStorage]);
+  }, [rightPanelWidth, saveWidthsToStorage, convertPercentageToPixels]);
 
-  const handleRightPanelResize = useCallback((width: number) => {
-    const constrainedWidth = Math.max(PANEL_BREAKPOINTS.ICON_ONLY, Math.min(PANEL_BREAKPOINTS.MAX, width));
+  const handleRightPanelResize = useCallback((percentage: number) => {
+    const pixelWidth = convertPercentageToPixels(percentage);
+    const constrainedWidth = Math.max(PANEL_BREAKPOINTS.MIN, Math.min(PANEL_BREAKPOINTS.MAX, pixelWidth));
     setRightPanelWidth(constrainedWidth);
     saveWidthsToStorage(leftPanelWidth, constrainedWidth);
-    
-    // Store as last expanded width if it's larger than icon-only
-    if (constrainedWidth > PANEL_BREAKPOINTS.ICON_ONLY) {
-      window.dispatchEvent(new CustomEvent('updateLastExpandedWidth', { 
-        detail: { side: 'right', width: constrainedWidth } 
-      }));
-    }
-  }, [leftPanelWidth, saveWidthsToStorage]);
+  }, [leftPanelWidth, saveWidthsToStorage, convertPercentageToPixels]);
 
   const getLeftPanelLayout = useCallback((): PanelLayout => {
-    if (leftPanelWidth <= PANEL_BREAKPOINTS.ICON_ONLY) return 'icon-only';
-    if (leftPanelWidth <= PANEL_BREAKPOINTS.ULTRA_COMPACT) return 'ultra-compact';
-    if (leftPanelWidth <= PANEL_BREAKPOINTS.COMPACT) return 'compact';
-    if (leftPanelWidth <= PANEL_BREAKPOINTS.STANDARD) return 'standard';
+    if (leftPanelWidth <= 250) return 'compact';
+    if (leftPanelWidth <= 350) return 'standard';
     return 'wide';
   }, [leftPanelWidth]);
 
   const getRightPanelLayout = useCallback((): PanelLayout => {
-    if (rightPanelWidth <= PANEL_BREAKPOINTS.ICON_ONLY) return 'icon-only';
-    if (rightPanelWidth <= PANEL_BREAKPOINTS.ULTRA_COMPACT) return 'ultra-compact';
-    if (rightPanelWidth <= PANEL_BREAKPOINTS.COMPACT) return 'compact';
-    if (rightPanelWidth <= PANEL_BREAKPOINTS.STANDARD) return 'standard';
+    if (rightPanelWidth <= 250) return 'compact';
+    if (rightPanelWidth <= 350) return 'standard';
     return 'wide';
   }, [rightPanelWidth]);
 
@@ -147,6 +108,7 @@ export const useAdaptivePanelWidths = () => {
     leftPanelLayout: getLeftPanelLayout(),
     rightPanelLayout: getRightPanelLayout(),
     handleLeftPanelResize,
-    handleRightPanelResize
+    handleRightPanelResize,
+    getInitialPercentage,
   };
 };

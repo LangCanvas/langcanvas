@@ -63,28 +63,7 @@ const Index: React.FC = () => {
     handleExpandRightPanel,
     closePanels,
     switchToPropertiesPanel,
-    setLastLeftExpandedWidth,
-    setLastRightExpandedWidth,
   } = panelHandlers;
-
-  // Listen for last expanded width events
-  React.useEffect(() => {
-    const handleSetLastLeftExpandedWidth = (event: CustomEvent) => {
-      setLastLeftExpandedWidth(event.detail);
-    };
-
-    const handleSetLastRightExpandedWidth = (event: CustomEvent) => {
-      setLastRightExpandedWidth(event.detail);
-    };
-
-    window.addEventListener('setLastLeftExpandedWidth', handleSetLastLeftExpandedWidth as EventListener);
-    window.addEventListener('setLastRightExpandedWidth', handleSetLastRightExpandedWidth as EventListener);
-
-    return () => {
-      window.removeEventListener('setLastLeftExpandedWidth', handleSetLastLeftExpandedWidth as EventListener);
-      window.removeEventListener('setLastRightExpandedWidth', handleSetLastRightExpandedWidth as EventListener);
-    };
-  }, [setLastLeftExpandedWidth, setLastRightExpandedWidth]);
 
   const changeTracking = useChangeTracking();
   const workflowActions = useWorkflowActions({

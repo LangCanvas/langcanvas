@@ -1,6 +1,6 @@
+
 import React from 'react';
 import EnhancedNodePalette from '../palette/EnhancedNodePalette';
-import CollapsedNodePalette from './CollapsedNodePalette';
 import { PanelLayout } from '../../hooks/useAdaptivePanelWidths';
 
 interface DesktopSidebarProps {
@@ -8,7 +8,6 @@ interface DesktopSidebarProps {
   isExpanded?: boolean;
   panelWidth?: number;
   panelLayout?: PanelLayout;
-  onExpand?: () => void;
   onToggle?: () => void;
 }
 
@@ -17,7 +16,6 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
   isExpanded = true,
   panelWidth = 256,
   panelLayout = 'standard',
-  onExpand,
   onToggle
 }) => {
   // If not visible at all, don't render anything
@@ -25,28 +23,16 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
     return null;
   }
 
-  // Handle collapsed state
   const handleToggle = () => {
     console.log('Toggle sidebar requested');
     if (onToggle) {
       onToggle();
-    } else if (onExpand) {
-      onExpand();
     }
   };
 
-  // Show collapsed panel when not expanded (ignore panelLayout for collapse logic)
-  if (!isExpanded) {
-    return (
-      <aside className="relative h-full bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out">
-        <CollapsedNodePalette onToggle={handleToggle} isExpanded={false} />
-      </aside>
-    );
-  }
-
-  // Show expanded panel with enhanced palette
+  // Always show expanded panel with enhanced palette (no collapsed state)
   return (
-    <aside className="relative h-full bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out">
+    <aside className="relative h-full bg-white border-r border-gray-200 flex flex-col">
       <EnhancedNodePalette 
         onNodeTypeSelect={(type) => {
           const event = new CustomEvent('setPendingCreation', { detail: type });

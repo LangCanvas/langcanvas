@@ -2,11 +2,10 @@
 import React, { useEffect, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { PanelRightClose } from 'lucide-react';
+import { X } from 'lucide-react';
 import EnhancedPropertiesPanel from '../EnhancedPropertiesPanel';
 import ValidationPanel from '../ValidationPanel';
 import PathfindingSettingsPanel from '../settings/PathfindingSettingsPanel';
-import CollapsedPropertiesPanel from './CollapsedPropertiesPanel';
 import { EnhancedNode } from '../../types/nodeTypes';
 import { EnhancedEdge } from '../../types/edgeTypes';
 import { ValidationResult } from '../../hooks/useValidation';
@@ -29,7 +28,6 @@ interface DesktopPropertiesPanelProps {
   onDeleteNode: (nodeId: string) => void;
   onDeleteEdge: (edgeId: string) => void;
   setShowValidationPanel: (show: boolean) => void;
-  onExpand?: () => void;
   onToggle?: () => void;
   switchToPropertiesPanel?: () => void;
   validatePriorityConflicts?: (nodeId: string, priority: number, currentEdgeId?: string) => { hasConflict: boolean; conflictingEdges: EnhancedEdge[] };
@@ -51,7 +49,6 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
   onDeleteNode,
   onDeleteEdge,
   setShowValidationPanel,
-  onExpand,
   onToggle,
   switchToPropertiesPanel,
   validatePriorityConflicts
@@ -73,54 +70,17 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
     }
   }, [showValidationPanel, setShowValidationPanel]);
 
-  // Debug logging
-  useEffect(() => {
-    console.log('🎛️ DesktopPropertiesPanel render state:', {
-      isVisible,
-      isExpanded,
-      onExpand: !!onExpand,
-      onToggle: !!onToggle
-    });
-  }, [isVisible, isExpanded, onExpand, onToggle]);
-
   const handleUpdateEdge = (edgeId: string, updates: Partial<EnhancedEdge>) => {
     onUpdateEdge(edgeId, updates);
   };
 
-  const handleExpand = () => {
-    console.log('🎛️ CollapsedPropertiesPanel expand clicked');
-    if (onExpand) {
-      onExpand();
-    }
-  };
-
   // If not visible, don't render anything
   if (!isVisible) {
-    console.log('🎛️ DesktopPropertiesPanel not visible, returning null');
     return null;
   }
 
-  // Show collapsed panel when not expanded or in icon-only mode
-  if (!isExpanded || panelLayout === 'icon-only') {
-    console.log('🎛️ DesktopPropertiesPanel rendering collapsed state');
-    return (
-      <aside 
-        data-panel="desktop-properties" 
-        className="relative bg-background border-l border-border flex flex-col h-full flex-shrink-0 z-10"
-      >
-        <CollapsedPropertiesPanel
-          selectedNode={selectedNode}
-          selectedEdge={selectedEdge}
-          validationResult={validationResult}
-          onExpand={handleExpand}
-        />
-      </aside>
-    );
-  }
-
-  // Show expanded panel with tabs
-  console.log('🎛️ DesktopPropertiesPanel rendering expanded state');
-  const isCompact = panelLayout === 'compact' || panelLayout === 'ultra-compact';
+  // Always show expanded panel (no collapsed state)
+  const isCompact = panelLayout === 'compact';
   
   return (
     <aside 
@@ -137,9 +97,9 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
             size="sm"
             onClick={onToggle}
             className="w-8 h-8 p-0"
-            title="Collapse Properties Panel"
+            title="Hide Properties Panel"
           >
-            <PanelRightClose className="w-4 h-4" />
+            <X className="w-4 h-4" />
           </Button>
         )}
       </div>
