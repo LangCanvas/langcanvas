@@ -1,179 +1,164 @@
+
 import React from 'react';
 import { EnhancedEdge } from '../types/edgeTypes';
 import { EnhancedNode } from '../types/nodeTypes';
-import { calculateOrthogonalPath } from '../utils/edgeCalculations';
+import { calculateEnhancedOrthogonalPath } from '../utils/enhancedEdgeCalculations';
+import GridDebugOverlay from './canvas/GridDebugOverlay';
+import { getEnhancedEdgeCalculator } from '../utils/enhancedEdgeCalculations';
+import { usePathfindingSettings } from '../hooks/usePathfindingSettings';
 
 interface EnhancedEdgeRendererProps {
   edges: EnhancedEdge[];
   nodes: EnhancedNode[];
   selectedEdgeId: string | null;
-  selectedEdgeIds: string[];
-  onSelectSingleEdge: (edgeId: string | null) => void;
-  onToggleEdgeSelection: (edgeId: string, isCtrlOrShiftPressed: boolean) => void;
-  onDoubleClick?: (edgeId: string) => void;
+  onSelectEdge: (edgeId: string | null) => void;
   getEdgeValidationClass?: (edgeId: string) => string;
   getEdgeTooltip?: (edgeId: string) => string;
 }
 
-const EnhancedEdgeRenderer: React.FC<EnhancedEdgeRendererProps> = ({
-  edges,
-  nodes,
-  selectedEdgeId,
-  selectedEdgeIds,
-  onSelectSingleEdge,
-  onToggleEdgeSelection,
-  onDoubleClick,
+const EnhancedEdgeRenderer: React.FC<EnhancedEdgeRendererProps> = ({ 
+  edges, 
+  nodes, 
+  selectedEdgeId, 
+  onSelectEdge,
   getEdgeValidationClass,
   getEdgeTooltip
 }) => {
-  const getNodePosition = (nodeId: string) => {
-    const node = nodes.find((n) => n.id === nodeId);
-    return node ? { x: node.x, y: node.y } : { x: 0, y: 0 };
+  const { settings } = usePathfindingSettings();
+
+  const handleEdgeClick = (e: React.MouseEvent, edgeId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log(`🔗 Enhanced edge clicked: ${edgeId}`);
+    onSelectEdge(selectedEdgeId === edgeId ? null : edgeId);
   };
 
-  const calculateEdgePath = (sourceNode: EnhancedNode, targetNode: EnhancedNode) => {
-    // Use the enhanced A* pathfinding system
-    const waypoints = calculateOrthogonalPath(sourceNode, targetNode);
-    
-    // Convert waypoints to SVG path string
-    if (waypoints.length < 2) {
-      return '';
-    }
-    
-    let pathString = `M ${waypoints[0].x} ${waypoints[0].y}`;
-    
-    for (let i = 1; i < waypoints.length; i++) {
-      pathString += ` L ${waypoints[i].x} ${waypoints[i].y}`;
-    }
-    
-    return pathString;
-  };
-
-  const getEdgeStyle = (edgeId: string) => {
-    const isPrimarySelected = selectedEdgeId === edgeId;
-    const isMultiSelected = selectedEdgeIds.includes(edgeId);
-
-    if (isPrimarySelected) {
-      return {
-        strokeColor: 'rgb(37, 99, 235)',
-        strokeWidth: '3.5',
-        strokePattern: 'none'
-      };
-    } else if (isMultiSelected) {
-      return {
-        strokeColor: 'rgb(59, 130, 246)',
-        strokeWidth: '3',
-        strokePattern: 'none' 
-      };
-    } else {
-      return {
-        strokeColor: 'rgb(75, 85, 99)',
-        strokeWidth: '2',
-        strokePattern: '4'
-      };
-    }
-  };
-
-  const handleEdgeClick = (event: React.MouseEvent, edgeId: string) => {
-    event.preventDefault();
-    event.stopPropagation();
-    const isCtrlOrShiftPressed = event.ctrlKey || event.metaKey || event.shiftKey;
-
-    console.log(`🔗 Edge clicked: ${edgeId}, Ctrl/Shift: ${isCtrlOrShiftPressed}`);
-    if (isCtrlOrShiftPressed) {
-      onToggleEdgeSelection(edgeId, true);
-    } else {
-      onSelectSingleEdge(edgeId);
-    }
-  };
-
-  const handleEdgeDoubleClick = (event: React.MouseEvent, edgeId: string) => {
-    event.preventDefault();
-    event.stopPropagation();
-    console.log(`🔗 Edge double-clicked: ${edgeId}`);
-    if (onDoubleClick) {
-      onDoubleClick(edgeId);
-    }
-  };
-
-  if (!edges || edges.length === 0) {
-    return null;
-  }
+  if (edges.length === 0 && !settings.enableDebugGrid) return null;
 
   return (
-    <svg
-      className="absolute inset-0 pointer-events-none z-1"
-      style={{ width: '100%', height: '100%' }}
+    <svg 
+      className="absolute inset-0 z-10" 
+      style={{ width: '100%', height: '100%', pointerEvents: 'none' }}
     >
       <defs>
-        <marker id="arrowhead" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto">
-          <path d="M 0 0 L 10 5 L 0 10 z" fill="rgb(75, 85, 99)" />
+        <marker
+          id="arrowhead-enhanced"
+          markerWidth="10"
+          markerHeight="7"
+          refX="9"
+          refY="3.5"
+          orient="auto"
+        >
+          <polygon points="0 0, 10 3.5, 0 7" fill="#10b981" />
         </marker>
-         <marker id="arrowhead-selected" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto">
-          <path d="M 0 0 L 10 5 L 0 10 z" fill="rgb(59, 130, 246)" />
+        <marker
+          id="arrowhead-enhanced-selected"
+          markerWidth="10"
+          markerHeight="7"
+          refX="9"
+          refY="3.5"
+          orient="auto"
+        >
+          <polygon points="0 0, 10 3.5, 0 7" fill="#3b82f6" />
         </marker>
-        <marker id="arrowhead-primary-selected" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto">
-          <path d="M 0 0 L 10 5 L 0 10 z" fill="rgb(37, 99, 235)" />
+        <marker
+          id="arrowhead-enhanced-error"
+          markerWidth="10"
+          markerHeight="7"
+          refX="9"
+          refY="3.5"
+          orient="auto"
+        >
+          <polygon points="0 0, 10 3.5, 0 7" fill="#dc2626" />
+        </marker>
+        <marker
+          id="arrowhead-enhanced-warning"
+          markerWidth="10"
+          markerHeight="7"
+          refX="9"
+          refY="3.5"
+          orient="auto"
+        >
+          <polygon points="0 0, 10 3.5, 0 7" fill="#d97706" />
         </marker>
       </defs>
       
-      {edges.map((edge) => {
-        const sourceNode = nodes.find((node) => node.id === edge.source);
-        const targetNode = nodes.find((node) => node.id === edge.target);
-
-        if (!sourceNode || !targetNode) {
+      {/* Debug grid overlay */}
+      {settings.enableDebugGrid && (
+        <GridDebugOverlay 
+          grid={getEnhancedEdgeCalculator().getGridSystem()} 
+          visible={settings.enableDebugGrid}
+          opacity={0.2}
+        />
+      )}
+      
+      {edges.map(edge => {
+        const sourceNode = nodes.find(n => n.id === edge.source);
+        const targetNode = nodes.find(n => n.id === edge.target);
+        
+        if (!sourceNode || !targetNode) return null;
+        
+        try {
+          // Use enhanced A* pathfinding
+          const waypoints = calculateEnhancedOrthogonalPath(sourceNode, targetNode);
+          const pathString = waypoints.map((point, index) => 
+            `${point.x},${point.y}`
+          ).join(' ');
+          
+          const isSelected = selectedEdgeId === edge.id;
+          const validationClass = getEdgeValidationClass?.(edge.id) || '';
+          const tooltip = getEdgeTooltip?.(edge.id) || '';
+          
+          let strokeColor = "#10b981"; // Enhanced green color
+          let strokeWidth = "2";
+          let markerEnd = "url(#arrowhead-enhanced)";
+          
+          if (isSelected) {
+            strokeColor = "#3b82f6";
+            strokeWidth = "3";
+            markerEnd = "url(#arrowhead-enhanced-selected)";
+          } else if (validationClass === 'validation-error') {
+            strokeColor = "#dc2626";
+            strokeWidth = "3";
+            markerEnd = "url(#arrowhead-enhanced-error)";
+          } else if (validationClass === 'validation-warning') {
+            strokeColor = "#d97706";
+            strokeWidth = "3";
+            markerEnd = "url(#arrowhead-enhanced-warning)";
+          }
+          
+          return (
+            <g key={edge.id}>
+              {/* Invisible hit area for clicking */}
+              <polyline
+                points={pathString}
+                fill="none"
+                stroke="transparent"
+                strokeWidth="12"
+                strokeLinejoin="round"
+                style={{ pointerEvents: 'auto', cursor: 'pointer' }}
+                onClick={(e) => handleEdgeClick(e, edge.id)}
+              />
+              {/* Visible edge */}
+              <polyline
+                points={pathString}
+                fill="none"
+                stroke={strokeColor}
+                strokeWidth={strokeWidth}
+                strokeLinejoin="round"
+                markerEnd={markerEnd}
+                style={{ pointerEvents: 'none' }}
+                className={`transition-all duration-200 ${isSelected ? '' : 'hover:brightness-125'}`}
+              />
+              {tooltip && (
+                <title>{tooltip}</title>
+              )}
+            </g>
+          );
+        } catch (error) {
+          console.warn('Enhanced pathfinding failed for edge:', edge.id, error);
           return null;
         }
-
-        const pathString = calculateEdgePath(sourceNode, targetNode);
-        const { strokeColor, strokeWidth, strokePattern } = getEdgeStyle(edge.id);
-        
-        const isPrimarySelected = selectedEdgeId === edge.id;
-        const isMultiSelected = selectedEdgeIds.includes(edge.id);
-        let markerEndUrl = "url(#arrowhead)";
-        if (isPrimarySelected) {
-            markerEndUrl = "url(#arrowhead-primary-selected)";
-        } else if (isMultiSelected) {
-            markerEndUrl = "url(#arrowhead-selected)";
-        }
-
-        const validationClass = getEdgeValidationClass?.(edge.id) || '';
-        const tooltip = getEdgeTooltip?.(edge.id) || '';
-
-        // Calculate label position (midpoint of path)
-        const waypoints = calculateOrthogonalPath(sourceNode, targetNode);
-        const midIndex = Math.floor(waypoints.length / 2);
-        const labelPos = waypoints[midIndex] || { x: 0, y: 0 };
-
-        return (
-          <g key={edge.id}>
-            <path
-              d={pathString}
-              fill="none"
-              stroke={strokeColor}
-              strokeWidth={strokeWidth}
-              strokeDasharray={strokePattern}
-              markerEnd={markerEndUrl}
-              className={`pointer-events-auto cursor-pointer ${validationClass}`}
-              onClick={(e) => handleEdgeClick(e, edge.id)}
-              onDoubleClick={(e) => handleEdgeDoubleClick(e, edge.id)}
-            >
-              {tooltip && <title>{tooltip}</title>}
-            </path>
-            {edge.label && (
-              <text
-                x={labelPos.x}
-                y={labelPos.y - 10}
-                fontSize="12"
-                fill="#6b7280"
-                textAnchor="middle"
-                className="pointer-events-none"
-              >
-                {edge.label}
-              </text>
-            )}
-          </g>
-        );
       })}
     </svg>
   );

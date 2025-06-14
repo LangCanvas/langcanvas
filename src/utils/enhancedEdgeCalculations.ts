@@ -1,7 +1,9 @@
+
 import { EnhancedNode } from '../types/nodeTypes';
 import { GridSystem } from './gridSystem';
 import { AStarPathfinder, PathfindingResult } from './astarPathfinding';
 import { getNodeDimensions } from './edgeCalculations';
+import { PathfindingCache } from './pathfindingCache';
 
 export interface EnhancedPathResult {
   waypoints: Array<{ x: number, y: number }>;
@@ -10,6 +12,7 @@ export interface EnhancedPathResult {
   debug?: {
     gridPath: Array<{ x: number, y: number }>;
     nodesExplored: number;
+    cached: boolean;
   };
 }
 
@@ -18,16 +21,42 @@ export class EnhancedEdgeCalculator {
   private pathfinder: AStarPathfinder;
   private canvasWidth: number;
   private canvasHeight: number;
+  private cache: PathfindingCache;
+  private batchUpdateTimeout: NodeJS.Timeout | null = null;
+  private pendingUpdates = new Set<string>();
 
   constructor(canvasWidth: number = 3000, canvasHeight: number = 3000) {
     this.canvasWidth = canvasWidth;
     this.canvasHeight = canvasHeight;
     this.grid = new GridSystem(canvasWidth, canvasHeight, 20);
     this.pathfinder = new AStarPathfinder(this.grid);
+    this.cache = new PathfindingCache();
   }
 
   public updateNodes(nodes: EnhancedNode[]): void {
     this.grid.updateNodes(nodes);
+    this.cache.invalidateGrid();
+  }
+
+  public updateNodesBatch(nodes: EnhancedNode[]): void {
+    // Clear existing timeout
+    if (this.batchUpdateTimeout) {
+      clearTimeout(this.batchUpdateTimeout);
+    }
+
+    // Add nodes to pending updates
+    nodes.forEach(node => this.pendingUpdates.add(node.id));
+
+    // Debounce the actual update
+    this.batchUpdateTimeout = setTimeout(() => {
+      this.updateNodes(nodes);
+      this.pendingUpdates.clear();
+      this.batchUpdateTimeout = null;
+    }, 50); // 50ms debounce
+  }
+
+  public invalidateNodePaths(nodeId: string): void {
+    this.cache.invalidateNode(nodeId);
   }
 
   public getConnectionPoints(sourceNode: EnhancedNode, targetNode: EnhancedNode) {
@@ -49,6 +78,18 @@ export class EnhancedEdgeCalculator {
   }
 
   public calculatePath(sourceNode: EnhancedNode, targetNode: EnhancedNode): EnhancedPathResult {
+    // Check cache first
+    const cachedResult = this.cache.get(sourceNode.id, targetNode.id);
+    if (cachedResult) {
+      return {
+        ...cachedResult,
+        debug: {
+          ...cachedResult.debug,
+          cached: true
+        }
+      };
+    }
+
     const { start, end } = this.getConnectionPoints(sourceNode, targetNode);
     
     // Convert canvas coordinates to grid coordinates
@@ -64,15 +105,19 @@ export class EnhancedEdgeCalculator {
     
     if (!pathResult.found) {
       // Fallback to direct line if no path found
-      return {
+      const result = {
         waypoints: [start, end],
         found: false,
         cost: Infinity,
         debug: {
           gridPath: [],
-          nodesExplored: pathResult.nodesExplored
+          nodesExplored: pathResult.nodesExplored,
+          cached: false
         }
       };
+      
+      // Don't cache failed paths
+      return result;
     }
     
     // Convert grid path back to canvas coordinates
@@ -83,15 +128,21 @@ export class EnhancedEdgeCalculator {
     // Add the actual start and end points
     const finalWaypoints = [start, ...canvasWaypoints, end];
     
-    return {
+    const result = {
       waypoints: this.optimizeWaypoints(finalWaypoints),
       found: true,
       cost: pathResult.cost,
       debug: {
         gridPath: pathResult.path,
-        nodesExplored: pathResult.nodesExplored
+        nodesExplored: pathResult.nodesExplored,
+        cached: false
       }
     };
+
+    // Cache successful results
+    this.cache.set(sourceNode.id, targetNode.id, result);
+    
+    return result;
   }
 
   private findClearPoint(
@@ -164,6 +215,14 @@ export class EnhancedEdgeCalculator {
   public getPathfinder(): AStarPathfinder {
     return this.pathfinder;
   }
+
+  public getCacheStats() {
+    return this.cache.getStats();
+  }
+
+  public clearCache(): void {
+    this.cache.invalidateGrid();
+  }
 }
 
 // Global instance for the application
@@ -178,7 +237,7 @@ export const getEnhancedEdgeCalculator = (): EnhancedEdgeCalculator => {
 
 export const updateEdgeCalculatorNodes = (nodes: EnhancedNode[]): void => {
   const calculator = getEnhancedEdgeCalculator();
-  calculator.updateNodes(nodes);
+  calculator.updateNodesBatch(nodes);
 };
 
 // Enhanced calculation functions that match the existing API
