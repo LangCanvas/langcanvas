@@ -1,8 +1,7 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { EnhancedNode } from '../types/nodeTypes';
 import { usePointerEvents } from './usePointerEvents';
-import { DragState } from '../types/nodeProps';
+import { DragState, PointerDragEvent } from '../types/nodeProps';
 
 export const useNodeDrag = (
   node: EnhancedNode,
@@ -15,7 +14,13 @@ export const useNodeDrag = (
   const nodeRef = useRef<HTMLDivElement>(null);
   const { getPointerEvent, addPointerEventListeners } = usePointerEvents();
 
-  const startDrag = (e: React.MouseEvent | React.TouchEvent) => {
+  const startDrag = (e: PointerDragEvent) => {
+    if (e.defaultPrevented) {
+      console.log("useNodeDrag: Event defaultPrevented, not starting single drag for node:", node.id);
+      return;
+    }
+    console.log("useNodeDrag: Attempting to start single drag for node:", node.id);
+
     const pointerEvent = getPointerEvent(e);
     pointerEvent.preventDefault();
     
@@ -31,6 +36,7 @@ export const useNodeDrag = (
       const canvasX = pointerEvent.clientX - canvasRect.left + scrollLeft;
       const canvasY = pointerEvent.clientY - canvasRect.top + scrollTop;
       
+      console.log(`useNodeDrag: Starting single drag for ${node.id} at canvasX: ${canvasX}, canvasY: ${canvasY}. Node pos: ${node.x}, ${node.y}`);
       setDragState({
         isDragging: true,
         dragOffset: {
@@ -38,11 +44,14 @@ export const useNodeDrag = (
           y: canvasY - node.y
         }
       });
+    } else {
+      console.warn("useNodeDrag: Could not get rects for drag calculation for node:", node.id);
     }
   };
 
   useEffect(() => {
     if (!dragState.isDragging) return;
+    console.log(`useNodeDrag: useEffect - Single drag active for ${node.id}`);
 
     const handlePointerMove = (pointerEvent: any) => {
       const canvas = document.getElementById('canvas');
@@ -58,11 +67,11 @@ export const useNodeDrag = (
         
         const newX = Math.max(0, Math.min(
           canvasX - dragState.dragOffset.x,
-          3000 - 120
+          3000 - (nodeRef.current?.offsetWidth || 120)
         ));
         const newY = Math.max(0, Math.min(
           canvasY - dragState.dragOffset.y,
-          3000 - 60
+          3000 - (nodeRef.current?.offsetHeight || 60)
         ));
         
         onMove(node.id, newX, newY);
@@ -70,12 +79,13 @@ export const useNodeDrag = (
     };
 
     const handlePointerEnd = () => {
+      console.log(`useNodeDrag: Ending single drag for ${node.id}`);
       setDragState(prev => ({ ...prev, isDragging: false }));
     };
 
     const cleanup = addPointerEventListeners(document.body, handlePointerMove, handlePointerEnd);
     return cleanup;
-  }, [dragState.isDragging, dragState.dragOffset, node.id, onMove, addPointerEventListeners]);
+  }, [dragState.isDragging, dragState.dragOffset, node.id, onMove, addPointerEventListeners, nodeRef]);
 
   return {
     nodeRef,
