@@ -24,18 +24,16 @@ const BaseNode: React.FC<BaseNodeComponentProps> = ({
   const { nodeRef, isDragging, startDrag } = useNodeDrag(node, onMove);
   const sanitizedLabel = sanitizeNodeLabel(node.label);
 
-  const handlePointerDown = (e: React.MouseEvent | React.TouchEvent) => {
-    // Pass the event to onSelect for multi-selection support
-    if ('clientX' in e) {
-      onSelect(node.id, e as React.MouseEvent);
-    } else {
-      onSelect(node.id);
+  const handlePointerDown = (e: React.PointerEvent) => {
+    // Pass the event to onSelect for multi-selection support.
+    // PointerEvent is a type of MouseEvent, so this is safe.
+    onSelect(node.id, e);
+    
+    if (onDragStart) {
+      onDragStart(e);
     }
     
-    if (onDragStart && 'clientX' in e) {
-      onDragStart(e as React.MouseEvent);
-    }
-    
+    // startDrag expects a PointerEvent, which is what we have now.
     startDrag(e);
   };
 
@@ -51,8 +49,7 @@ const BaseNode: React.FC<BaseNodeComponentProps> = ({
     <div
       ref={nodeRef}
       style={nodeStyle}
-      onMouseDown={handlePointerDown}
-      onTouchStart={handlePointerDown}
+      onPointerDown={handlePointerDown}
       onDoubleClick={handleDoubleClick}
       className={`node ${node.type}-node ${isSelected ? 'selected' : ''} ${validationClass}`}
       data-node-id={node.id}
