@@ -1,17 +1,18 @@
+
 import React from 'react';
 import Canvas from '../components/Canvas';
 import MainApplicationLayout from '../components/layout/MainApplicationLayout';
 import { useWorkflowActions } from '../hooks/useWorkflowActions';
 import { useIndexHandlers } from '../hooks/useIndexHandlers';
 import { useIndexWorkflowHandlers } from '../hooks/useIndexWorkflowHandlers';
-import { useIndexPanelHandlers } from '../hooks/useIndexPanelHandlers';
+import { useIndexPanelHandlers } from '../hooks/useIndexPanelHandlers'; // Added import
 import { useIndexState } from '../hooks/useIndexState';
 import { useChangeTracking } from '../hooks/useChangeTracking';
 import { useIndexSelectionState } from '../hooks/useIndexSelectionState';
 import { useIndexChangeTrackedHandlers } from '../hooks/useIndexChangeTrackedHandlers';
 import { useIndexEventListeners } from '../hooks/useIndexEventListeners';
 import { EnhancedEdge } from '../types/edgeTypes';
-import { NodeType } from '../types/nodeTypes';
+// NodeType import was unused after refactor, removed.
 
 const Index = () => {
   const {
@@ -26,6 +27,9 @@ const Index = () => {
   const { hasUnsavedChanges } = changeTracking;
 
   const { selectionState, handleCanvasSelectionChange } = useIndexSelectionState();
+
+  // Initialize panelHandlers
+  const panelHandlers = useIndexPanelHandlers(nodeCreation.clearPendingCreation);
 
   // Original action/handler hooks
   const workflowActions = useWorkflowActions({
@@ -69,8 +73,8 @@ const Index = () => {
   // Setup event listeners using the new hook
   useIndexEventListeners({
     nodeCreation,
-    indexHandlers,
-    panelHandlers,
+    indexHandlers, // Passed to useIndexEventListeners
+    panelHandlers, // Passed to useIndexEventListeners
   });
 
   console.log("📍 Index component rendering - DEBUG STATE:");
@@ -85,40 +89,12 @@ const Index = () => {
     handleExpandRightPanel: !!panelHandlers.handleExpandRightPanel
   });
 
-  // Set up pending node creation event listener
-  React.useEffect(() => {
-    const handlePendingCreation = (event: CustomEvent) => {
-      nodeCreation.setPendingCreation(event.detail);
-    };
-
-    const handleOpenPropertiesPanel = (event: CustomEvent) => {
-      const { nodeId, edgeId, type } = event.detail;
-      
-      // Select the appropriate item
-      if (type === 'node' && nodeId) {
-        indexHandlers.handleSelectNode(nodeId);
-      } else if (type === 'edge' && edgeId) {
-        indexHandlers.handleSelectEdge(edgeId);
-      }
-      
-      // Open right panel and expand it
-      panelHandlers.handleExpandRightPanel();
-      
-      // Switch to properties panel if needed
-      panelHandlers.switchToPropertiesPanel();
-    };
-
-    window.addEventListener('setPendingCreation', handlePendingCreation as EventListener);
-    window.addEventListener('openPropertiesPanel', handleOpenPropertiesPanel as EventListener);
-    
-    return () => {
-      window.removeEventListener('setPendingCreation', handlePendingCreation as EventListener);
-      window.removeEventListener('openPropertiesPanel', handleOpenPropertiesPanel as EventListener);
-    };
-  }, [nodeCreation.setPendingCreation, indexHandlers.handleSelectNode, indexHandlers.handleSelectEdge, panelHandlers.handleExpandRightPanel, panelHandlers.switchToPropertiesPanel]);
+  // Redundant useEffect for 'setPendingCreation' and 'openPropertiesPanel' removed
+  // as useIndexEventListeners now handles this.
 
   const handleUpdateEdgeWithCondition = (edgeId: string, updates: Partial<EnhancedEdge>) => {
-    handleUpdateEdgePropertiesWithTracking(edgeId, updates);
+    // Corrected to use trackedHandlers
+    trackedHandlers.handleUpdateEdgePropertiesWithTracking(edgeId, updates);
     if (updates.conditional) {
       edgeState.updateEdgeCondition(edgeId, updates.conditional.condition);
     }
@@ -160,17 +136,17 @@ const Index = () => {
         onDeleteNode={trackedHandlers.handleDeleteNodeWithTracking}
         onDeleteEdge={trackedHandlers.handleDeleteEdgeWithTracking}
         onUpdateNodeProperties={trackedHandlers.handleUpdateNodePropertiesWithTracking}
-        onUpdateEdgeProperties={trackedHandlers.handleUpdateEdgeWithCondition} // Use the specific one for conditions
+        onUpdateEdgeProperties={handleUpdateEdgeWithCondition} // Uses the corrected local version
         validatePriorityConflicts={edgeState.validatePriorityConflicts}
       >
         <Canvas
           nodes={nodeState.nodes}
           edges={edgeState.edges}
           selectedNodeId={nodeState.selectedNodeId}
-          selectedEdgeId={nodeState.selectedEdgeId}
+          selectedEdgeId={edgeState.selectedEdgeId} // Corrected prop
           onAddNode={trackedHandlers.handleAddNodeWithTracking}
-          onSelectNode={indexHandlers.handleSelectNode} // Base selection handlers are fine for Canvas
-          onSelectEdge={indexHandlers.handleSelectEdge} // Base selection handlers are fine for Canvas
+          onSelectNode={indexHandlers.handleSelectNode} 
+          onSelectEdge={indexHandlers.handleSelectEdge} 
           onMoveNode={trackedHandlers.handleMoveNodeWithTracking}
           onDeleteNode={trackedHandlers.handleDeleteNodeWithTracking}
           onDeleteEdge={trackedHandlers.handleDeleteEdgeWithTracking}
@@ -191,3 +167,4 @@ const Index = () => {
 };
 
 export default Index;
+
