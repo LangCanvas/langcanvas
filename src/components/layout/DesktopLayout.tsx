@@ -61,15 +61,17 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     handleLeftPanelResize,
     handleRightPanelResize,
     getInitialPercentage,
-    getMaxPercentageForLeftPanel
+    getMaxPercentageForLeftPanel,
+    getMinPercentageForLeftPanel
   } = useAdaptivePanelWidths();
 
   const leftPanelPercentage = getInitialPercentage(leftPanelWidth, isLeftPanelVisible);
   const rightPanelPercentage = getInitialPercentage(rightPanelWidth, isRightPanelVisible);
   const canvasPercentage = Math.max(30, 100 - leftPanelPercentage - rightPanelPercentage);
 
-  // Calculate the maximum percentage for the left panel (100px equivalent)
+  // Calculate the maximum and minimum percentages for the left panel
   const maxLeftPanelPercentage = getMaxPercentageForLeftPanel();
+  const minLeftPanelPercentage = getMinPercentageForLeftPanel();
 
   return (
     <div className="flex-1 h-full">
@@ -78,7 +80,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
           <>
             <ResizablePanel
               defaultSize={leftPanelPercentage}
-              minSize={3}
+              minSize={minLeftPanelPercentage} // Use calculated min percentage for 80px constraint
               maxSize={maxLeftPanelPercentage} // Use calculated max percentage for 100px cap
               onResize={handleLeftPanelResize}
               className="relative"

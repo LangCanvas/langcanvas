@@ -94,6 +94,12 @@ export const useAdaptivePanelWidths = () => {
     return (PANEL_BREAKPOINTS.MAX / referenceWidth) * 100;
   }, []);
 
+  // Calculate the minimum percentage that represents 80px
+  const getMinPercentageForLeftPanel = useCallback(() => {
+    const referenceWidth = 1400;
+    return (PANEL_BREAKPOINTS.MIN / referenceWidth) * 100;
+  }, []);
+
   const handleLeftPanelResize = useCallback((percentage: number) => {
     // Cap the percentage to ensure it doesn't exceed 100px equivalent
     const maxPercentage = getMaxPercentageForLeftPanel();
@@ -130,7 +136,8 @@ export const useAdaptivePanelWidths = () => {
     handleLeftPanelResize,
     handleRightPanelResize,
     getInitialPercentage,
-    getMaxPercentageForLeftPanel, // Export this for use in DesktopLayout
+    getMaxPercentageForLeftPanel,
+    getMinPercentageForLeftPanel, // Export the new function
     measurements,
   };
 };
