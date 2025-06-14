@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { nodeCategories } from '../utils/nodeCategories';
 
 interface ContentMeasurements {
+  minWidthForIcons: number;
   minWidthForText: number;
   minWidthForDescriptions: number;
   recommendedWidth: number;
@@ -10,6 +11,7 @@ interface ContentMeasurements {
 
 export const useSmartPanelSizing = () => {
   const [measurements, setMeasurements] = useState<ContentMeasurements>({
+    minWidthForIcons: 56, // Very small for icon-only mode
     minWidthForText: 130,
     minWidthForDescriptions: 210,
     recommendedWidth: 280
@@ -40,20 +42,28 @@ export const useSmartPanelSizing = () => {
 
     document.body.removeChild(measureEl);
 
-    // Calculate minimum widths
-    const iconWidth = 16; // mr-2 spacing + icon
-    const buttonPadding = 16; // px-2 = 8px each side
-    const panelPadding = 32; // p-4 = 16px each side
-    const margins = 8; // various margins
+    // Calculate minimum widths with reduced constraints for ultra-compact
+    const iconWidth = 16; // icon size
+    const buttonSpacing = 8; // mr-2 spacing
+    const buttonPadding = 12; // reduced for compact mode
+    const panelPadding = 16; // reduced from 32
+    const margins = 4; // reduced margins
     
-    const minWidthForText = Math.ceil(maxTextWidth + iconWidth + buttonPadding + panelPadding + margins);
-    const minWidthForDescriptions = minWidthForText + 80; // extra space for descriptions
+    // Icon-only mode: just icon + minimal padding
+    const minWidthForIcons = iconWidth + buttonPadding + panelPadding;
+    
+    // Text mode: icon + text + padding
+    const minWidthForText = Math.ceil(maxTextWidth + iconWidth + buttonSpacing + buttonPadding + panelPadding + margins);
+    
+    // Description mode: extra space for descriptions
+    const minWidthForDescriptions = minWidthForText + 80;
     
     // Calculate 20% of window width as recommended
     const windowWidth = window.innerWidth;
     const recommendedWidth = Math.max(minWidthForText, Math.min(400, windowWidth * 0.2));
 
     setMeasurements({
+      minWidthForIcons,
       minWidthForText,
       minWidthForDescriptions,
       recommendedWidth
@@ -73,6 +83,7 @@ export const useSmartPanelSizing = () => {
   }, [measureContent]);
 
   const getContentBasedLayout = useCallback((width: number) => {
+    if (width < measurements.minWidthForIcons + 20) return 'icon-only';
     if (width < measurements.minWidthForText) return 'ultra-compact';
     if (width < measurements.minWidthForDescriptions) return 'compact';
     if (width < 350) return 'standard';

@@ -92,17 +92,31 @@ const EnhancedNodePalette: React.FC<EnhancedNodePaletteProps> = ({
     setSelectedCategory(null);
   };
 
-  // Layout configuration based on panel size - updated to be content-aware
+  // Layout configuration based on panel size - updated with icon-only mode
   const layoutConfig = useMemo(() => {
     switch (panelLayout) {
+      case 'icon-only':
+        return {
+          showSearch: false,
+          showCategories: true,
+          showDescriptions: false,
+          showNodeCount: false,
+          compactItems: true,
+          compactCategories: false,
+          iconOnlyCategories: true,
+          iconOnlyItems: true,
+          maxVisibleNodes: 6
+        };
       case 'ultra-compact':
         return {
           showSearch: false,
-          showCategories: true, // Show categories but compact
+          showCategories: true,
           showDescriptions: false,
           showNodeCount: false,
           compactItems: true,
           compactCategories: true,
+          iconOnlyCategories: false,
+          iconOnlyItems: false,
           maxVisibleNodes: 8
         };
       case 'compact':
@@ -113,6 +127,8 @@ const EnhancedNodePalette: React.FC<EnhancedNodePaletteProps> = ({
           showNodeCount: false,
           compactItems: true,
           compactCategories: false,
+          iconOnlyCategories: false,
+          iconOnlyItems: false,
           maxVisibleNodes: 12
         };
       case 'standard':
@@ -123,6 +139,8 @@ const EnhancedNodePalette: React.FC<EnhancedNodePaletteProps> = ({
           showNodeCount: true,
           compactItems: false,
           compactCategories: false,
+          iconOnlyCategories: false,
+          iconOnlyItems: false,
           maxVisibleNodes: null
         };
       case 'wide':
@@ -133,6 +151,8 @@ const EnhancedNodePalette: React.FC<EnhancedNodePaletteProps> = ({
           showNodeCount: true,
           compactItems: false,
           compactCategories: false,
+          iconOnlyCategories: false,
+          iconOnlyItems: false,
           maxVisibleNodes: null
         };
       default:
@@ -143,6 +163,8 @@ const EnhancedNodePalette: React.FC<EnhancedNodePaletteProps> = ({
           showNodeCount: true,
           compactItems: false,
           compactCategories: false,
+          iconOnlyCategories: false,
+          iconOnlyItems: false,
           maxVisibleNodes: null
         };
     }
@@ -152,15 +174,15 @@ const EnhancedNodePalette: React.FC<EnhancedNodePaletteProps> = ({
     ? filteredNodes.slice(0, layoutConfig.maxVisibleNodes)
     : filteredNodes;
 
-  const paddingClass = panelLayout === 'ultra-compact' ? 'p-2' : panelLayout === 'compact' ? 'p-3' : 'p-4';
+  const paddingClass = panelLayout === 'icon-only' ? 'p-1' : panelLayout === 'ultra-compact' ? 'p-2' : panelLayout === 'compact' ? 'p-3' : 'p-4';
 
   return (
     <div className={`${paddingClass} h-full flex flex-col`}>
       <div className="flex items-center justify-between mb-4">
-        <h2 className={`font-medium text-gray-700 ${panelLayout === 'ultra-compact' ? 'text-xs' : 'text-sm'}`}>
-          {panelLayout === 'ultra-compact' ? 'Nodes' : 'Node Palette'}
+        <h2 className={`font-medium text-gray-700 ${panelLayout === 'icon-only' || panelLayout === 'ultra-compact' ? 'text-xs' : 'text-sm'}`}>
+          {panelLayout === 'icon-only' ? '' : panelLayout === 'ultra-compact' ? 'Nodes' : 'Node Palette'}
         </h2>
-        {onToggle && panelLayout !== 'ultra-compact' && (
+        {onToggle && panelLayout !== 'ultra-compact' && panelLayout !== 'icon-only' && (
           <button
             onClick={onToggle}
             className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
@@ -185,6 +207,7 @@ const EnhancedNodePalette: React.FC<EnhancedNodePaletteProps> = ({
             selectedCategory={selectedCategory}
             onCategorySelect={setSelectedCategory}
             compact={layoutConfig.compactCategories}
+            iconOnly={layoutConfig.iconOnlyCategories}
           />
         )}
 
@@ -224,19 +247,21 @@ const EnhancedNodePalette: React.FC<EnhancedNodePaletteProps> = ({
           </div>
         )}
 
-        <div className="mt-4 text-xs text-gray-500">
-          {panelLayout !== 'ultra-compact' && (
-            <>
-              <p className="hidden lg:block">Drag nodes to the canvas to create them</p>
-              <p className="lg:hidden">Tap a node type, then tap on the canvas to place it</p>
-            </>
-          )}
-          {layoutConfig.showNodeCount && filteredNodes.length > 0 && (
-            <p className="mt-1">
-              {filteredNodes.length} node{filteredNodes.length !== 1 ? 's' : ''} available
-            </p>
-          )}
-        </div>
+        {panelLayout !== 'icon-only' && (
+          <div className="mt-4 text-xs text-gray-500">
+            {panelLayout !== 'ultra-compact' && (
+              <>
+                <p className="hidden lg:block">Drag nodes to the canvas to create them</p>
+                <p className="lg:hidden">Tap a node type, then tap on the canvas to place it</p>
+              </>
+            )}
+            {layoutConfig.showNodeCount && filteredNodes.length > 0 && (
+              <p className="mt-1">
+                {filteredNodes.length} node{filteredNodes.length !== 1 ? 's' : ''} available
+              </p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

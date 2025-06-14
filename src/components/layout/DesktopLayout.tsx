@@ -76,7 +76,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
           <>
             <ResizablePanel
               defaultSize={leftPanelPercentage}
-              minSize={15}
+              minSize={5} // Reduced from 15 to allow smaller panels
               maxSize={35}
               onResize={handleLeftPanelResize}
               className="relative"
@@ -104,7 +104,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
             <ResizableHandle withHandle />
             <ResizablePanel
               defaultSize={rightPanelPercentage}
-              minSize={15}
+              minSize={5} // Reduced from 15 to allow smaller panels
               maxSize={35}
               onResize={handleRightPanelResize}
               className="relative"

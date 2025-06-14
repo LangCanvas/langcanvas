@@ -2,14 +2,15 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useSmartPanelSizing } from './useSmartPanelSizing';
 
+// Updated panel breakpoints to use smart measurements
 export const PANEL_BREAKPOINTS = {
-  MIN: 200,
+  MIN: 50, // Allow very small panels for icon-only mode
   DEFAULT_LEFT: 256,
   DEFAULT_RIGHT: 320,
   MAX: 500
 } as const;
 
-export type PanelLayout = 'ultra-compact' | 'compact' | 'standard' | 'wide';
+export type PanelLayout = 'icon-only' | 'ultra-compact' | 'compact' | 'standard' | 'wide';
 
 interface PanelWidthSettings {
   leftPanelWidth: number;
@@ -19,12 +20,12 @@ interface PanelWidthSettings {
 }
 
 const PANEL_WIDTH_STORAGE_KEY = 'langcanvas_panel_widths';
-const PANEL_WIDTH_VERSION = '2.0';
+const PANEL_WIDTH_VERSION = '2.1';
 
 export const useAdaptivePanelWidths = () => {
   const { measurements, getContentBasedLayout } = useSmartPanelSizing();
   
-  // Use smart defaults
+  // Use smart defaults based on 20% of window width
   const getInitialLeftWidth = useCallback(() => {
     if (typeof window !== 'undefined') {
       return Math.max(measurements.minWidthForText, Math.min(PANEL_BREAKPOINTS.MAX, window.innerWidth * 0.2));
@@ -43,7 +44,8 @@ export const useAdaptivePanelWidths = () => {
       try {
         const data: PanelWidthSettings = JSON.parse(stored);
         if (data.version === PANEL_WIDTH_VERSION) {
-          const constrainedLeft = Math.max(measurements.minWidthForText, Math.min(PANEL_BREAKPOINTS.MAX, data.leftPanelWidth));
+          // Allow panel to be smaller than text width (for icon-only mode)
+          const constrainedLeft = Math.max(PANEL_BREAKPOINTS.MIN, Math.min(PANEL_BREAKPOINTS.MAX, data.leftPanelWidth));
           const constrainedRight = Math.max(PANEL_BREAKPOINTS.MIN, Math.min(PANEL_BREAKPOINTS.MAX, data.rightPanelWidth));
           setLeftPanelWidth(constrainedLeft);
           setRightPanelWidth(constrainedRight);
@@ -56,7 +58,7 @@ export const useAdaptivePanelWidths = () => {
     
     // No stored settings, use smart default
     setLeftPanelWidth(getInitialLeftWidth());
-  }, [measurements.minWidthForText, getInitialLeftWidth]);
+  }, [getInitialLeftWidth]);
 
   // Save panel widths to storage (debounced)
   const saveWidthsToStorage = useCallback((leftWidth: number, rightWidth: number) => {
@@ -79,12 +81,12 @@ export const useAdaptivePanelWidths = () => {
     }, 300);
   }, []);
 
-  // Convert pixel width to percentage for ResizablePanelGroup
+  // Convert pixel width to percentage for ResizablePanelGroup with lower minimum
   const getInitialPercentage = useCallback((pixelWidth: number, isVisible: boolean) => {
     if (!isVisible) return 0;
     // Use a fixed reference width for consistent percentage calculation
     const referenceWidth = 1400;
-    return Math.max(15, Math.min(35, (pixelWidth / referenceWidth) * 100));
+    return Math.max(5, Math.min(35, (pixelWidth / referenceWidth) * 100)); // Reduced from 15% to 5%
   }, []);
 
   // Convert percentage back to pixels (from ResizablePanelGroup onResize)
@@ -95,10 +97,11 @@ export const useAdaptivePanelWidths = () => {
 
   const handleLeftPanelResize = useCallback((percentage: number) => {
     const pixelWidth = convertPercentageToPixels(percentage);
-    const constrainedWidth = Math.max(measurements.minWidthForText, Math.min(PANEL_BREAKPOINTS.MAX, pixelWidth));
+    // Allow panel to be smaller than text width for icon-only mode
+    const constrainedWidth = Math.max(PANEL_BREAKPOINTS.MIN, Math.min(PANEL_BREAKPOINTS.MAX, pixelWidth));
     setLeftPanelWidth(constrainedWidth);
     saveWidthsToStorage(constrainedWidth, rightPanelWidth);
-  }, [rightPanelWidth, saveWidthsToStorage, convertPercentageToPixels, measurements.minWidthForText]);
+  }, [rightPanelWidth, saveWidthsToStorage, convertPercentageToPixels]);
 
   const handleRightPanelResize = useCallback((percentage: number) => {
     const pixelWidth = convertPercentageToPixels(percentage);
@@ -112,6 +115,7 @@ export const useAdaptivePanelWidths = () => {
   }, [leftPanelWidth, getContentBasedLayout]);
 
   const getRightPanelLayout = useCallback((): PanelLayout => {
+    if (rightPanelWidth <= 80) return 'icon-only';
     if (rightPanelWidth <= 180) return 'ultra-compact';
     if (rightPanelWidth <= 250) return 'compact';
     if (rightPanelWidth <= 350) return 'standard';
