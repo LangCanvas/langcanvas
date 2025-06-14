@@ -1,4 +1,3 @@
-
 import React from 'react';
 import EnhancedNodePalette from '../palette/EnhancedNodePalette';
 import CollapsedNodePalette from './CollapsedNodePalette';
@@ -36,11 +35,11 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
     }
   };
 
-  // Show collapsed panel when not expanded or in icon-only mode
-  if (!isExpanded || panelLayout === 'icon-only') {
+  // Show collapsed panel when not expanded (ignore panelLayout for collapse logic)
+  if (!isExpanded) {
     return (
       <aside className="relative h-full bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out">
-        <CollapsedNodePalette onToggle={handleToggle} isExpanded={isExpanded} />
+        <CollapsedNodePalette onToggle={handleToggle} isExpanded={false} />
       </aside>
     );
   }

@@ -66,11 +66,32 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     handleRightPanelResize
   } = useAdaptivePanelWidths();
 
-  // Calculate panel sizes for ResizablePanelGroup
-  const totalAvailableWidth = window.innerWidth;
-  const leftPanelPercentage = isLeftPanelVisible ? (leftPanelWidth / totalAvailableWidth) * 100 : 0;
-  const rightPanelPercentage = isRightPanelVisible ? (rightPanelWidth / totalAvailableWidth) * 100 : 0;
-  const canvasPercentage = 100 - leftPanelPercentage - rightPanelPercentage;
+  // Listen for last expanded width updates
+  useEffect(() => {
+    const handleUpdateLastExpandedWidth = (event: CustomEvent) => {
+      const { side, width } = event.detail;
+      if (side === 'left') {
+        // Dispatch to panel handlers to update last expanded width
+        window.dispatchEvent(new CustomEvent('setLastLeftExpandedWidth', { detail: width }));
+      } else if (side === 'right') {
+        window.dispatchEvent(new CustomEvent('setLastRightExpandedWidth', { detail: width }));
+      }
+    };
+
+    window.addEventListener('updateLastExpandedWidth', handleUpdateLastExpandedWidth as EventListener);
+    return () => {
+      window.removeEventListener('updateLastExpandedWidth', handleUpdateLastExpandedWidth as EventListener);
+    };
+  }, []);
+
+  // Calculate panel sizes for ResizablePanelGroup with proper defaults
+  const totalAvailableWidth = Math.max(window.innerWidth, 1200); // Minimum width to avoid division issues
+  const actualLeftWidth = isLeftPanelVisible ? leftPanelWidth : 0;
+  const actualRightWidth = isRightPanelVisible ? rightPanelWidth : 0;
+  
+  const leftPanelPercentage = actualLeftWidth > 0 ? Math.max(5, Math.min(40, (actualLeftWidth / totalAvailableWidth) * 100)) : 0;
+  const rightPanelPercentage = actualRightWidth > 0 ? Math.max(5, Math.min(40, (actualRightWidth / totalAvailableWidth) * 100)) : 0;
+  const canvasPercentage = Math.max(30, 100 - leftPanelPercentage - rightPanelPercentage);
 
   return (
     <div className="flex-1 h-full">

@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useRef, useEffect } from 'react';
 
 export const PANEL_BREAKPOINTS = {
@@ -28,8 +27,8 @@ const DEFAULT_WIDTHS = {
 };
 
 export const useAdaptivePanelWidths = () => {
-  const [leftPanelWidth, setLeftPanelWidth] = useState(DEFAULT_WIDTHS.leftPanelWidth);
-  const [rightPanelWidth, setRightPanelWidth] = useState(DEFAULT_WIDTHS.rightPanelWidth);
+  const [leftPanelWidth, setLeftPanelWidth] = useState(256); // Default to 256px like before
+  const [rightPanelWidth, setRightPanelWidth] = useState(320);
   const debounceRef = useRef<NodeJS.Timeout>();
 
   // Load panel widths from storage on mount
@@ -47,6 +46,37 @@ export const useAdaptivePanelWidths = () => {
       console.warn('Failed to load panel widths from storage:', error);
     }
   }, []);
+
+  // Listen for external width changes (from toggle handlers)
+  useEffect(() => {
+    const handleLeftPanelResize = (event: CustomEvent) => {
+      const { width, expanding, collapsing } = event.detail;
+      console.log('🎛️ Left panel resize event:', { width, expanding, collapsing });
+      
+      if (expanding || collapsing) {
+        setLeftPanelWidth(width);
+        saveWidthsToStorage(width, rightPanelWidth);
+      }
+    };
+
+    const handleRightPanelResize = (event: CustomEvent) => {
+      const { width, expanding, collapsing } = event.detail;
+      console.log('🎛️ Right panel resize event:', { width, expanding, collapsing });
+      
+      if (expanding || collapsing) {
+        setRightPanelWidth(width);
+        saveWidthsToStorage(leftPanelWidth, width);
+      }
+    };
+
+    window.addEventListener('leftPanelResize', handleLeftPanelResize as EventListener);
+    window.addEventListener('rightPanelResize', handleRightPanelResize as EventListener);
+
+    return () => {
+      window.removeEventListener('leftPanelResize', handleLeftPanelResize as EventListener);
+      window.removeEventListener('rightPanelResize', handleRightPanelResize as EventListener);
+    };
+  }, [leftPanelWidth, rightPanelWidth]);
 
   // Save panel widths to storage (debounced)
   const saveWidthsToStorage = useCallback((leftWidth: number, rightWidth: number) => {
@@ -73,12 +103,26 @@ export const useAdaptivePanelWidths = () => {
     const constrainedWidth = Math.max(PANEL_BREAKPOINTS.ICON_ONLY, Math.min(PANEL_BREAKPOINTS.MAX, width));
     setLeftPanelWidth(constrainedWidth);
     saveWidthsToStorage(constrainedWidth, rightPanelWidth);
+    
+    // Store as last expanded width if it's larger than icon-only
+    if (constrainedWidth > PANEL_BREAKPOINTS.ICON_ONLY) {
+      window.dispatchEvent(new CustomEvent('updateLastExpandedWidth', { 
+        detail: { side: 'left', width: constrainedWidth } 
+      }));
+    }
   }, [rightPanelWidth, saveWidthsToStorage]);
 
   const handleRightPanelResize = useCallback((width: number) => {
     const constrainedWidth = Math.max(PANEL_BREAKPOINTS.ICON_ONLY, Math.min(PANEL_BREAKPOINTS.MAX, width));
     setRightPanelWidth(constrainedWidth);
     saveWidthsToStorage(leftPanelWidth, constrainedWidth);
+    
+    // Store as last expanded width if it's larger than icon-only
+    if (constrainedWidth > PANEL_BREAKPOINTS.ICON_ONLY) {
+      window.dispatchEvent(new CustomEvent('updateLastExpandedWidth', { 
+        detail: { side: 'right', width: constrainedWidth } 
+      }));
+    }
   }, [leftPanelWidth, saveWidthsToStorage]);
 
   const getLeftPanelLayout = useCallback((): PanelLayout => {

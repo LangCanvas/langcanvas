@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useEnhancedAnalytics } from './useEnhancedAnalytics';
 import { savePanelSettingsToStorage, loadPanelSettingsFromStorage } from '../utils/panelStorage';
@@ -18,6 +17,10 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
   const [isRightPanelVisible, setIsRightPanelVisible] = useState(storedSettings.isRightPanelVisible);
   const [isRightPanelExpanded, setIsRightPanelExpanded] = useState(storedSettings.isRightPanelExpanded);
   
+  // Store the last expanded width for restoration
+  const [lastLeftExpandedWidth, setLastLeftExpandedWidth] = useState(256);
+  const [lastRightExpandedWidth, setLastRightExpandedWidth] = useState(320);
+  
   const analytics = useEnhancedAnalytics();
 
   // Save panel settings to localStorage whenever they change
@@ -26,9 +29,11 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
       isLeftPanelVisible,
       isLeftPanelExpanded,
       isRightPanelVisible,
-      isRightPanelExpanded
+      isRightPanelExpanded,
+      leftPanelWidth: storedSettings.leftPanelWidth,
+      rightPanelWidth: storedSettings.rightPanelWidth
     });
-  }, [isLeftPanelVisible, isLeftPanelExpanded, isRightPanelVisible, isRightPanelExpanded]);
+  }, [isLeftPanelVisible, isLeftPanelExpanded, isRightPanelVisible, isRightPanelExpanded, storedSettings.leftPanelWidth, storedSettings.rightPanelWidth]);
 
   const handleMobileMenuToggle = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -53,6 +58,19 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
     const newExpanded = !isLeftPanelExpanded;
     setIsLeftPanelExpanded(newExpanded);
 
+    // Trigger width change through custom event
+    if (newExpanded) {
+      // Expanding: restore to last expanded width
+      window.dispatchEvent(new CustomEvent('leftPanelResize', { 
+        detail: { width: lastLeftExpandedWidth, expanding: true } 
+      }));
+    } else {
+      // Collapsing: set to icon-only width (56px)
+      window.dispatchEvent(new CustomEvent('leftPanelResize', { 
+        detail: { width: 56, collapsing: true } 
+      }));
+    }
+
     analytics.trackFeatureUsage('desktop_left_panel_toggled', { 
       isExpanded: newExpanded 
     });
@@ -62,6 +80,19 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
     const newExpanded = !isRightPanelExpanded;
     console.log('🎛️ Right panel toggle handler called. Current expanded:', isRightPanelExpanded, 'New expanded:', newExpanded);
     setIsRightPanelExpanded(newExpanded);
+
+    // Trigger width change through custom event
+    if (newExpanded) {
+      // Expanding: restore to last expanded width
+      window.dispatchEvent(new CustomEvent('rightPanelResize', { 
+        detail: { width: lastRightExpandedWidth, expanding: true } 
+      }));
+    } else {
+      // Collapsing: set to icon-only width (56px)
+      window.dispatchEvent(new CustomEvent('rightPanelResize', { 
+        detail: { width: 56, collapsing: true } 
+      }));
+    }
 
     analytics.trackFeatureUsage('desktop_right_panel_toggled', { 
       isExpanded: newExpanded 
@@ -118,5 +149,9 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
     handleExpandLeftPanel,
     handleExpandRightPanel,
     switchToPropertiesPanel,
+    
+    // Width management
+    setLastLeftExpandedWidth,
+    setLastRightExpandedWidth,
   };
 };

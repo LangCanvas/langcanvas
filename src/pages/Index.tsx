@@ -1,167 +1,188 @@
-import React from 'react';
+import React, { useRef, useCallback } from 'react';
 import Canvas from '../components/Canvas';
 import MainApplicationLayout from '../components/layout/MainApplicationLayout';
-import { useWorkflowActions } from '../hooks/useWorkflowActions';
-import { useIndexHandlers } from '../hooks/useIndexHandlers';
-import { useIndexWorkflowHandlers } from '../hooks/useIndexWorkflowHandlers';
-import { useIndexPanelHandlers } from '../hooks/useIndexPanelHandlers'; // Added import
 import { useIndexState } from '../hooks/useIndexState';
-import { useChangeTracking } from '../hooks/useChangeTracking';
+import { useIndexPanelHandlers } from '../hooks/useIndexPanelHandlers';
 import { useIndexSelectionState } from '../hooks/useIndexSelectionState';
-import { useIndexChangeTrackedHandlers } from '../hooks/useIndexChangeTrackedHandlers';
+import { useIndexHandlers } from '../hooks/useIndexHandlers';
 import { useIndexEventListeners } from '../hooks/useIndexEventListeners';
-import { EnhancedEdge } from '../types/edgeTypes';
-// NodeType import was unused after refactor, removed.
+import { useIndexWorkflowHandlers } from '../hooks/useIndexWorkflowHandlers';
+import { useIndexMobileHandlers } from '../hooks/useIndexMobileHandlers';
+import { useIndexChangeTrackedHandlers } from '../hooks/useIndexChangeTrackedHandlers';
 
-const Index = () => {
+const Index: React.FC = () => {
+  const canvasRef = useRef<HTMLDivElement>(null);
+  
   const {
-    nodeState,
-    edgeState,
-    nodeCreation,
-    workflowSerializer,
-    validation
+    nodes,
+    edges,
+    pendingCreation,
+    clearPendingCreation,
+    dragMode,
+    isSelecting,
+    selectedCount,
+    validationResult,
+    deleteNode,
+    deleteEdge,
+    addEdge,
+    deleteEdgesForNode,
+    updateNodeProperties,
+    updateEdgeProperties,
+    setNodes,
+    setEdges,
+    selectNode,
+    selectEdge,
+    clearSelection,
+    validatePriorityConflicts,
   } = useIndexState();
 
-  const changeTracking = useChangeTracking();
-  const { hasUnsavedChanges } = changeTracking;
+  const {
+    isMobileMenuOpen,
+    activePanel,
+    showValidationPanel,
+    isLeftPanelVisible,
+    isLeftPanelExpanded,
+    isRightPanelVisible,
+    isRightPanelExpanded,
+    setShowValidationPanel,
+    handleMobileMenuToggle,
+    handlePanelToggle,
+    handleToggleLeftPanel,
+    handleToggleRightPanel,
+    handleExpandLeftPanel,
+    handleExpandRightPanel,
+    closePanels,
+    switchToPropertiesPanel,
+    setLastLeftExpandedWidth,
+    setLastRightExpandedWidth,
+  } = useIndexPanelHandlers(clearPendingCreation);
 
-  const { selectionState, handleCanvasSelectionChange } = useIndexSelectionState();
+  // Listen for last expanded width events
+  React.useEffect(() => {
+    const handleSetLastLeftExpandedWidth = (event: CustomEvent) => {
+      setLastLeftExpandedWidth(event.detail);
+    };
 
-  // Initialize panelHandlers
-  const panelHandlers = useIndexPanelHandlers(nodeCreation.clearPendingCreation);
+    const handleSetLastRightExpandedWidth = (event: CustomEvent) => {
+      setLastRightExpandedWidth(event.detail);
+    };
 
-  // Original action/handler hooks
-  const workflowActions = useWorkflowActions({
-    nodes: nodeState.nodes,
-    exportWorkflowAsString: workflowSerializer.exportWorkflowAsString,
-    importWorkflow: workflowSerializer.importWorkflow,
-    validateWorkflow: workflowSerializer.validateWorkflow,
-    clearWorkflow: workflowSerializer.clearWorkflow,
-    validationResult: validation.validationResult
+    window.addEventListener('setLastLeftExpandedWidth', handleSetLastLeftExpandedWidth as EventListener);
+    window.addEventListener('setLastRightExpandedWidth', handleSetLastRightExpandedWidth as EventListener);
+
+    return () => {
+      window.removeEventListener('setLastLeftExpandedWidth', handleSetLastLeftExpandedWidth as EventListener);
+      window.removeEventListener('setLastRightExpandedWidth', handleSetLastRightExpandedWidth as EventListener);
+    };
+  }, [setLastLeftExpandedWidth, setLastRightExpandedWidth]);
+
+  const {
+    isWorkflowValid,
+    handleValidateWorkflow,
+    handleNewProject,
+    handleImport,
+    handleExport,
+  } = useIndexWorkflowHandlers(nodes, edges, setNodes, setEdges, clearSelection);
+
+  const {
+    handleNodePositionChange,
+    handleEdgeUpdate,
+  } = useIndexEventListeners(setNodes, setEdges, canvasRef);
+
+  const {
+    handleSelectionChange,
+    handleMultiSelectStart,
+    handleMultiSelectEnd,
+  } = useIndexSelectionState(canvasRef, nodes, edges, selectNode, selectEdge);
+
+  const {
+    handleDeleteNode,
+    handleAddEdge,
+    handleSelectNode,
+    handleSelectEdge,
+    handleUpdateNodeProperties,
+    handleUpdateEdgeProperties,
+  } = useIndexHandlers({
+    nodes,
+    deleteEdgesForNode,
+    deleteNode,
+    deleteEdge,
+    addEdge,
+    selectNode,
+    selectEdge,
+    updateNodeProperties,
+    updateEdgeProperties,
   });
 
-  const indexHandlers = useIndexHandlers({
-    nodes: nodeState.nodes,
-    deleteEdgesForNode: edgeState.deleteEdgesForNode,
-    deleteNode: nodeState.deleteNode,
-    deleteEdge: edgeState.deleteEdge,
-    addEdge: edgeState.addEdge,
-    selectNode: nodeState.selectNode,
-    selectEdge: edgeState.selectEdge,
-    updateNodeProperties: nodeState.updateNodeProperties,
-    updateEdgeProperties: edgeState.updateEdgeProperties,
-  });
+  const {
+    handleCanvasClick,
+    handleNodeCreate,
+  } = useIndexMobileHandlers(canvasRef, pendingCreation, clearPendingCreation, handleAddEdge);
 
-  // New hook for change-tracked handlers
-  const trackedHandlers = useIndexChangeTrackedHandlers({
-    nodeCreation,
-    nodeState,
-    edgeState,
-    indexHandlers,
-    workflowActions,
-    changeTracking,
-  });
-
-  // Enhanced workflow handlers (using some tracked handlers)
-  const workflowHandlers = useIndexWorkflowHandlers({
-    handleNewProject: trackedHandlers.handleNewProjectWithTracking,
-    handleImport: trackedHandlers.handleImportWithTracking,
-    handleExport: trackedHandlers.handleExportWithTracking,
-  });
-  
-  // Setup event listeners using the new hook
-  useIndexEventListeners({
-    nodeCreation,
-    indexHandlers, // Passed to useIndexEventListeners
-    panelHandlers, // Passed to useIndexEventListeners
-  });
-
-  console.log("📍 Index component rendering - DEBUG STATE:");
-  console.log("📍 Panel handlers state:", {
-    isLeftPanelVisible: panelHandlers.isLeftPanelVisible,
-    isLeftPanelExpanded: panelHandlers.isLeftPanelExpanded,
-    isRightPanelVisible: panelHandlers.isRightPanelVisible,
-    isRightPanelExpanded: panelHandlers.isRightPanelExpanded
-  });
-  console.log("📍 Panel handlers functions:", {
-    handleToggleRightPanel: !!panelHandlers.handleToggleRightPanel,
-    handleExpandRightPanel: !!panelHandlers.handleExpandRightPanel
-  });
-
-  // Redundant useEffect for 'setPendingCreation' and 'openPropertiesPanel' removed
-  // as useIndexEventListeners now handles this.
-
-  const handleUpdateEdgeWithCondition = (edgeId: string, updates: Partial<EnhancedEdge>) => {
-    // Corrected to use trackedHandlers
-    trackedHandlers.handleUpdateEdgePropertiesWithTracking(edgeId, updates);
-    if (updates.conditional) {
-      edgeState.updateEdgeCondition(edgeId, updates.conditional.condition);
-    }
-  };
+  const {
+    handleNewProjectChangeTracked: handleNewProject,
+    handleImportChangeTracked: handleImport,
+    handleExportChangeTracked: handleExport,
+  } = useIndexChangeTrackedHandlers(handleNewProject, handleImport, handleExport);
 
   return (
-    <div style={{ backgroundColor: '#fef3c7' }} className="min-h-screen">
-      <div className="absolute top-0 left-0 bg-orange-500 text-white px-3 py-1 text-xs z-50 rounded-br">
-        INDEX DEBUG - Right Panel: {panelHandlers.isRightPanelVisible ? 'VISIBLE' : 'HIDDEN'} / {panelHandlers.isRightPanelExpanded ? 'EXPANDED' : 'COLLAPSED'}
-      </div>
-      
-      <MainApplicationLayout
-        isMobileMenuOpen={panelHandlers.isMobileMenuOpen}
-        activePanel={panelHandlers.activePanel}
-        showValidationPanel={panelHandlers.showValidationPanel}
-        isLeftPanelVisible={panelHandlers.isLeftPanelVisible}
-        isLeftPanelExpanded={panelHandlers.isLeftPanelExpanded}
-        isRightPanelVisible={panelHandlers.isRightPanelVisible}
-        isRightPanelExpanded={panelHandlers.isRightPanelExpanded}
-        nodes={nodeState.nodes}
-        edges={edgeState.edges}
-        selectedNode={nodeState.selectedNode}
-        selectedEdge={edgeState.selectedEdge}
-        validationResult={validation.validationResult}
-        isSelecting={selectionState.isSelecting}
-        selectedCount={selectionState.selectedCount}
-        onMobileMenuToggle={panelHandlers.handleMobileMenuToggle}
-        onPanelToggle={panelHandlers.handlePanelToggle}
-        onToggleLeftPanel={panelHandlers.handleToggleLeftPanel}
-        onToggleRightPanel={panelHandlers.handleToggleRightPanel}
-        onExpandLeftPanel={panelHandlers.handleExpandLeftPanel}
-        onExpandRightPanel={panelHandlers.handleExpandRightPanel}
-        closePanels={panelHandlers.closePanels}
-        setShowValidationPanel={panelHandlers.setShowValidationPanel}
-        switchToPropertiesPanel={panelHandlers.switchToPropertiesPanel}
-        onNewProject={workflowHandlers.handleNewProjectWithAnalytics}
-        onImport={workflowHandlers.handleImportWithAnalytics}
-        onExport={workflowHandlers.handleExportWithAnalytics}
-        onDeleteNode={trackedHandlers.handleDeleteNodeWithTracking}
-        onDeleteEdge={trackedHandlers.handleDeleteEdgeWithTracking}
-        onUpdateNodeProperties={trackedHandlers.handleUpdateNodePropertiesWithTracking}
-        onUpdateEdgeProperties={handleUpdateEdgeWithCondition}
-        validatePriorityConflicts={edgeState.validatePriorityConflicts}
-      >
-        <Canvas
-          nodes={nodeState.nodes}
-          edges={edgeState.edges}
-          selectedNodeId={nodeState.selectedNodeId}
-          selectedEdgeId={edgeState.selectedEdgeId}
-          onAddNode={trackedHandlers.handleAddNodeWithTracking}
-          onSelectNode={indexHandlers.handleSelectNode} 
-          onSelectEdge={indexHandlers.handleSelectEdge} 
-          onMoveNode={trackedHandlers.handleMoveNodeWithTracking}
-          onDeleteNode={trackedHandlers.handleDeleteNodeWithTracking}
-          onDeleteEdge={trackedHandlers.handleDeleteEdgeWithTracking}
-          onAddEdge={trackedHandlers.handleAddEdgeWithTracking}
-          canCreateEdge={edgeState.canCreateEdge}
-          getNodeValidationClass={validation.getNodeErrorClass}
-          getEdgeValidationClass={validation.getEdgeErrorClass}
-          getNodeTooltip={validation.getNodeTooltip}
-          getEdgeTooltip={validation.getEdgeTooltip}
-          pendingNodeType={nodeCreation.pendingNodeType}
-          onClearPendingCreation={nodeCreation.clearPendingCreation}
-          hasUnsavedChanges={hasUnsavedChanges}
-          onSelectionStateChange={handleCanvasSelectionChange}
-        />
-      </MainApplicationLayout>
-    </div>
+    <MainApplicationLayout
+      isMobileMenuOpen={isMobileMenuOpen}
+      activePanel={activePanel}
+      showValidationPanel={showValidationPanel}
+      isLeftPanelVisible={isLeftPanelVisible}
+      isLeftPanelExpanded={isLeftPanelExpanded}
+      isRightPanelVisible={isRightPanelVisible}
+      isRightPanelExpanded={isRightPanelExpanded}
+      nodes={nodes}
+      edges={edges}
+      selectedNode={selectedNode}
+      selectedEdge={selectedEdge}
+      validationResult={validationResult}
+      isSelecting={isSelecting}
+      selectedCount={selectedCount}
+      onMobileMenuToggle={handleMobileMenuToggle}
+      onPanelToggle={handlePanelToggle}
+      onToggleLeftPanel={handleToggleLeftPanel}
+      onToggleRightPanel={handleToggleRightPanel}
+      onExpandLeftPanel={handleExpandLeftPanel}
+      onExpandRightPanel={handleExpandRightPanel}
+      closePanels={closePanels}
+      setShowValidationPanel={setShowValidationPanel}
+      switchToPropertiesPanel={switchToPropertiesPanel}
+      onNewProject={handleNewProject}
+      onImport={handleImport}
+      onExport={handleExport}
+      onDeleteNode={handleDeleteNode}
+      onDeleteEdge={handleDeleteEdge}
+      onUpdateNodeProperties={handleUpdateNodeProperties}
+      onUpdateEdgeProperties={handleUpdateEdgeProperties}
+      validatePriorityConflicts={validatePriorityConflicts}
+    >
+      <Canvas
+        ref={canvasRef}
+        nodes={nodes}
+        edges={edges}
+        selectedNode={selectedNode}
+        selectedEdge={selectedEdge}
+        pendingCreation={pendingCreation}
+        dragMode={dragMode}
+        isSelecting={isSelecting}
+        selectedCount={selectedCount}
+        validationResult={validationResult}
+        onNodePositionChange={handleNodePositionChange}
+        onNodeSelect={handleSelectNode}
+        onEdgeSelect={handleSelectEdge}
+        onCanvasClick={handleCanvasClick}
+        onNodeCreate={handleNodeCreate}
+        onEdgeCreate={handleAddEdge}
+        onEdgeUpdate={handleEdgeUpdate}
+        onClearSelection={clearSelection}
+        onSelectionChange={handleSelectionChange}
+        onMultiSelectStart={handleMultiSelectStart}
+        onMultiSelectEnd={handleMultiSelectEnd}
+      />
+    </MainApplicationLayout>
   );
 };
 
