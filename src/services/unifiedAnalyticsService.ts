@@ -1,11 +1,10 @@
-
 import { analyticsStorage, AggregatedStats } from '@/utils/analyticsStorage';
 import { isDevelopment } from '@/config/firebase';
 import { AnalyticsEventManager, UnifiedAnalyticsEvent } from './analytics/analyticsEventManager';
 import { QuotaManager } from './analytics/quotaManager';
 import { SyncManager } from './analytics/syncManager';
 
-export { UnifiedAnalyticsEvent } from './analytics/analyticsEventManager';
+export type { UnifiedAnalyticsEvent } from './analytics/analyticsEventManager';
 
 export class UnifiedAnalyticsService {
   private static instance: UnifiedAnalyticsService;

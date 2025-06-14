@@ -1,9 +1,8 @@
-
 import { DoNotTrackDetector } from '@/utils/doNotTrackDetection';
 import { UserIdentifierManager } from './user/userIdentifierManager';
 import { SessionManager } from './user/sessionManager';
 
-export { UserSession } from './user/userSession';
+export type { UserSession } from './user/userSession';
 
 export class UserIdentificationManager {
   // Re-export key methods for backward compatibility
