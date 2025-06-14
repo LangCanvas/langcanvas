@@ -109,9 +109,12 @@ export const useIndexState = () => {
 
   const {
     validationResult,
-    isWorkflowValid,
-    handleValidateWorkflow,
+    runValidation,
   } = validation;
+
+  // Derive isWorkflowValid from validationResult
+  const isWorkflowValid = validationResult.isValid;
+  const handleValidateWorkflow = runValidation;
 
   return {
     // Node state
