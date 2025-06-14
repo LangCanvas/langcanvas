@@ -1,13 +1,15 @@
+
 import React, { useState, useMemo } from 'react';
 import { PanelLeftClose } from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { NodeType } from '../../types/nodeTypes';
 import { getAllNodes, getNodesByCategory, searchNodes, NodeDefinition } from '../../utils/nodeCategories';
 import { useEnhancedAnalytics } from '../../hooks/useEnhancedAnalytics';
 import { PanelLayout } from '../../hooks/useAdaptivePanelWidths';
 import NodePaletteSearch from './NodePaletteSearch';
 import NodeCategorySelector from './NodeCategorySelector';
-import EnhancedNodeItem from './EnhancedNodeItem';
+import PaletteContent from './PaletteContent';
+import PaletteFooter from './PaletteFooter';
+import { getLayoutConfig } from './PaletteLayoutConfig';
 
 interface EnhancedNodePaletteProps {
   onNodeTypeSelect?: (type: NodeType) => void;
@@ -92,84 +94,7 @@ const EnhancedNodePalette: React.FC<EnhancedNodePaletteProps> = ({
     setSelectedCategory(null);
   };
 
-  // Layout configuration based on panel size - updated with icon-only mode
-  const layoutConfig = useMemo(() => {
-    switch (panelLayout) {
-      case 'icon-only':
-        return {
-          showSearch: false,
-          showCategories: true,
-          showDescriptions: false,
-          showNodeCount: false,
-          compactItems: true,
-          compactCategories: false,
-          iconOnlyCategories: true,
-          iconOnlyItems: true,
-          maxVisibleNodes: 6
-        };
-      case 'ultra-compact':
-        return {
-          showSearch: false,
-          showCategories: true,
-          showDescriptions: false,
-          showNodeCount: false,
-          compactItems: true,
-          compactCategories: true,
-          iconOnlyCategories: false,
-          iconOnlyItems: false,
-          maxVisibleNodes: 8
-        };
-      case 'compact':
-        return {
-          showSearch: true,
-          showCategories: true,
-          showDescriptions: false,
-          showNodeCount: false,
-          compactItems: true,
-          compactCategories: false,
-          iconOnlyCategories: false,
-          iconOnlyItems: false,
-          maxVisibleNodes: 12
-        };
-      case 'standard':
-        return {
-          showSearch: true,
-          showCategories: true,
-          showDescriptions: false,
-          showNodeCount: true,
-          compactItems: false,
-          compactCategories: false,
-          iconOnlyCategories: false,
-          iconOnlyItems: false,
-          maxVisibleNodes: null
-        };
-      case 'wide':
-        return {
-          showSearch: true,
-          showCategories: true,
-          showDescriptions: true,
-          showNodeCount: true,
-          compactItems: false,
-          compactCategories: false,
-          iconOnlyCategories: false,
-          iconOnlyItems: false,
-          maxVisibleNodes: null
-        };
-      default:
-        return {
-          showSearch: true,
-          showCategories: true,
-          showDescriptions: true,
-          showNodeCount: true,
-          compactItems: false,
-          compactCategories: false,
-          iconOnlyCategories: false,
-          iconOnlyItems: false,
-          maxVisibleNodes: null
-        };
-    }
-  }, [panelLayout]);
-
+  const layoutConfig = getLayoutConfig(panelLayout);
   const displayNodes = layoutConfig.maxVisibleNodes 
     ? filteredNodes.slice(0, layoutConfig.maxVisibleNodes)
     : filteredNodes;
@@ -211,57 +136,25 @@ const EnhancedNodePalette: React.FC<EnhancedNodePaletteProps> = ({
           />
         )}
 
-        <ScrollArea className="flex-1">
-          <div className={`space-y-3 pr-3 ${layoutConfig.compactItems ? 'space-y-1' : ''}`}>
-            {displayNodes.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <p className="text-sm">No nodes found</p>
-                {(searchQuery || selectedCategory) && (
-                  <button
-                    onClick={handleClearSearch}
-                    className="text-xs text-blue-600 hover:text-blue-800 mt-2"
-                  >
-                    Clear filters
-                  </button>
-                )}
-              </div>
-            ) : (
-              displayNodes.map((node) => (
-                <EnhancedNodeItem
-                  key={node.type}
-                  node={node}
-                  onDragStart={handleDragStart}
-                  onClick={handleClick}
-                  showDescription={layoutConfig.showDescriptions}
-                  compact={layoutConfig.compactItems}
-                  panelLayout={panelLayout}
-                />
-              ))
-            )}
-          </div>
-        </ScrollArea>
+        <PaletteContent
+          displayNodes={displayNodes}
+          filteredNodes={filteredNodes}
+          layoutConfig={layoutConfig}
+          searchQuery={searchQuery}
+          selectedCategory={selectedCategory}
+          panelLayout={panelLayout}
+          onDragStart={handleDragStart}
+          onClick={handleClick}
+          onClearSearch={handleClearSearch}
+        />
 
-        {layoutConfig.maxVisibleNodes && filteredNodes.length > layoutConfig.maxVisibleNodes && (
-          <div className="text-xs text-gray-500 text-center">
-            +{filteredNodes.length - layoutConfig.maxVisibleNodes} more
-          </div>
-        )}
-
-        {panelLayout !== 'icon-only' && (
-          <div className="mt-4 text-xs text-gray-500">
-            {panelLayout !== 'ultra-compact' && (
-              <>
-                <p className="hidden lg:block">Drag nodes to the canvas to create them</p>
-                <p className="lg:hidden">Tap a node type, then tap on the canvas to place it</p>
-              </>
-            )}
-            {layoutConfig.showNodeCount && filteredNodes.length > 0 && (
-              <p className="mt-1">
-                {filteredNodes.length} node{filteredNodes.length !== 1 ? 's' : ''} available
-              </p>
-            )}
-          </div>
-        )}
+        <PaletteFooter
+          panelLayout={panelLayout}
+          layoutConfig={layoutConfig}
+          filteredNodesCount={filteredNodes.length}
+          maxVisibleNodes={layoutConfig.maxVisibleNodes}
+          totalDisplayed={displayNodes.length}
+        />
       </div>
     </div>
   );
