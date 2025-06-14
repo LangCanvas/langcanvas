@@ -17,6 +17,11 @@ export class GoogleAuthInitializer {
       this.callbackHandler = callbackHandler;
     }
 
+    // Debug logging for client ID verification
+    console.log('🔐 Initializing Google Auth with Client ID:', GOOGLE_CLIENT_ID);
+    console.log('🔐 Current domain:', window.location.hostname);
+    console.log('🔐 Current origin:', window.location.origin);
+
     this.initializationPromise = this.initializeWithRetry();
     await this.initializationPromise;
   }
@@ -61,11 +66,19 @@ export class GoogleAuthInitializer {
       config.redirect_uri = window.location.origin + '/admin-login';
     }
 
+    console.log('🔐 Configuring Google Auth with config:', {
+      client_id: config.client_id,
+      ux_mode: config.ux_mode,
+      use_fedcm_for_prompt: config.use_fedcm_for_prompt,
+      redirect_uri: config.redirect_uri
+    });
+
     window.google.accounts.id.initialize(config);
     console.log(`🔐 Google Auth configured (${config.ux_mode} mode)`);
   }
 
   static enableFallbackMode(): void {
+    console.log('🔐 Enabling fallback mode for Google Auth');
     this.fallbackMode = true;
     this.isInitialized = false;
     this.initializationPromise = null;
@@ -83,18 +96,22 @@ export class GoogleAuthInitializer {
   private static loadGoogleIdentityServices(): Promise<void> {
     return new Promise((resolve, reject) => {
       if (window.google?.accounts?.id) {
+        console.log('🔐 Google Identity Services already loaded');
         resolve();
         return;
       }
 
+      console.log('🔐 Loading Google Identity Services script...');
       const script = document.createElement('script');
       script.src = 'https://accounts.google.com/gsi/client';
       script.async = true;
       script.defer = true;
       
       script.onload = () => {
+        console.log('🔐 Google Identity Services script loaded');
         const checkInterval = setInterval(() => {
           if (window.google?.accounts?.id) {
+            console.log('🔐 Google Identity Services API available');
             clearInterval(checkInterval);
             resolve();
           }

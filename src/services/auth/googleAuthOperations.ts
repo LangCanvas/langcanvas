@@ -1,8 +1,9 @@
-
 import { GOOGLE_CLIENT_ID, GoogleAuthUser, AuthenticationError, AuthErrorHandler } from './googleAuthConfig';
 
 export class GoogleAuthOperations {
   static async promptSignIn(): Promise<void> {
+    console.log('🔐 Starting Google Auth prompt sign-in...');
+    
     if (!window.google?.accounts?.id) {
       throw AuthErrorHandler.createAuthError('initialization_failed', 'Google Identity Services is not properly initialized');
     }
@@ -15,6 +16,13 @@ export class GoogleAuthOperations {
       try {
         window.google!.accounts.id.prompt((notification: any) => {
           clearTimeout(timeoutId);
+          
+          console.log('🔐 Google Auth prompt notification:', {
+            isNotDisplayed: notification.isNotDisplayed?.(),
+            isSkippedMoment: notification.isSkippedMoment?.(),
+            isDismissedMoment: notification.isDismissedMoment?.(),
+            notDisplayedReason: notification.getNotDisplayedReason?.()
+          });
           
           if (notification.isNotDisplayed()) {
             const reason = notification.getNotDisplayedReason();
@@ -30,36 +38,40 @@ export class GoogleAuthOperations {
             } else if (reason?.includes('suppressed_by_user') || reason?.includes('browser_not_supported')) {
               reject(AuthErrorHandler.createAuthError('popup_blocked', 'Sign-in popup was blocked by browser settings'));
             } else if (reason === 'opt_out_or_no_session') {
-              // Handle the specific opt_out_or_no_session error
               reject(AuthErrorHandler.createAuthError(
                 'user_cancelled', 
                 'Google One Tap is not available. Please use the alternative sign-in button below.',
                 'User has opted out of One Tap or has no active Google session'
               ));
             } else {
-              reject(AuthErrorHandler.createAuthError('unknown', `Sign-in could not be displayed: ${reason}`));
+              reject(AuthErrorHandler.createAuthError('unknown', `Sign-in could not be displayed: ${reason || 'unknown_reason'}`));
             }
           } else if (notification.isSkippedMoment()) {
             reject(AuthErrorHandler.createAuthError('user_cancelled', 'Sign-in was skipped by user'));
           } else if (notification.isDismissedMoment()) {
             reject(AuthErrorHandler.createAuthError('user_cancelled', 'Sign-in was dismissed by user'));
           } else {
+            console.log('🔐 Google Auth prompt displayed successfully');
             resolve();
           }
         });
       } catch (error) {
         clearTimeout(timeoutId);
+        console.error('🔐 Error during Google Auth prompt:', error);
         reject(AuthErrorHandler.createAuthError('unknown', error instanceof Error ? error.message : 'Unknown error during sign-in'));
       }
     });
   }
 
   static async renderButton(container: HTMLElement, customCallback?: (response: any) => void): Promise<void> {
+    console.log('🔐 Rendering Google Auth button...');
+    
     if (!window.google?.accounts?.id) {
       throw AuthErrorHandler.createAuthError('initialization_failed', 'Google Identity Services is not available');
     }
 
     if (customCallback) {
+      console.log('🔐 Re-initializing Google Auth for button with custom callback');
       window.google.accounts.id.initialize({
         client_id: GOOGLE_CLIENT_ID,
         callback: customCallback,
@@ -80,6 +92,8 @@ export class GoogleAuthOperations {
       width: 280,
       locale: 'en'
     });
+    
+    console.log('🔐 Google Auth button rendered successfully');
   }
 
   static parseCredential(credential: string): GoogleAuthUser {
