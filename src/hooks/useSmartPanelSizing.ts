@@ -10,7 +10,7 @@ interface ContentMeasurements {
 
 export const useSmartPanelSizing = () => {
   const [measurements, setMeasurements] = useState<ContentMeasurements>({
-    minWidthForIcons: 60, // Updated minimum for small layout (reduced from 80px to 60px)
+    minWidthForIcons: 50, // Updated minimum for small layout (reduced from 60px to 50px)
     minWidthForText: 90, // Threshold to switch to medium layout
     recommendedWidth: 95 // Default recommended width
   });
@@ -20,10 +20,10 @@ export const useSmartPanelSizing = () => {
     if (typeof window === 'undefined') return;
 
     // Fixed measurements based on updated requirements
-    const minWidthForIcons = 60; // Small layout minimum (reduced to 60px)
+    const minWidthForIcons = 50; // Small layout minimum (reduced to 50px)
     const minWidthForText = 90; // Switch threshold to medium layout
     const windowWidth = window.innerWidth;
-    const recommendedWidth = Math.max(60, Math.min(100, windowWidth * 0.15));
+    const recommendedWidth = Math.max(50, Math.min(100, windowWidth * 0.15));
 
     setMeasurements({
       minWidthForIcons,
