@@ -2,10 +2,10 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useSmartPanelSizing } from './useSmartPanelSizing';
 
-// Updated panel breakpoints with new constraints
+// Updated panel breakpoints with new minimum constraint
 export const PANEL_BREAKPOINTS = {
-  MIN: 80, // Updated minimum for small layout (icon + text)
-  SWITCH_THRESHOLD: 90, // Updated switch to medium layout threshold
+  MIN: 60, // Updated minimum for small layout (reduced from 80px to 60px)
+  SWITCH_THRESHOLD: 90, // Switch to medium layout threshold
   MAX: 100, // Maximum for medium layout to keep it compact
   DEFAULT_LEFT: 95,
   DEFAULT_RIGHT: 320
