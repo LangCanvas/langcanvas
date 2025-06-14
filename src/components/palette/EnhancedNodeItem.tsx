@@ -1,10 +1,11 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { NodeDefinition } from '../../utils/nodeCategories';
 import { NodeType } from '../../types/nodeTypes';
 import { PanelLayout } from '../../hooks/useAdaptivePanelWidths';
+import { createDragImage } from './DragImageCreator';
+import SmallLayoutNodeItem from './SmallLayoutNodeItem';
+import MediumLayoutNodeItem from './MediumLayoutNodeItem';
 
 interface EnhancedNodeItemProps {
   node: NodeDefinition;
@@ -23,82 +24,6 @@ const EnhancedNodeItem: React.FC<EnhancedNodeItemProps> = ({
   compact = false,
   panelLayout = 'medium'
 }) => {
-  const createDragImage = (nodeType: NodeType, label: string): HTMLElement => {
-    const dragImage = document.createElement('div');
-    dragImage.style.position = 'absolute';
-    dragImage.style.top = '-1000px';
-    dragImage.style.display = 'flex';
-    dragImage.style.alignItems = 'center';
-    dragImage.style.justifyContent = 'center';
-    dragImage.style.fontSize = '14px';
-    dragImage.style.fontWeight = '500';
-    dragImage.style.userSelect = 'none';
-    dragImage.style.zIndex = '1000';
-    dragImage.textContent = label;
-
-    if (nodeType === 'conditional') {
-      dragImage.style.width = '80px';
-      dragImage.style.height = '80px';
-      dragImage.style.backgroundColor = '#fef3c7';
-      dragImage.style.border = '3px solid #f59e0b';
-      dragImage.style.color = '#92400e';
-      dragImage.style.clipPath = 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)';
-      dragImage.style.fontSize = '12px';
-      dragImage.style.fontWeight = '600';
-      dragImage.style.boxShadow = '0 8px 24px rgba(245, 158, 11, 0.3)';
-    } else {
-      dragImage.style.width = '120px';
-      dragImage.style.height = '60px';
-      dragImage.style.border = '2px solid';
-      dragImage.style.borderRadius = '12px';
-      
-      switch (nodeType) {
-        case 'start':
-          dragImage.style.backgroundColor = '#dcfce7';
-          dragImage.style.borderColor = '#22c55e';
-          dragImage.style.color = '#15803d';
-          dragImage.style.borderRadius = '30px';
-          dragImage.style.boxShadow = '0 8px 24px rgba(34, 197, 94, 0.3)';
-          break;
-        case 'agent':
-          dragImage.style.backgroundColor = '#d1fae5';
-          dragImage.style.borderColor = '#10b981';
-          dragImage.style.color = '#047857';
-          dragImage.style.boxShadow = '0 8px 24px rgba(16, 185, 129, 0.3)';
-          break;
-        case 'tool':
-          dragImage.style.backgroundColor = '#dbeafe';
-          dragImage.style.borderColor = '#3b82f6';
-          dragImage.style.color = '#1e40af';
-          dragImage.style.boxShadow = '0 8px 24px rgba(59, 130, 246, 0.3)';
-          break;
-        case 'function':
-          dragImage.style.backgroundColor = '#ede9fe';
-          dragImage.style.borderColor = '#8b5cf6';
-          dragImage.style.color = '#6d28d9';
-          dragImage.style.boxShadow = '0 8px 24px rgba(139, 92, 246, 0.3)';
-          break;
-        case 'parallel':
-          dragImage.style.backgroundColor = '#cffafe';
-          dragImage.style.borderColor = '#06b6d4';
-          dragImage.style.color = '#0891b2';
-          dragImage.style.boxShadow = '0 8px 24px rgba(6, 182, 212, 0.3)';
-          break;
-        case 'end':
-          dragImage.style.backgroundColor = '#fee2e2';
-          dragImage.style.borderColor = '#ef4444';
-          dragImage.style.color = '#dc2626';
-          dragImage.style.borderRadius = '30px';
-          dragImage.style.boxShadow = '0 8px 24px rgba(239, 68, 68, 0.3)';
-          break;
-        default:
-          dragImage.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.15)';
-      }
-    }
-
-    return dragImage;
-  };
-
   const handleDragStart = (e: React.DragEvent) => {
     const dragImage = createDragImage(node.type, node.label);
     document.body.appendChild(dragImage);
@@ -127,77 +52,25 @@ const EnhancedNodeItem: React.FC<EnhancedNodeItemProps> = ({
     onClick(e, node.type);
   };
 
-  const getEnhancedNodeColors = (nodeType: NodeType) => {
-    switch (nodeType) {
-      case 'start':
-        return 'bg-green-50 border-green-200 text-green-800 hover:bg-green-100 hover:border-green-300';
-      case 'agent':
-        return 'bg-emerald-50 border-emerald-200 text-emerald-800 hover:bg-emerald-100 hover:border-emerald-300';
-      case 'tool':
-        return 'bg-blue-50 border-blue-200 text-blue-800 hover:bg-blue-100 hover:border-blue-300';
-      case 'function':
-        return 'bg-purple-50 border-purple-200 text-purple-800 hover:bg-purple-100 hover:border-purple-300';
-      case 'conditional':
-        return 'bg-amber-50 border-amber-200 text-amber-800 hover:bg-amber-100 hover:border-amber-300';
-      case 'parallel':
-        return 'bg-cyan-50 border-cyan-200 text-cyan-800 hover:bg-cyan-100 hover:border-cyan-300';
-      case 'end':
-        return 'bg-red-50 border-red-200 text-red-800 hover:bg-red-100 hover:border-red-300';
-      default:
-        return 'bg-gray-50 border-gray-200 text-gray-800 hover:bg-gray-100 hover:border-gray-300';
-    }
-  };
-
   // Small layout: icon-only, very compact with tooltip
   if (panelLayout === 'small') {
     return (
-      <div className="group">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="outline"
-                className={`w-full h-6 ${getEnhancedNodeColors(node.type)} border transition-all duration-200 text-xs p-1 shadow-sm hover:shadow-md active:scale-95 relative`}
-                draggable
-                onDragStart={handleDragStart}
-                onClick={handleClick}
-              >
-                <span className="text-xs absolute left-2">{node.icon}</span>
-                <span className="text-xs font-medium w-full text-center">{node.label}</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right" className="text-xs">
-              <div className="font-medium">{node.label}</div>
-              <div className="text-xs opacity-80 mt-1">{node.description}</div>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </div>
+      <SmallLayoutNodeItem
+        node={node}
+        onDragStart={handleDragStart}
+        onClick={handleClick}
+      />
     );
   }
 
   // Medium layout: full functionality with text
   return (
-    <div className="group relative">
-      <Button
-        variant="outline"
-        className={`w-full h-auto p-3 ${getEnhancedNodeColors(node.type)} border-2 transition-all duration-200 flex flex-col items-start space-y-2 shadow-sm hover:shadow-md active:scale-[0.98] group-hover:shadow-lg`}
-        draggable
-        onDragStart={handleDragStart}
-        onClick={handleClick}
-      >
-        <div className="flex items-center space-x-2 w-full">
-          <span className="text-lg">{node.icon}</span>
-          <span className="font-semibold text-sm">{node.label}</span>
-        </div>
-        
-        {showDescription && (
-          <p className="text-xs text-left leading-relaxed opacity-80 group-hover:opacity-100 transition-opacity">
-            {node.description}
-          </p>
-        )}
-      </Button>
-    </div>
+    <MediumLayoutNodeItem
+      node={node}
+      onDragStart={handleDragStart}
+      onClick={handleClick}
+      showDescription={showDescription}
+    />
   );
 };
 
