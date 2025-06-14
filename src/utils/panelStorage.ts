@@ -1,6 +1,6 @@
 
 const PANEL_STORAGE_KEY = 'langcanvas_panel_settings';
-const PANEL_VERSION = '2.3'; // Updated version for improved reliability
+const PANEL_VERSION = '2.4'; // Updated version for reliable defaults
 
 export interface StoredPanelSettings {
   isLeftPanelVisible: boolean;
@@ -16,7 +16,7 @@ export interface StoredPanelSettings {
 const DEFAULT_PANEL_SETTINGS: Omit<StoredPanelSettings, 'version' | 'timestamp'> = {
   isLeftPanelVisible: true, // Always visible by default
   isLeftPanelExpanded: true,
-  isRightPanelVisible: true, // ENSURE right panel is visible by default
+  isRightPanelVisible: true, // ALWAYS visible by default - this is the key fix
   isRightPanelExpanded: true,
   leftPanelWidth: 95,
   rightPanelWidth: 320
@@ -47,11 +47,10 @@ export const savePanelSettingsToStorage = (settings: Omit<StoredPanelSettings, '
       settings = DEFAULT_PANEL_SETTINGS;
     }
 
-    // Force left panel to always be visible, ensure right panel has a valid state
+    // Force left panel to always be visible
     const panelData: StoredPanelSettings = {
       ...settings,
       isLeftPanelVisible: true, // Override any false values
-      isRightPanelVisible: settings.isRightPanelVisible ?? true, // Default to true if undefined
       version: PANEL_VERSION,
       timestamp: Date.now()
     };
@@ -59,7 +58,8 @@ export const savePanelSettingsToStorage = (settings: Omit<StoredPanelSettings, '
     localStorage.setItem(PANEL_STORAGE_KEY, JSON.stringify(panelData));
     console.log('💾 Panel settings saved to localStorage:', {
       rightPanelVisible: panelData.isRightPanelVisible,
-      version: panelData.version
+      version: panelData.version,
+      timestamp: new Date(panelData.timestamp).toISOString()
     });
   } catch (error) {
     console.warn('❌ Failed to save panel settings to localStorage:', error);
@@ -71,7 +71,7 @@ export const loadPanelSettingsFromStorage = (): Omit<StoredPanelSettings, 'versi
     const stored = localStorage.getItem(PANEL_STORAGE_KEY);
     
     if (!stored) {
-      console.log('🆕 No stored panel settings found, using defaults (Properties Panel will be visible)');
+      console.log('🆕 No stored panel settings found - Properties Panel will be visible by default');
       return DEFAULT_PANEL_SETTINGS;
     }
 
@@ -79,23 +79,23 @@ export const loadPanelSettingsFromStorage = (): Omit<StoredPanelSettings, 'versi
     try {
       panelData = JSON.parse(stored);
     } catch (parseError) {
-      console.warn('🔧 Corrupted panel settings detected, resetting to defaults');
+      console.warn('🔧 Corrupted panel settings detected, resetting to defaults - Properties Panel will be visible');
       localStorage.removeItem(PANEL_STORAGE_KEY);
       return DEFAULT_PANEL_SETTINGS;
     }
     
     // Handle version migration or validation failure
     if (panelData.version !== PANEL_VERSION || !validatePanelSettings(panelData)) {
-      console.log(`🔄 Migrating panel settings from ${panelData.version || 'unknown'} to ${PANEL_VERSION}`);
+      console.log(`🔄 Migrating panel settings from ${panelData.version || 'unknown'} to ${PANEL_VERSION} - Properties Panel will be visible by default`);
       
       // Clear old/corrupted storage
       localStorage.removeItem('langcanvas_panel_widths');
       localStorage.removeItem(PANEL_STORAGE_KEY);
       
-      // For existing users, try to preserve their right panel preference if it was explicitly set
-      const preservedRightPanelVisible = panelData.isRightPanelVisible !== undefined 
-        ? panelData.isRightPanelVisible 
-        : true; // Default to visible for safety
+      // For migration: Only preserve right panel visibility if it was explicitly set to false
+      const preservedRightPanelVisible = panelData.isRightPanelVisible === false ? false : true;
+      
+      console.log('🔍 Preserving right panel visibility preference:', preservedRightPanelVisible);
       
       return {
         ...DEFAULT_PANEL_SETTINGS,
@@ -105,19 +105,20 @@ export const loadPanelSettingsFromStorage = (): Omit<StoredPanelSettings, 'versi
 
     console.log('📂 Panel settings loaded from localStorage:', {
       rightPanelVisible: panelData.isRightPanelVisible,
-      version: panelData.version
+      version: panelData.version,
+      timestamp: new Date(panelData.timestamp).toISOString()
     });
 
     return {
       isLeftPanelVisible: true, // Always force to true, regardless of stored value
       isLeftPanelExpanded: panelData.isLeftPanelExpanded ?? true,
-      isRightPanelVisible: panelData.isRightPanelVisible ?? true, // Force default to true if missing
+      isRightPanelVisible: panelData.isRightPanelVisible ?? true, // Default to true if missing
       isRightPanelExpanded: panelData.isRightPanelExpanded ?? true,
       leftPanelWidth: panelData.leftPanelWidth || DEFAULT_PANEL_SETTINGS.leftPanelWidth,
       rightPanelWidth: panelData.rightPanelWidth || DEFAULT_PANEL_SETTINGS.rightPanelWidth
     };
   } catch (error) {
-    console.warn('❌ Failed to load panel settings from localStorage, using defaults:', error);
+    console.warn('❌ Failed to load panel settings from localStorage, using defaults - Properties Panel will be visible:', error);
     return DEFAULT_PANEL_SETTINGS;
   }
 };

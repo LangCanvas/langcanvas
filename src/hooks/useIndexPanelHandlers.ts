@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useEnhancedAnalytics } from './useEnhancedAnalytics';
 import { savePanelSettingsToStorage, loadPanelSettingsFromStorage } from '../utils/panelStorage';
@@ -13,44 +12,38 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
   // Get actual panel widths from the adaptive panel widths hook
   const { leftPanelWidth, rightPanelWidth } = useAdaptivePanelWidths();
   
-  // Load panel settings from localStorage with enhanced error handling
-  const loadStoredSettings = () => {
-    try {
-      const settings = loadPanelSettingsFromStorage();
-      console.log('📂 Panel settings loaded:', settings);
-      return settings;
-    } catch (error) {
-      console.warn('⚠️ Failed to load panel settings, using defaults:', error);
-      return {
-        isLeftPanelVisible: true,
-        isLeftPanelExpanded: true,
-        isRightPanelVisible: true, // Force default to true
-        isRightPanelExpanded: true,
-        leftPanelWidth: 95,
-        rightPanelWidth: 320
-      };
-    }
-  };
-  
-  const storedSettings = loadStoredSettings();
-  
-  // Desktop panel states - left panel is ALWAYS visible, right panel defaults to visible
-  const [isLeftPanelVisible] = useState(true); // Always true, no setter needed
-  const [isRightPanelVisible, setIsRightPanelVisible] = useState(() => {
-    // ROBUST DEFAULT LOGIC: Always default to visible unless explicitly disabled
-    // This ensures new users and users with corrupted storage see the panel
-    const shouldBeVisible = storedSettings.isRightPanelVisible !== false;
-    
-    if (!shouldBeVisible) {
-      console.log('🔍 Properties Panel initialized as hidden (user preference)');
-    } else {
-      console.log('✅ Properties Panel initialized as visible (default behavior)');
-    }
-    
-    return shouldBeVisible;
-  });
+  // SIMPLIFIED: Properties Panel is ALWAYS visible by default
+  // This ensures new users, incognito mode, and corrupted storage all see the panel
+  const [isRightPanelVisible, setIsRightPanelVisible] = useState(true);
   
   const analytics = useEnhancedAnalytics();
+
+  // Load panel settings and apply them AFTER initialization
+  useEffect(() => {
+    try {
+      const settings = loadPanelSettingsFromStorage();
+      console.log('🔍 Properties Panel - Loading stored settings:', settings);
+      
+      // Only hide the panel if explicitly stored as false by user preference
+      const shouldHidePanel = settings.isRightPanelVisible === false;
+      
+      console.log('🔍 Properties Panel - Should hide panel:', shouldHidePanel);
+      console.log('🔍 Properties Panel - Current visible state:', isRightPanelVisible);
+      
+      if (shouldHidePanel && isRightPanelVisible) {
+        console.log('👁️ Properties Panel - Applying user preference: hiding panel');
+        setIsRightPanelVisible(false);
+      } else if (!shouldHidePanel && !isRightPanelVisible) {
+        console.log('👁️ Properties Panel - Ensuring panel is visible (default behavior)');
+        setIsRightPanelVisible(true);
+      }
+      
+      console.log('✅ Properties Panel - Final visible state:', isRightPanelVisible);
+    } catch (error) {
+      console.warn('⚠️ Properties Panel - Failed to load settings, keeping default visible state:', error);
+      // Panel remains visible (default state)
+    }
+  }, []);
 
   // Enhanced panel settings saving with error handling
   useEffect(() => {
@@ -63,20 +56,33 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
         leftPanelWidth, // Use actual width from adaptive panel widths
         rightPanelWidth // Use actual width from adaptive panel widths
       });
-      console.log('💾 Panel settings saved successfully');
+      console.log('💾 Panel settings saved successfully - Right panel visible:', isRightPanelVisible);
     } catch (error) {
       console.warn('⚠️ Failed to save panel settings:', error);
     }
   }, [isRightPanelVisible, leftPanelWidth, rightPanelWidth]);
 
-  // Safeguard: Runtime check to ensure panel visibility is maintained
+  // Debug logging for panel visibility state changes
+  useEffect(() => {
+    console.log('🔍 Properties Panel - Visibility state changed:', {
+      isRightPanelVisible,
+      timestamp: new Date().toISOString(),
+      localStorage: localStorage.getItem('langcanvas_panel_settings')
+    });
+  }, [isRightPanelVisible]);
+
+  // Runtime safeguard: Force panel visible if it should be but isn't
   useEffect(() => {
     const checkPanelVisibility = () => {
       const rightPanel = document.querySelector('[data-panel="desktop-properties"]');
       if (!isRightPanelVisible && rightPanel) {
-        console.log('🔧 Panel visibility mismatch detected - panel exists but state says hidden');
+        console.log('🔧 Properties Panel - Visibility mismatch detected, panel exists but state says hidden');
       } else if (isRightPanelVisible && !rightPanel) {
-        console.log('🔧 Panel visibility mismatch detected - panel should be visible but not found in DOM');
+        console.log('🔧 Properties Panel - Visibility mismatch detected, panel should be visible but not found in DOM');
+      } else if (isRightPanelVisible && rightPanel) {
+        console.log('✅ Properties Panel - Visibility state and DOM are in sync (visible)');
+      } else {
+        console.log('✅ Properties Panel - Visibility state and DOM are in sync (hidden by user preference)');
       }
     };
 
@@ -117,13 +123,13 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
   };
 
   const handleShowRightPanel = () => {
-    console.log('👁️ Showing Properties Panel');
+    console.log('👁️ Properties Panel - User requested to show panel');
     setIsRightPanelVisible(true);
     analytics.trackFeatureUsage('desktop_right_panel_shown');
   };
 
   const handleHideRightPanel = () => {
-    console.log('🙈 Hiding Properties Panel');
+    console.log('🙈 Properties Panel - User requested to hide panel');
     setIsRightPanelVisible(false);
     analytics.trackFeatureUsage('desktop_right_panel_hidden');
   };
