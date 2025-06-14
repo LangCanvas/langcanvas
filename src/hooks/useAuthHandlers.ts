@@ -6,7 +6,7 @@ import { DebugLogger } from '@/utils/debugLogger';
 
 const ADMIN_EMAIL = 'bdevay@gmail.com';
 
-export const useAuthHandlers = () => {
+export const useAuthHandlers = (onAuthSuccess?: () => void) => {
   const secureAuth = useSecureAuth();
   const [debugLogger] = useState(() => new DebugLogger());
   const [authError, setAuthError] = useState<AuthenticationError | null>(null);
@@ -36,6 +36,12 @@ export const useAuthHandlers = () => {
       setAuthError(null);
       setRetryCount(0);
       debugLogger.addLog(`Enhanced authentication successful for: ${userData.email}`);
+      
+      // Trigger immediate navigation if callback provided
+      if (onAuthSuccess) {
+        debugLogger.addLog('Triggering navigation callback after successful authentication');
+        onAuthSuccess();
+      }
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Authentication failed';
       debugLogger.addLog(`Authentication failed: ${errorMsg}`);

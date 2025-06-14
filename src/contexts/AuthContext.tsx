@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useSecureAuth } from '@/hooks/useSecureAuth';
 import { useAuthHandlers } from '@/hooks/useAuthHandlers';
@@ -28,6 +29,7 @@ interface AuthContextType {
   validateSession: () => boolean;
   diagnosticInfo: Record<string, any>;
   domainConfig: { origins: string[], redirects: string[] };
+  setAuthSuccessCallback: (callback: (() => void) | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -46,7 +48,9 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const secureAuth = useSecureAuth();
-  const authHandlers = useAuthHandlers();
+  const [authSuccessCallback, setAuthSuccessCallback] = useState<(() => void) | null>(null);
+  
+  const authHandlers = useAuthHandlers(authSuccessCallback || undefined);
   const { isGoogleLoaded, diagnosticInfo, domainConfig, initializeAuth } = useAuthInitialization(
     authHandlers.handleCredentialResponse,
     authHandlers.debugLogger,
@@ -78,6 +82,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       validateSession: secureAuth.validateSession,
       diagnosticInfo,
       domainConfig,
+      setAuthSuccessCallback,
     }}>
       {children}
     </AuthContext.Provider>
