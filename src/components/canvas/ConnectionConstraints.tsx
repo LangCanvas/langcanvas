@@ -26,28 +26,28 @@ const ConnectionConstraints: React.FC<ConnectionConstraintsProps> = ({
     // Type-specific constraints
     switch (sourceNode.type) {
       case 'start':
-        // Start nodes can connect to any valid target except start
-        return targetNode.type !== 'start';
+        // Start nodes can connect to any valid target except start (already handled above)
+        return true;
         
       case 'tool':
-        // Tool nodes can connect to any valid target except start
-        return targetNode.type !== 'start';
+        // Tool nodes can connect to any valid target except start (already handled above)
+        return true;
         
       case 'agent':
         // Agent nodes can connect to tools, conditions, or end
         return ['tool', 'conditional', 'end'].includes(targetNode.type);
         
       case 'function':
-        // Function nodes can connect to any valid target except start
-        return targetNode.type !== 'start';
+        // Function nodes can connect to any valid target except start (already handled above)
+        return true;
         
       case 'conditional':
-        // Conditional nodes can connect to any valid target except start
-        return targetNode.type !== 'start';
+        // Conditional nodes can connect to any valid target except start (already handled above)
+        return true;
         
       case 'parallel':
-        // Parallel nodes can connect to any valid target except start
-        return targetNode.type !== 'start';
+        // Parallel nodes can connect to any valid target except start (already handled above)
+        return true;
         
       default:
         return true;
