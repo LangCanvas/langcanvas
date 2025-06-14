@@ -1,3 +1,4 @@
+
 import { GOOGLE_CLIENT_ID, GoogleAuthUser, AuthenticationError, AuthErrorHandler } from './googleAuthConfig';
 
 export class GoogleAuthOperations {
@@ -105,21 +106,71 @@ export class GoogleAuthOperations {
       
       console.log('🔐 Google Auth button rendered successfully');
       
-      // Wait a bit longer for the button to be properly rendered
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Wait longer and use multiple detection strategies
+      await this.waitForButtonWithRetry(container, 5000, 100);
       
-      // Check if button was actually rendered
-      const buttonElement = container.querySelector('div[role="button"]') as HTMLElement;
-      if (!buttonElement) {
-        console.warn('🔐 Button element not found after rendering');
-        throw new Error('Google Sign-in button was not properly rendered');
-      }
-      
-      console.log('🔐 Button element found and ready');
     } catch (error) {
       console.error('🔐 Error rendering Google Auth button:', error);
       throw AuthErrorHandler.createAuthError('initialization_failed', 'Failed to render Google Sign-in button');
     }
+  }
+
+  private static async waitForButtonWithRetry(container: HTMLElement, maxWaitTime: number = 5000, checkInterval: number = 100): Promise<void> {
+    const startTime = Date.now();
+    let attempts = 0;
+    
+    while (Date.now() - startTime < maxWaitTime) {
+      attempts++;
+      
+      // Multiple button detection strategies
+      const buttonSelectors = [
+        'div[role="button"]',
+        'button',
+        '[data-idom-class]',
+        '.gsi-material-button',
+        'div[tabindex="0"]',
+        'div[jsaction]'
+      ];
+      
+      let buttonElement: HTMLElement | null = null;
+      
+      for (const selector of buttonSelectors) {
+        buttonElement = container.querySelector(selector) as HTMLElement;
+        if (buttonElement) {
+          console.log(`🔐 Button found with selector: ${selector} (attempt ${attempts})`);
+          break;
+        }
+      }
+      
+      if (buttonElement) {
+        // Verify the button is actually interactive
+        const isInteractive = buttonElement.offsetWidth > 0 && 
+                             buttonElement.offsetHeight > 0 && 
+                             (buttonElement.hasAttribute('tabindex') || 
+                              buttonElement.getAttribute('role') === 'button' ||
+                              buttonElement.tagName === 'BUTTON');
+        
+        if (isInteractive) {
+          console.log('🔐 Interactive button element found and verified');
+          return;
+        } else {
+          console.log('🔐 Button found but not yet interactive, continuing to wait...');
+        }
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, checkInterval));
+    }
+    
+    // Final attempt with detailed logging
+    console.log('🔐 Button detection failed, container contents:', container.innerHTML);
+    console.log('🔐 Container children count:', container.children.length);
+    
+    if (container.children.length > 0) {
+      console.log('🔐 First child element:', container.children[0]);
+      console.log('🔐 First child attributes:', Array.from(container.children[0].attributes).map(attr => `${attr.name}="${attr.value}"`));
+    }
+    
+    throw new Error('Google Sign-in button was not properly rendered or detected');
   }
 
   static parseCredential(credential: string): GoogleAuthUser {

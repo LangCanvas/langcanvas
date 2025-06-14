@@ -1,4 +1,3 @@
-
 import { GoogleAuthService } from '@/services/googleAuthService';
 import { useAuthHandlers } from '@/hooks/useAuthHandlers';
 import { useSecureAuth } from '@/hooks/useSecureAuth';
@@ -74,29 +73,72 @@ export const useAuthOperations = (
       buttonContainer.style.position = 'absolute';
       buttonContainer.style.top = '-9999px';
       buttonContainer.style.left = '-9999px';
-      buttonContainer.style.width = '300px';
-      buttonContainer.style.height = '50px';
+      buttonContainer.style.width = '320px';
+      buttonContainer.style.height = '60px';
+      buttonContainer.style.zIndex = '9999';
       buttonContainer.id = 'temp-google-signin-button';
       document.body.appendChild(buttonContainer);
 
       await GoogleAuthService.renderButton(buttonContainer, handleCredentialResponse);
 
-      // Wait for button to be ready and then click it
-      setTimeout(() => {
-        const button = buttonContainer.querySelector('div[role="button"]') as HTMLElement;
-        if (button) {
-          debugLogger.addLog('Clicking alternative sign-in button...');
+      // Wait for button to be ready and then click it with improved detection
+      setTimeout(async () => {
+        try {
+          const buttonSelectors = [
+            'div[role="button"]',
+            'button',
+            '[data-idom-class]',
+            '.gsi-material-button',
+            'div[tabindex="0"]',
+            'div[jsaction]'
+          ];
           
-          // Simulate a proper click event
-          const clickEvent = new MouseEvent('click', {
-            view: window,
-            bubbles: true,
-            cancelable: true
-          });
-          button.dispatchEvent(clickEvent);
-        } else {
-          debugLogger.addLog('Button not found in container');
-          throw new Error('Sign-in button could not be found after rendering');
+          let buttonElement: HTMLElement | null = null;
+          
+          for (const selector of buttonSelectors) {
+            buttonElement = buttonContainer.querySelector(selector) as HTMLElement;
+            if (buttonElement && buttonElement.offsetWidth > 0) {
+              debugLogger.addLog(`Clicking alternative sign-in button found with: ${selector}`);
+              break;
+            }
+          }
+          
+          if (buttonElement) {
+            // Simulate a proper click event with multiple event types
+            const events = ['mousedown', 'mouseup', 'click'];
+            
+            for (const eventType of events) {
+              const event = new MouseEvent(eventType, {
+                view: window,
+                bubbles: true,
+                cancelable: true,
+                clientX: buttonElement.offsetLeft + buttonElement.offsetWidth / 2,
+                clientY: buttonElement.offsetTop + buttonElement.offsetHeight / 2
+              });
+              buttonElement.dispatchEvent(event);
+            }
+            
+            // Also try focus and keyboard events
+            if (buttonElement.focus) {
+              buttonElement.focus();
+            }
+            
+            const keyboardEvent = new KeyboardEvent('keydown', {
+              key: 'Enter',
+              code: 'Enter',
+              bubbles: true,
+              cancelable: true
+            });
+            buttonElement.dispatchEvent(keyboardEvent);
+            
+          } else {
+            debugLogger.addLog('Button not found in container after improved detection');
+            debugLogger.addLog(`Container HTML: ${buttonContainer.innerHTML}`);
+            throw new Error('Sign-in button could not be found after rendering');
+          }
+        } catch (clickError) {
+          debugLogger.addLog(`Error clicking button: ${clickError instanceof Error ? clickError.message : 'Unknown'}`);
+          throw clickError;
         }
         
         // Clean up after a delay
@@ -104,8 +146,8 @@ export const useAuthOperations = (
           if (document.body.contains(buttonContainer)) {
             document.body.removeChild(buttonContainer);
           }
-        }, 5000);
-      }, 1200); // Increased delay to ensure button is ready
+        }, 8000);
+      }, 1500); // Increased delay to ensure button is ready
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Alternative sign-in failed';
       debugLogger.addLog(`Alternative sign-in failed: ${errorMessage}`);
