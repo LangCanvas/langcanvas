@@ -12,7 +12,7 @@ interface ConditionalNodeProps extends BaseNodeProps {
 
 const ConditionalNode: React.FC<ConditionalNodeProps> = (props) => {
   const { node, isSelected, canCreateEdge, onStartConnection, outgoingEdges } = props;
-  const { isDragging } = useNodeDrag(node, props.onMove);
+  const { isDragging } = useNodeDrag(node, props.onMove, isSelected);
   
   const nodeStyle = getConditionalNodeStyle(node, isSelected, isDragging);
   const conditionCount = outgoingEdges.filter(edge => edge.conditional).length;

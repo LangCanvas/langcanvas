@@ -8,7 +8,7 @@ import ConnectionHandle from '../ConnectionHandle';
 
 const RegularNode: React.FC<BaseNodeProps> = (props) => {
   const { node, isSelected, canCreateEdge, onStartConnection } = props;
-  const { isDragging } = useNodeDrag(node, props.onMove);
+  const { isDragging } = useNodeDrag(node, props.onMove, isSelected);
   
   const nodeStyle = getRegularNodeStyle(node, isSelected, isDragging);
 
