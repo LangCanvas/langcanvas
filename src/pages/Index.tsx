@@ -11,6 +11,8 @@ import { useIndexEventListeners } from '../hooks/useIndexEventListeners';
 import { useIndexChangeTrackedHandlers } from '../hooks/useIndexChangeTrackedHandlers';
 
 const Index: React.FC = () => {
+  console.log('📄 Index.tsx - Component render started');
+  
   const canvasRef = useRef<HTMLDivElement>(null);
   
   const indexState = useIndexState();
@@ -45,6 +47,14 @@ const Index: React.FC = () => {
     addNode,
   } = indexState;
 
+  console.log('📄 Index.tsx - IndexState loaded:', {
+    nodesCount: nodes.length,
+    edgesCount: edges.length,
+    selectedNode: selectedNode?.id || 'none',
+    selectedEdge: selectedEdge?.id || 'none',
+    validationIssues: validationResult.issues.length
+  });
+
   const panelHandlers = useIndexPanelHandlers(clearPendingCreation);
   const {
     isMobileMenuOpen,
@@ -64,6 +74,15 @@ const Index: React.FC = () => {
     closePanels,
     switchToPropertiesPanel,
   } = panelHandlers;
+
+  console.log('📄 Index.tsx - Panel handlers loaded:', {
+    isLeftPanelVisible,
+    isRightPanelVisible,
+    isLeftPanelExpanded,
+    isRightPanelExpanded,
+    isMobileMenuOpen,
+    activePanel
+  });
 
   const changeTracking = useChangeTracking();
   const workflowActions = useWorkflowActions({
@@ -131,6 +150,15 @@ const Index: React.FC = () => {
     updateEdgeProperties(id, updates);
   }, [updateEdgeProperties]);
 
+  console.log('📄 Index.tsx - About to render MainApplicationLayout with props:', {
+    isLeftPanelVisible,
+    isRightPanelVisible,
+    isLeftPanelExpanded,
+    isRightPanelExpanded,
+    selectedNode: selectedNode?.id || 'none',
+    selectedEdge: selectedEdge?.id || 'none'
+  });
+
   return (
     <MainApplicationLayout
       isMobileMenuOpen={isMobileMenuOpen}
@@ -165,6 +193,7 @@ const Index: React.FC = () => {
       onUpdateEdgeProperties={handleUpdateEdgeProperties}
       validatePriorityConflicts={validatePriorityConflicts}
     >
+      {console.log('📄 Index.tsx - Rendering Canvas component')}
       <Canvas
         nodes={nodes}
         edges={edges}

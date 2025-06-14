@@ -53,11 +53,23 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
   switchToPropertiesPanel,
   validatePriorityConflicts
 }) => {
+  console.log('🎛️ DesktopPropertiesPanel - Render started with props:', {
+    selectedNode: selectedNode?.id || 'none',
+    selectedEdge: selectedEdge?.id || 'none',
+    isVisible,
+    isExpanded,
+    panelWidth,
+    panelLayout,
+    validationIssues: validationResult.issues.length,
+    showValidationPanel
+  });
+
   const [activeTab, setActiveTab] = useState('properties');
 
   // Smart switching: when user selects a node/edge while validation panel is showing
   useEffect(() => {
     if ((selectedNode || selectedEdge) && showValidationPanel && switchToPropertiesPanel) {
+      console.log('🎛️ DesktopPropertiesPanel - Smart switching to properties tab');
       switchToPropertiesPanel();
     }
   }, [selectedNode, selectedEdge, showValidationPanel, switchToPropertiesPanel]);
@@ -65,28 +77,51 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
   // Auto-switch to validation tab when there are issues and user clicks on validation
   useEffect(() => {
     if (showValidationPanel) {
+      console.log('🎛️ DesktopPropertiesPanel - Auto-switching to validation tab');
       setActiveTab('validation');
       setShowValidationPanel(false); // Reset the flag
     }
   }, [showValidationPanel, setShowValidationPanel]);
 
   const handleUpdateEdge = (edgeId: string, updates: Partial<EnhancedEdge>) => {
+    console.log('🎛️ DesktopPropertiesPanel - Updating edge:', edgeId, updates);
     onUpdateEdge(edgeId, updates);
   };
 
   // If not visible, don't render anything
   if (!isVisible) {
+    console.log('🎛️ DesktopPropertiesPanel - Not visible, returning null');
     return null;
   }
 
+  console.log('🎛️ DesktopPropertiesPanel - Continuing with render');
+
   // Always show expanded panel (no collapsed state)
   const isCompact = panelLayout === 'compact';
+  
+  console.log('🎛️ DesktopPropertiesPanel - Rendering with layout:', {
+    isCompact,
+    panelLayout,
+    activeTab
+  });
+
+  // Add DOM element verification
+  useEffect(() => {
+    const element = document.querySelector('[data-panel="desktop-properties"]');
+    console.log('🎛️ DesktopPropertiesPanel - DOM element check:', {
+      elementExists: !!element,
+      element,
+      timestamp: new Date().toISOString()
+    });
+  });
   
   return (
     <aside 
       data-panel="desktop-properties" 
       className="relative bg-background border-l border-border flex flex-col h-full flex-shrink-0"
     >
+      {console.log('🎛️ DesktopPropertiesPanel - Rendering aside element')}
+      
       <div className={`${isCompact ? 'p-2' : 'p-4'} border-b border-border flex items-center justify-between`}>
         <h2 className={`font-medium text-foreground ${isCompact ? 'text-xs' : 'text-sm'}`}>
           {isCompact ? 'Panel' : 'Properties Panel'}
@@ -125,6 +160,7 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
         </div>
         
         <TabsContent value="properties" className="flex-1 mt-0">
+          {console.log('🎛️ DesktopPropertiesPanel - Rendering properties tab content')}
           <EnhancedPropertiesPanel 
             selectedNode={selectedNode}
             selectedEdge={selectedEdge}
@@ -139,6 +175,7 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
         </TabsContent>
         
         <TabsContent value="validation" className="flex-1 mt-0">
+          {console.log('🎛️ DesktopPropertiesPanel - Rendering validation tab content')}
           <div className={isCompact ? 'p-2' : 'p-4'}>
             <ValidationPanel 
               validationResult={validationResult}
@@ -148,6 +185,7 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
         </TabsContent>
 
         <TabsContent value="settings" className="flex-1 mt-0">
+          {console.log('🎛️ DesktopPropertiesPanel - Rendering settings tab content')}
           <div className={isCompact ? 'p-2' : 'p-4'}>
             <PathfindingSettingsPanel 
               nodes={allNodes}
@@ -157,6 +195,8 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
           </div>
         </TabsContent>
       </Tabs>
+      
+      {console.log('🎛️ DesktopPropertiesPanel - Render completed successfully')}
     </aside>
   );
 };

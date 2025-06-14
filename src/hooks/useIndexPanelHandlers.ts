@@ -4,6 +4,8 @@ import { savePanelSettingsToStorage, loadPanelSettingsFromStorage } from '../uti
 import { useAdaptivePanelWidths } from './useAdaptivePanelWidths';
 
 export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
+  console.log('🔧 useIndexPanelHandlers - Hook initialization started');
+  
   // Mobile states (existing)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activePanel, setActivePanel] = useState<'palette' | 'properties' | 'settings' | null>(null);
@@ -11,15 +13,18 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
   
   // Get actual panel widths from the adaptive panel widths hook
   const { leftPanelWidth, rightPanelWidth } = useAdaptivePanelWidths();
+  console.log('🔧 useIndexPanelHandlers - Panel widths from adaptive hook:', { leftPanelWidth, rightPanelWidth });
   
   // SIMPLIFIED: Properties Panel is ALWAYS visible by default
   // This ensures new users, incognito mode, and corrupted storage all see the panel
   const [isRightPanelVisible, setIsRightPanelVisible] = useState(true);
+  console.log('🔧 useIndexPanelHandlers - Initial right panel state set to:', true);
   
   const analytics = useEnhancedAnalytics();
 
   // Load panel settings and apply them AFTER initialization
   useEffect(() => {
+    console.log('🔧 useIndexPanelHandlers - Storage loading effect triggered');
     try {
       const settings = loadPanelSettingsFromStorage();
       console.log('🔍 Properties Panel - Loading stored settings:', settings);
@@ -38,7 +43,7 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
         setIsRightPanelVisible(true);
       }
       
-      console.log('✅ Properties Panel - Final visible state:', isRightPanelVisible);
+      console.log('✅ Properties Panel - Final visible state after storage loading:', isRightPanelVisible);
     } catch (error) {
       console.warn('⚠️ Properties Panel - Failed to load settings, keeping default visible state:', error);
       // Panel remains visible (default state)
@@ -47,6 +52,13 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
 
   // Enhanced panel settings saving with error handling
   useEffect(() => {
+    console.log('🔧 useIndexPanelHandlers - Panel settings save effect triggered');
+    console.log('🔧 Panel settings to save:', {
+      isRightPanelVisible,
+      leftPanelWidth,
+      rightPanelWidth
+    });
+    
     try {
       savePanelSettingsToStorage({
         isLeftPanelVisible: true, // Always true
@@ -75,6 +87,12 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
   useEffect(() => {
     const checkPanelVisibility = () => {
       const rightPanel = document.querySelector('[data-panel="desktop-properties"]');
+      console.log('🔧 DOM Panel Check:', {
+        expectedVisible: isRightPanelVisible,
+        panelExistsInDOM: !!rightPanel,
+        panelElement: rightPanel
+      });
+      
       if (!isRightPanelVisible && rightPanel) {
         console.log('🔧 Properties Panel - Visibility mismatch detected, panel exists but state says hidden');
       } else if (isRightPanelVisible && !rightPanel) {
@@ -149,7 +167,7 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
     analytics.trackFeatureUsage('validation_to_properties_switch');
   };
 
-  return {
+  const returnValues = {
     // Mobile states
     isMobileMenuOpen,
     activePanel,
@@ -180,4 +198,13 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
     handleExpandRightPanel: handleShowRightPanel,
     switchToPropertiesPanel,
   };
+
+  console.log('🔧 useIndexPanelHandlers - Returning values:', {
+    isLeftPanelVisible: returnValues.isLeftPanelVisible,
+    isRightPanelVisible: returnValues.isRightPanelVisible,
+    isLeftPanelExpanded: returnValues.isLeftPanelExpanded,
+    isRightPanelExpanded: returnValues.isRightPanelExpanded
+  });
+
+  return returnValues;
 };

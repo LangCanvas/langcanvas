@@ -53,6 +53,14 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   onUpdateEdgeProperties,
   validatePriorityConflicts,
 }) => {
+  console.log('🖥️ DesktopLayout - Render started with props:', {
+    isLeftPanelVisible,
+    isRightPanelVisible,
+    children: !!children,
+    nodes: nodes.length,
+    edges: edges.length
+  });
+
   const {
     leftPanelWidth,
     rightPanelWidth,
@@ -65,23 +73,45 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     getMinPercentageForLeftPanel
   } = useAdaptivePanelWidths();
 
+  console.log('🖥️ DesktopLayout - Panel widths and layouts:', {
+    leftPanelWidth,
+    rightPanelWidth,
+    leftPanelLayout,
+    rightPanelLayout
+  });
+
   const leftPanelPercentage = getInitialPercentage(leftPanelWidth, isLeftPanelVisible);
   const rightPanelPercentage = getInitialPercentage(rightPanelWidth, isRightPanelVisible);
   const canvasPercentage = Math.max(30, 100 - leftPanelPercentage - rightPanelPercentage);
+
+  console.log('🖥️ DesktopLayout - Calculated percentages:', {
+    leftPanelPercentage,
+    rightPanelPercentage,
+    canvasPercentage,
+    leftVisible: isLeftPanelVisible,
+    rightVisible: isRightPanelVisible
+  });
 
   // Calculate the maximum and minimum percentages for the left panel
   const maxLeftPanelPercentage = getMaxPercentageForLeftPanel();
   const minLeftPanelPercentage = getMinPercentageForLeftPanel();
 
+  console.log('🖥️ DesktopLayout - Panel constraints:', {
+    maxLeftPanelPercentage,
+    minLeftPanelPercentage
+  });
+
   return (
     <div className="flex-1 h-full">
+      {console.log('🖥️ DesktopLayout - Starting ResizablePanelGroup render')}
       <ResizablePanelGroup direction="horizontal" className="h-full">
         {isLeftPanelVisible && (
           <>
+            {console.log('🖥️ DesktopLayout - Rendering left panel with percentage:', leftPanelPercentage)}
             <ResizablePanel
               defaultSize={leftPanelPercentage}
-              minSize={minLeftPanelPercentage} // Use calculated min percentage for 80px constraint
-              maxSize={maxLeftPanelPercentage} // Use calculated max percentage for 100px cap
+              minSize={minLeftPanelPercentage}
+              maxSize={maxLeftPanelPercentage}
               onResize={handleLeftPanelResize}
               className="relative"
             >
@@ -96,12 +126,14 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
           </>
         )}
 
+        {console.log('🖥️ DesktopLayout - Rendering canvas panel with percentage:', canvasPercentage)}
         <ResizablePanel defaultSize={canvasPercentage} minSize={30} className="relative overflow-hidden">
           {children}
         </ResizablePanel>
 
         {isRightPanelVisible && (
           <>
+            {console.log('🖥️ DesktopLayout - Rendering right panel with percentage:', rightPanelPercentage)}
             <ResizableHandle withHandle />
             <ResizablePanel
               defaultSize={rightPanelPercentage}
@@ -110,6 +142,13 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
               onResize={handleRightPanelResize}
               className="relative"
             >
+              {console.log('🖥️ DesktopLayout - About to render DesktopPropertiesPanel with props:', {
+                selectedNode: selectedNode?.id || 'none',
+                selectedEdge: selectedEdge?.id || 'none',
+                isVisible: isRightPanelVisible,
+                panelWidth: rightPanelWidth,
+                panelLayout: rightPanelLayout
+              })}
               <DesktopPropertiesPanel
                 selectedNode={selectedNode}
                 selectedEdge={selectedEdge}
@@ -134,6 +173,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
           </>
         )}
       </ResizablePanelGroup>
+      {console.log('🖥️ DesktopLayout - Render completed')}
     </div>
   );
 };

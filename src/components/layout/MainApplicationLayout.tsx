@@ -80,6 +80,23 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
 }) => {
   const isMobile = useMobileDetection();
 
+  console.log('🏗️ MainApplicationLayout - Render started:', {
+    isMobile,
+    isLeftPanelVisible,
+    isRightPanelVisible,
+    isLeftPanelExpanded,
+    isRightPanelExpanded,
+    layoutChoice: !isMobile ? 'Desktop' : 'Mobile'
+  });
+
+  console.log('🏗️ MainApplicationLayout - Props received:', {
+    nodes: nodes.length,
+    edges: edges.length,
+    selectedNode: selectedNode?.id || 'none',
+    selectedEdge: selectedEdge?.id || 'none',
+    validationResult: validationResult.issues.length + ' issues'
+  });
+
   return (
     <div className="flex flex-col h-screen bg-gray-50">
       <UnderConstructionBanner />
@@ -98,55 +115,66 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
 
       <div className="flex flex-1 relative overflow-hidden">
         {!isMobile ? (
-          <DesktopLayout
-            isLeftPanelVisible={isLeftPanelVisible}
-            isLeftPanelExpanded={isLeftPanelExpanded}
-            isRightPanelVisible={isRightPanelVisible}
-            isRightPanelExpanded={isRightPanelExpanded}
-            nodes={nodes}
-            edges={edges}
-            selectedNode={selectedNode}
-            selectedEdge={selectedEdge}
-            validationResult={validationResult}
-            showValidationPanel={showValidationPanel}
-            onToggleLeftPanel={onToggleLeftPanel}
-            onToggleRightPanel={onToggleRightPanel}
-            onExpandLeftPanel={onExpandLeftPanel}
-            onExpandRightPanel={onExpandRightPanel}
-            setShowValidationPanel={setShowValidationPanel}
-            switchToPropertiesPanel={switchToPropertiesPanel}
-            onDeleteNode={onDeleteNode}
-            onDeleteEdge={onDeleteEdge}
-            onUpdateNodeProperties={onUpdateNodeProperties}
-            onUpdateEdgeProperties={onUpdateEdgeProperties}
-            validatePriorityConflicts={validatePriorityConflicts}
-          >
-            {children}
-          </DesktopLayout>
+          <>
+            {console.log('🖥️ MainApplicationLayout - Rendering DesktopLayout with props:', {
+              isLeftPanelVisible,
+              isRightPanelVisible,
+              isLeftPanelExpanded,
+              isRightPanelExpanded
+            })}
+            <DesktopLayout
+              isLeftPanelVisible={isLeftPanelVisible}
+              isLeftPanelExpanded={isLeftPanelExpanded}
+              isRightPanelVisible={isRightPanelVisible}
+              isRightPanelExpanded={isRightPanelExpanded}
+              nodes={nodes}
+              edges={edges}
+              selectedNode={selectedNode}
+              selectedEdge={selectedEdge}
+              validationResult={validationResult}
+              showValidationPanel={showValidationPanel}
+              onToggleLeftPanel={onToggleLeftPanel}
+              onToggleRightPanel={onToggleRightPanel}
+              onExpandLeftPanel={onExpandLeftPanel}
+              onExpandRightPanel={onExpandRightPanel}
+              setShowValidationPanel={setShowValidationPanel}
+              switchToPropertiesPanel={switchToPropertiesPanel}
+              onDeleteNode={onDeleteNode}
+              onDeleteEdge={onDeleteEdge}
+              onUpdateNodeProperties={onUpdateNodeProperties}
+              onUpdateEdgeProperties={onUpdateEdgeProperties}
+              validatePriorityConflicts={validatePriorityConflicts}
+            >
+              {children}
+            </DesktopLayout>
+          </>
         ) : (
-          <MobileLayout
-            isMobileMenuOpen={isMobileMenuOpen}
-            activePanel={activePanel}
-            showValidationPanel={showValidationPanel}
-            nodes={nodes}
-            selectedNode={selectedNode}
-            selectedEdge={selectedEdge}
-            validationResult={validationResult}
-            onMobileMenuToggle={onMobileMenuToggle}
-            onPanelToggle={onPanelToggle}
-            closePanels={closePanels}
-            setShowValidationPanel={setShowValidationPanel}
-            onNewProject={onNewProject}
-            onImport={onImport}
-            onExport={onExport}
-            onDeleteNode={onDeleteNode}
-            onDeleteEdge={onDeleteEdge}
-            onUpdateNodeProperties={onUpdateNodeProperties}
-            onUpdateEdgeProperties={onUpdateEdgeProperties}
-            validatePriorityConflicts={validatePriorityConflicts}
-          >
-            {children}
-          </MobileLayout>
+          <>
+            {console.log('📱 MainApplicationLayout - Rendering MobileLayout')}
+            <MobileLayout
+              isMobileMenuOpen={isMobileMenuOpen}
+              activePanel={activePanel}
+              showValidationPanel={showValidationPanel}
+              nodes={nodes}
+              selectedNode={selectedNode}
+              selectedEdge={selectedEdge}
+              validationResult={validationResult}
+              onMobileMenuToggle={onMobileMenuToggle}
+              onPanelToggle={onPanelToggle}
+              closePanels={closePanels}
+              setShowValidationPanel={setShowValidationPanel}
+              onNewProject={onNewProject}
+              onImport={onImport}
+              onExport={onExport}
+              onDeleteNode={onDeleteNode}
+              onDeleteEdge={onDeleteEdge}
+              onUpdateNodeProperties={onUpdateNodeProperties}
+              onUpdateEdgeProperties={onUpdateEdgeProperties}
+              validatePriorityConflicts={validatePriorityConflicts}
+            >
+              {children}
+            </MobileLayout>
+          </>
         )}
       </div>
     </div>
