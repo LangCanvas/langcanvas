@@ -12,10 +12,12 @@ interface ToolbarProps {
   validationResult: ValidationResult;
   isSelecting?: boolean;
   selectedCount?: number;
+  isRightPanelVisible?: boolean;
   onMobileMenuToggle: () => void;
   onNewProject: () => void;
   onImport: () => void;
   onExport: () => void;
+  onToggleRightPanel?: () => void;
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({
@@ -24,16 +26,16 @@ const Toolbar: React.FC<ToolbarProps> = ({
   validationResult,
   isSelecting = false,
   selectedCount = 0,
+  isRightPanelVisible = true,
   onMobileMenuToggle,
   onNewProject,
   onImport,
   onExport,
+  onToggleRightPanel,
 }) => {
   return (
     <header className="bg-white border-b border-gray-200 h-14 flex items-center px-4 relative z-50">
       <ToolbarBrand />
-      
-      <ToolbarMenu />
 
       <div className="flex items-center gap-3 ml-auto">
         <ToolbarValidation 
@@ -45,7 +47,11 @@ const Toolbar: React.FC<ToolbarProps> = ({
           onNewProject={onNewProject}
           onImport={onImport}
           onExport={onExport}
+          isRightPanelVisible={isRightPanelVisible}
+          onToggleRightPanel={onToggleRightPanel}
         />
+        
+        <ToolbarMenu />
       </div>
     </header>
   );

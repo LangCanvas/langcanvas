@@ -1,18 +1,22 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Download, Upload, File } from 'lucide-react';
+import { Download, Upload, File, PanelRightOpen, PanelRightClose } from 'lucide-react';
 
 interface ToolbarActionsProps {
   onNewProject: () => void;
   onImport: () => void;
   onExport: () => void;
+  isRightPanelVisible?: boolean;
+  onToggleRightPanel?: () => void;
 }
 
 const ToolbarActions: React.FC<ToolbarActionsProps> = ({
   onNewProject,
   onImport,
-  onExport
+  onExport,
+  isRightPanelVisible = true,
+  onToggleRightPanel
 }) => {
   const handleNewClick = () => {
     console.log("🔴 New button clicked in ToolbarActions");
@@ -41,6 +45,16 @@ const ToolbarActions: React.FC<ToolbarActionsProps> = ({
       console.log("🔴 Export button handler executed successfully");
     } catch (error) {
       console.error("🔴 Error in Export button handler:", error);
+    }
+  };
+
+  const handleTogglePanelClick = () => {
+    console.log("🔴 Properties Panel toggle clicked in ToolbarActions");
+    try {
+      onToggleRightPanel?.();
+      console.log("🔴 Properties Panel toggle handler executed successfully");
+    } catch (error) {
+      console.error("🔴 Error in Properties Panel toggle handler:", error);
     }
   };
 
@@ -76,6 +90,23 @@ const ToolbarActions: React.FC<ToolbarActionsProps> = ({
         <Download className="w-4 h-4 mr-1" />
         <span className="hidden md:inline">Export</span>
       </Button>
+      {onToggleRightPanel && (
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={handleTogglePanelClick}
+          className="text-gray-600 hover:text-gray-800 touch-manipulation"
+          style={{ minHeight: '44px' }}
+          title={isRightPanelVisible ? "Hide Properties Panel" : "Show Properties Panel"}
+        >
+          {isRightPanelVisible ? (
+            <PanelRightClose className="w-4 h-4 mr-1" />
+          ) : (
+            <PanelRightOpen className="w-4 h-4 mr-1" />
+          )}
+          <span className="hidden md:inline">Panel</span>
+        </Button>
+      )}
     </div>
   );
 };

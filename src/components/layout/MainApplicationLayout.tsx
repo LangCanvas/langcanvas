@@ -107,10 +107,12 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
         validationResult={validationResult}
         isSelecting={isSelecting}
         selectedCount={selectedCount}
+        isRightPanelVisible={isRightPanelVisible}
         onMobileMenuToggle={onMobileMenuToggle}
         onNewProject={onNewProject}
         onImport={onImport}
         onExport={onExport}
+        onToggleRightPanel={onToggleRightPanel}
       />
 
       <div className="flex flex-1 relative overflow-hidden">
