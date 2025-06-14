@@ -1,6 +1,6 @@
 
 import React from 'react';
-import NodePalette from '../NodePalette';
+import EnhancedNodePalette from '../palette/EnhancedNodePalette';
 import CollapsedNodePalette from './CollapsedNodePalette';
 
 interface DesktopSidebarProps {
@@ -40,10 +40,10 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
     );
   }
 
-  // Show expanded panel
+  // Show expanded panel with enhanced palette
   return (
     <aside className="relative w-64 bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out">
-      <NodePalette 
+      <EnhancedNodePalette 
         onNodeTypeSelect={(type) => {
           const event = new CustomEvent('setPendingCreation', { detail: type });
           window.dispatchEvent(event);
