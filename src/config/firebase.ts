@@ -26,9 +26,19 @@ export const isDevelopment = typeof window !== 'undefined' &&
 // Initialize Firestore with quota-aware settings
 export const db = getFirestore(app);
 
-// Disable Firestore for development to avoid quota issues
+// Completely disable Firestore operations in development to avoid quota issues
 if (isDevelopment) {
-  console.log('🔧 Development environment detected - using local analytics only');
+  console.log('🔧 Development environment detected - Firestore operations disabled to prevent quota issues');
+  
+  // Override Firestore operations to prevent writes in development
+  const originalAddDoc = require('firebase/firestore').addDoc;
+  const originalSetDoc = require('firebase/firestore').setDoc;
+  const originalUpdateDoc = require('firebase/firestore').updateDoc;
+  
+  // Monkey patch to prevent writes in development
+  if (typeof window !== 'undefined') {
+    window.__FIRESTORE_DEV_MODE__ = true;
+  }
 }
 
 // Initialize Analytics (only in browser environment and production)

@@ -1,3 +1,4 @@
+
 import { GOOGLE_CLIENT_ID, GoogleAuthUser, AuthenticationError, AuthErrorHandler } from './googleAuthConfig';
 
 export class GoogleAuthOperations {
@@ -35,8 +36,14 @@ export class GoogleAuthOperations {
                 `Current origin: ${window.location.origin}`
               );
               reject(domainError);
-            } else if (reason?.includes('suppressed_by_user') || reason?.includes('browser_not_supported')) {
-              reject(AuthErrorHandler.createAuthError('popup_blocked', 'Sign-in popup was blocked by browser settings'));
+            } else if (reason?.includes('suppressed_by_user') || reason === 'suppressed_by_user') {
+              reject(AuthErrorHandler.createAuthError(
+                'user_cancelled', 
+                'Google One Tap is disabled in your browser. Please use the sign-in button below.',
+                'One Tap has been suppressed by user settings or browser policy'
+              ));
+            } else if (reason?.includes('browser_not_supported')) {
+              reject(AuthErrorHandler.createAuthError('popup_blocked', 'Browser does not support One Tap. Please use the sign-in button below.'));
             } else if (reason === 'opt_out_or_no_session') {
               reject(AuthErrorHandler.createAuthError(
                 'user_cancelled', 
@@ -112,6 +119,19 @@ export class GoogleAuthOperations {
   static disableAutoSelect(): void {
     if (window.google?.accounts?.id) {
       window.google.accounts.id.disableAutoSelect();
+    }
+  }
+
+  static resetOneTapPreferences(): void {
+    if (window.google?.accounts?.id) {
+      // Clear any stored One Tap preferences
+      try {
+        localStorage.removeItem('g_state');
+        sessionStorage.removeItem('g_state');
+        console.log('🔐 One Tap preferences cleared');
+      } catch (error) {
+        console.warn('🔐 Could not clear One Tap preferences:', error);
+      }
     }
   }
 }

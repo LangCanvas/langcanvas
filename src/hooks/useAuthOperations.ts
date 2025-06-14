@@ -28,10 +28,20 @@ export const useAuthOperations = (
         const authErr = error as any;
         setAuthError(authErr);
         
-        // Handle specific error types
-        if (authErr.type === 'user_cancelled' && authErr.details?.includes('opt_out_or_no_session')) {
-          debugLogger.addLog('One Tap unavailable - user should use alternative sign-in button');
-          // Don't increment retry count for this specific error
+        // Handle specific error types with automatic fallback for suppressed One Tap
+        if (authErr.type === 'user_cancelled' && 
+            (authErr.details?.includes('suppressed_by_user') || 
+             authErr.details?.includes('opt_out_or_no_session') ||
+             authErr.message?.includes('disabled in your browser'))) {
+          debugLogger.addLog('One Tap suppressed - automatically trying button-based sign-in...');
+          // Don't increment retry count for this specific error, just fall back to button
+          try {
+            await signInWithButton();
+            return; // Success via button, don't throw
+          } catch (buttonError) {
+            debugLogger.addLog('Button-based fallback also failed');
+            // Let the original error propagate
+          }
         } else if (authErr.type === 'domain_unauthorized' && retryCount < 2) {
           debugLogger.addLog('Enabling fallback mode for domain authorization issues...');
           GoogleAuthService.enableFallbackMode();
@@ -117,6 +127,13 @@ export const useAuthOperations = (
     setAuthError(null);
     setRetryCount(0);
     GoogleAuthService.disableAutoSelect();
+    
+    // Also reset One Tap preferences
+    try {
+      GoogleAuthService.resetOneTapPreferences?.();
+    } catch (error) {
+      debugLogger.addLog('Could not reset One Tap preferences');
+    }
     
     try {
       document.cookie.split(";").forEach(cookie => {

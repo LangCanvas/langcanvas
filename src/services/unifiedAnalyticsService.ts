@@ -2,6 +2,7 @@
 import { firestoreAnalytics, AnalyticsEvent as FirestoreEvent } from '@/utils/firestoreAnalytics';
 import { analyticsStorage, AnalyticsEvent as LocalEvent, AggregatedStats } from '@/utils/analyticsStorage';
 import { AnalyticsComputation } from '@/utils/analyticsComputation';
+import { isDevelopment } from '@/config/firebase';
 
 export interface UnifiedAnalyticsEvent {
   id: string;
@@ -24,6 +25,12 @@ export class UnifiedAnalyticsService {
   constructor() {
     this.setupOnlineListeners();
     this.initializeLocalStorage();
+    
+    // In development, force local-only mode to prevent quota issues
+    if (isDevelopment) {
+      this.quotaExhausted = true;
+      console.log('🔧 Development mode: Analytics set to local-only to prevent Firestore quota issues');
+    }
   }
 
   static getInstance(): UnifiedAnalyticsService {
@@ -36,7 +43,9 @@ export class UnifiedAnalyticsService {
   private setupOnlineListeners(): void {
     window.addEventListener('online', () => {
       this.isOnline = true;
-      this.syncPendingEvents();
+      if (!isDevelopment) {
+        this.syncPendingEvents();
+      }
     });
     
     window.addEventListener('offline', () => {
@@ -67,6 +76,9 @@ export class UnifiedAnalyticsService {
   }
 
   private canRetryFirestore(): boolean {
+    // Never retry in development to prevent quota issues
+    if (isDevelopment) return false;
+    
     if (!this.quotaExhausted) return true;
     
     const timeSinceError = Date.now() - this.lastQuotaError;
@@ -82,8 +94,8 @@ export class UnifiedAnalyticsService {
       // Always store locally first
       await this.storeEventLocally(event);
 
-      // Only try Firestore if online and quota is not exhausted
-      if (this.isOnline && this.canRetryFirestore()) {
+      // Only try Firestore if not in development, online, and quota is not exhausted
+      if (!isDevelopment && this.isOnline && this.canRetryFirestore()) {
         try {
           await this.storeEventRemotely(event);
         } catch (error) {
@@ -92,10 +104,11 @@ export class UnifiedAnalyticsService {
           } else {
             console.warn('Failed to store event remotely:', error);
           }
-          // Add to pending events for later sync
+          // Add to pending events for later sync (production only)
           this.pendingEvents.push(event);
         }
-      } else {
+      } else if (!isDevelopment) {
+        // Only queue for sync in production
         this.pendingEvents.push(event);
       }
     } catch (error) {
@@ -109,6 +122,10 @@ export class UnifiedAnalyticsService {
   }
 
   async migrateLocalToRemote(): Promise<void> {
+    if (isDevelopment) {
+      throw new Error('Migration disabled in development environment');
+    }
+    
     if (!this.isOnline) {
       throw new Error('Cannot migrate data while offline');
     }
@@ -139,6 +156,11 @@ export class UnifiedAnalyticsService {
   }
 
   private async storeEventRemotely(event: UnifiedAnalyticsEvent): Promise<void> {
+    if (isDevelopment) {
+      console.log('🔧 Firestore write skipped in development environment');
+      return;
+    }
+
     const firestoreEvent: Omit<FirestoreEvent, 'timestamp' | 'environment'> = {
       id: event.id,
       userId: event.userId,
@@ -152,6 +174,8 @@ export class UnifiedAnalyticsService {
   }
 
   private async syncPendingEvents(): Promise<void> {
+    if (isDevelopment) return; // Don't sync in development
+    
     if (this.pendingEvents.length === 0 || !this.canRetryFirestore()) return;
 
     const eventsToSync = [...this.pendingEvents];
