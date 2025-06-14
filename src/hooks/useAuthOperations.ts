@@ -79,75 +79,73 @@ export const useAuthOperations = (
       buttonContainer.id = 'temp-google-signin-button';
       document.body.appendChild(buttonContainer);
 
+      // Render the button and wait for it to be ready
       await GoogleAuthService.renderButton(buttonContainer, handleCredentialResponse);
-
-      // Wait for button to be ready and then click it with improved detection
-      setTimeout(async () => {
-        try {
-          const buttonSelectors = [
-            'div[role="button"]',
-            'button',
-            '[data-idom-class]',
-            '.gsi-material-button',
-            'div[tabindex="0"]',
-            'div[jsaction]'
-          ];
-          
-          let buttonElement: HTMLElement | null = null;
-          
-          for (const selector of buttonSelectors) {
-            buttonElement = buttonContainer.querySelector(selector) as HTMLElement;
-            if (buttonElement && buttonElement.offsetWidth > 0) {
-              debugLogger.addLog(`Clicking alternative sign-in button found with: ${selector}`);
-              break;
-            }
-          }
-          
-          if (buttonElement) {
-            // Simulate a proper click event with multiple event types
-            const events = ['mousedown', 'mouseup', 'click'];
-            
-            for (const eventType of events) {
-              const event = new MouseEvent(eventType, {
-                view: window,
-                bubbles: true,
-                cancelable: true,
-                clientX: buttonElement.offsetLeft + buttonElement.offsetWidth / 2,
-                clientY: buttonElement.offsetTop + buttonElement.offsetHeight / 2
-              });
-              buttonElement.dispatchEvent(event);
-            }
-            
-            // Also try focus and keyboard events
-            if (buttonElement.focus) {
-              buttonElement.focus();
-            }
-            
-            const keyboardEvent = new KeyboardEvent('keydown', {
-              key: 'Enter',
-              code: 'Enter',
-              bubbles: true,
-              cancelable: true
-            });
-            buttonElement.dispatchEvent(keyboardEvent);
-            
-          } else {
-            debugLogger.addLog('Button not found in container after improved detection');
-            debugLogger.addLog(`Container HTML: ${buttonContainer.innerHTML}`);
-            throw new Error('Sign-in button could not be found after rendering');
-          }
-        } catch (clickError) {
-          debugLogger.addLog(`Error clicking button: ${clickError instanceof Error ? clickError.message : 'Unknown'}`);
-          throw clickError;
+      
+      debugLogger.addLog('Button rendered successfully, attempting to click...');
+      
+      // Since renderButton() completed successfully, we know the button is ready
+      // Find and click the button immediately
+      const buttonSelectors = [
+        'div[role="button"]',
+        'button',
+        '[data-idom-class]',
+        '.gsi-material-button',
+        'div[tabindex="0"]',
+        'div[jsaction]'
+      ];
+      
+      let buttonElement: HTMLElement | null = null;
+      
+      for (const selector of buttonSelectors) {
+        buttonElement = buttonContainer.querySelector(selector) as HTMLElement;
+        if (buttonElement) {
+          debugLogger.addLog(`Found button with selector: ${selector}`);
+          break;
         }
-        
-        // Clean up after a delay
-        setTimeout(() => {
-          if (document.body.contains(buttonContainer)) {
-            document.body.removeChild(buttonContainer);
-          }
-        }, 8000);
-      }, 1500); // Increased delay to ensure button is ready
+      }
+      
+      if (!buttonElement) {
+        throw new Error('Button element not found in container after successful rendering');
+      }
+
+      // Click the button with multiple event types to ensure compatibility
+      const clickEvents = ['mousedown', 'mouseup', 'click'];
+      
+      for (const eventType of clickEvents) {
+        const event = new MouseEvent(eventType, {
+          view: window,
+          bubbles: true,
+          cancelable: true,
+          clientX: buttonElement.offsetLeft + buttonElement.offsetWidth / 2,
+          clientY: buttonElement.offsetTop + buttonElement.offsetHeight / 2
+        });
+        buttonElement.dispatchEvent(event);
+      }
+      
+      // Also try focus and keyboard activation
+      if (buttonElement.focus) {
+        buttonElement.focus();
+      }
+      
+      const keyboardEvent = new KeyboardEvent('keydown', {
+        key: 'Enter',
+        code: 'Enter',
+        bubbles: true,
+        cancelable: true
+      });
+      buttonElement.dispatchEvent(keyboardEvent);
+      
+      debugLogger.addLog('Button click events dispatched successfully');
+      
+      // Clean up the temporary container after a delay
+      setTimeout(() => {
+        if (document.body.contains(buttonContainer)) {
+          document.body.removeChild(buttonContainer);
+          debugLogger.addLog('Temporary button container cleaned up');
+        }
+      }, 8000);
+      
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Alternative sign-in failed';
       debugLogger.addLog(`Alternative sign-in failed: ${errorMessage}`);
