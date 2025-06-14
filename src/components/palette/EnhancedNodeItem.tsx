@@ -1,6 +1,6 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { NodeDefinition } from '../../utils/nodeCategories';
 import { NodeType } from '../../types/nodeTypes';
 import { PanelLayout } from '../../hooks/useAdaptivePanelWidths';
@@ -147,20 +147,29 @@ const EnhancedNodeItem: React.FC<EnhancedNodeItemProps> = ({
     }
   };
 
-  // Small layout: icon-only, very compact
+  // Small layout: icon-only, very compact with tooltip
   if (panelLayout === 'small') {
     return (
       <div className="group">
-        <Button
-          variant="outline"
-          className={`w-full h-6 ${getEnhancedNodeColors(node.type)} border transition-all duration-200 text-xs p-1 shadow-sm hover:shadow-md active:scale-95`}
-          draggable
-          onDragStart={handleDragStart}
-          onClick={handleClick}
-          title={`${node.label}: ${node.description}`}
-        >
-          <span className="text-xs">{node.icon}</span>
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                className={`w-full h-6 ${getEnhancedNodeColors(node.type)} border transition-all duration-200 text-xs p-1 shadow-sm hover:shadow-md active:scale-95`}
+                draggable
+                onDragStart={handleDragStart}
+                onClick={handleClick}
+              >
+                <span className="text-xs">{node.icon}</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="text-xs">
+              <div className="font-medium">{node.label}</div>
+              <div className="text-xs opacity-80 mt-1">{node.description}</div>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
     );
   }
