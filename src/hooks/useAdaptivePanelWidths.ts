@@ -5,7 +5,7 @@ import { useSmartPanelSizing } from './useSmartPanelSizing';
 // Updated panel breakpoints with new minimum constraint
 export const PANEL_BREAKPOINTS = {
   MIN: 50, // Updated minimum for small layout (reduced from 60px to 50px)
-  SWITCH_THRESHOLD: 90, // Switch to medium layout threshold
+  SWITCH_THRESHOLD: 70, // Switch to medium layout threshold (reduced from 90px to 70px)
   MAX: 100, // Maximum for medium layout to keep it compact
   DEFAULT_LEFT: 95,
   DEFAULT_RIGHT: 320
