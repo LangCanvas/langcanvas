@@ -108,7 +108,6 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
       <ResizablePanelGroup direction="horizontal" className="h-full">
         {isLeftPanelVisible && (
           <>
-            {console.log('🖥️ DesktopLayout - Rendering left panel with percentage:', leftPanelPercentage)}
             <ResizablePanel
               defaultSize={leftPanelPercentage}
               minSize={minLeftPanelPercentage}
@@ -127,14 +126,12 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
           </>
         )}
 
-        {console.log('🖥️ DesktopLayout - Rendering canvas panel with percentage:', canvasPercentage)}
         <ResizablePanel defaultSize={canvasPercentage} minSize={30} className="relative overflow-hidden">
           {children}
         </ResizablePanel>
 
         {isRightPanelVisible && (
           <>
-            {console.log('🖥️ DesktopLayout - Rendering right panel with percentage:', rightPanelPercentage)}
             <ResizableHandle withHandle />
             <ResizablePanel
               defaultSize={rightPanelPercentage}
@@ -143,16 +140,6 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
               onResize={handleRightPanelResize}
               className="relative"
             >
-              {(() => {
-                console.log('🖥️ DesktopLayout - About to render DesktopPropertiesPanel with props:', {
-                  selectedNode: selectedNode?.id || 'none',
-                  selectedEdge: selectedEdge?.id || 'none',
-                  isVisible: isRightPanelVisible,
-                  panelWidth: rightPanelWidth,
-                  panelLayout: rightPanelLayout
-                });
-                return null;
-              })()}
               <DesktopPropertiesPanel
                 selectedNode={selectedNode}
                 selectedEdge={selectedEdge}
@@ -177,10 +164,6 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
           </>
         )}
       </ResizablePanelGroup>
-      {(() => {
-        console.log('🖥️ DesktopLayout - Render completed');
-        return null;
-      })()}
     </div>
   );
 };
