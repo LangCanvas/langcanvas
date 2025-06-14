@@ -1,4 +1,5 @@
 
+import React from 'react';
 import { EnhancedNode } from './nodeTypes';
 
 export interface BaseNodeProps {
@@ -18,3 +19,5 @@ export interface DragState {
   isDragging: boolean;
   dragOffset: { x: number; y: number };
 }
+
+export type PointerDragEvent = React.PointerEvent;
