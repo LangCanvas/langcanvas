@@ -32,9 +32,9 @@ const MediumLayoutNodeItem: React.FC<MediumLayoutNodeItemProps> = ({
           }
         }}
       >
-        <div className="flex items-center space-x-2 w-full">
+        <div className="flex items-center justify-start space-x-2 w-full">
           <span className="text-lg flex-shrink-0">{node.icon}</span>
-          <span className="font-semibold text-sm text-left flex-1">{node.label}</span>
+          <span className="font-semibold text-sm text-left flex-grow">{node.label}</span>
         </div>
         
         {showDescription && (
