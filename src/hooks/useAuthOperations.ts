@@ -128,13 +128,7 @@ export const useAuthOperations = (
     setRetryCount(0);
     GoogleAuthService.disableAutoSelect();
     
-    // Also reset One Tap preferences
-    try {
-      GoogleAuthService.resetOneTapPreferences?.();
-    } catch (error) {
-      debugLogger.addLog('Could not reset One Tap preferences');
-    }
-    
+    // Clear Google-related cookies
     try {
       document.cookie.split(";").forEach(cookie => {
         const eqPos = cookie.indexOf("=");
@@ -145,6 +139,14 @@ export const useAuthOperations = (
       });
     } catch (error) {
       debugLogger.addLog('Could not clear all cookies');
+    }
+    
+    // Clear local storage items related to Google Auth
+    try {
+      localStorage.removeItem('g_state');
+      sessionStorage.removeItem('g_state');
+    } catch (error) {
+      debugLogger.addLog('Could not clear One Tap preferences');
     }
     
     setTimeout(() => {
