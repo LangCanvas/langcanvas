@@ -7,7 +7,7 @@ const ToolbarBrand: React.FC = () => {
       <img 
         src="/icon.png" 
         alt="LangCanvas" 
-        className="w-16 h-16 sm:w-20 sm:h-20"
+        className="w-8 h-8 sm:w-10 sm:h-10"
       />
     </div>
   );
