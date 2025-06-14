@@ -97,8 +97,6 @@ const Canvas: React.FC<CanvasProps> = ({
   const {
     isDragging: isMultiDragging,
     startDrag: startMultiDrag,
-    updateDrag: updateMultiDrag,
-    endDrag: endMultiDrag,
   } = useMultiNodeDrag(selectedNodeIds, nodes, onMoveNode);
 
   const createNodeWithAnalytics = (type: NodeType, x: number, y: number) => {
@@ -187,26 +185,8 @@ const Canvas: React.FC<CanvasProps> = ({
     toggleEdgeSelection(edgeId, isCtrlOrShiftPressed);
   };
 
-  // Handle global mouse events for multi-node dragging
-  useEffect(() => {
-    if (!isMultiDragging) return;
-
-    const handleMouseMove = (event: MouseEvent) => {
-      updateMultiDrag(event.clientX, event.clientY);
-    };
-
-    const handleMouseUp = () => {
-      endMultiDrag();
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isMultiDragging, updateMultiDrag, endMultiDrag]);
+  // Handle global mouse events for multi-node dragging - This is now handled inside useMultiNodeDrag hook
+  // The old useEffect has been removed.
 
   const handleEdgeDoubleClick = (edgeId: string) => {
     // Dispatch custom event to open right panel  

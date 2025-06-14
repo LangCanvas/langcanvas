@@ -1,5 +1,5 @@
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { EnhancedNode } from '../types/nodeTypes';
 
 const DRAG_THRESHOLD = 5;
@@ -29,31 +29,8 @@ export const useMultiNodeDrag = (
 
   const [isVisualDragging, setVisualDragging] = useState(false);
 
-  const startDrag = useCallback((nodeId: string, clientX: number, clientY: number) => {
-    const initialPositions = new Map();
-    selectedNodeIds.forEach(id => {
-      const node = nodes.find(n => n.id === id);
-      if (node) {
-        initialPositions.set(id, { x: node.x, y: node.y });
-      }
-    });
-
-    if (initialPositions.size === 0) return;
-
-    console.log('🎯 Preparing multi-drag for nodes:', [...initialPositions.keys()]);
-    
-    dragStateRef.current = {
-      isDragging: false,
-      primaryNodeId: nodeId,
-      dragOffset: { x: 0, y: 0 },
-      initialPositions,
-      startX: clientX,
-      startY: clientY,
-    };
-    setVisualDragging(false);
-  }, [selectedNodeIds, nodes]);
-
-  const updateDrag = useCallback((clientX: number, clientY: number) => {
+  const handlePointerMove = useCallback((event: PointerEvent) => {
+    const { clientX, clientY } = event;
     if (!dragStateRef.current.initialPositions.size || !dragStateRef.current.primaryNodeId) return;
 
     if (dragStateRef.current.isDragging) {
@@ -76,8 +53,12 @@ export const useMultiNodeDrag = (
         const deltaY = newPrimaryY - primaryNodeInitial.y;
 
         dragStateRef.current.initialPositions.forEach((initialPos, nodeId) => {
-          const constrainedX = Math.max(0, Math.min(initialPos.x + deltaX, 2880));
-          const constrainedY = Math.max(0, Math.min(initialPos.y + deltaY, 2940));
+          const node = nodes.find(n => n.id === nodeId);
+          const nodeWidth = node ? (document.querySelector(`[data-node-id="${nodeId}"]`)?.offsetWidth || 120) : 120;
+          const nodeHeight = node ? (document.querySelector(`[data-node-id="${nodeId}"]`)?.offsetHeight || 60) : 60;
+
+          const constrainedX = Math.max(0, Math.min(initialPos.x + deltaX, 3000 - nodeWidth));
+          const constrainedY = Math.max(0, Math.min(initialPos.y + deltaY, 3000 - nodeHeight));
           onMoveNode(nodeId, constrainedX, constrainedY);
         });
       }
@@ -111,9 +92,9 @@ export const useMultiNodeDrag = (
         console.log('🎯 Starting multi-drag with offset:', dragStateRef.current.dragOffset);
       }
     }
-  }, [onMoveNode]);
+  }, [onMoveNode, nodes]);
 
-  const endDrag = useCallback(() => {
+  const handlePointerUp = useCallback(() => {
     if (dragStateRef.current.isDragging) {
       console.log('🎯 Ending multi-drag');
     }
@@ -126,12 +107,47 @@ export const useMultiNodeDrag = (
       startY: 0,
     };
     setVisualDragging(false);
-  }, []);
+
+    document.removeEventListener('pointermove', handlePointerMove);
+    document.removeEventListener('pointerup', handlePointerUp);
+  }, [handlePointerMove]);
+
+  const startDrag = useCallback((nodeId: string, clientX: number, clientY: number) => {
+    const initialPositions = new Map();
+    selectedNodeIds.forEach(id => {
+      const node = nodes.find(n => n.id === id);
+      if (node) {
+        initialPositions.set(id, { x: node.x, y: node.y });
+      }
+    });
+
+    if (initialPositions.size === 0) return;
+
+    console.log('🎯 Preparing multi-drag for nodes:', [...initialPositions.keys()]);
+    
+    dragStateRef.current = {
+      isDragging: false,
+      primaryNodeId: nodeId,
+      dragOffset: { x: 0, y: 0 },
+      initialPositions,
+      startX: clientX,
+      startY: clientY,
+    };
+    setVisualDragging(false);
+
+    document.addEventListener('pointermove', handlePointerMove);
+    document.addEventListener('pointerup', handlePointerUp);
+  }, [selectedNodeIds, nodes, handlePointerMove, handlePointerUp]);
+
+  useEffect(() => {
+    return () => {
+      document.removeEventListener('pointermove', handlePointerMove);
+      document.removeEventListener('pointerup', handlePointerUp);
+    };
+  }, [handlePointerMove, handlePointerUp]);
 
   return {
     isDragging: isVisualDragging,
     startDrag,
-    updateDrag,
-    endDrag,
   };
 };
