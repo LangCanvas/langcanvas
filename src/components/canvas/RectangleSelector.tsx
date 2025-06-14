@@ -11,11 +11,8 @@ const RectangleSelector: React.FC<RectangleSelectorProps> = ({
   selectionRect,
   isSelecting
 }) => {
-  console.log('🎨 RectangleSelector render:', { selectionRect, isSelecting });
-
   // Only render if we have a valid rectangle and are actively selecting
   if (!isSelecting || !selectionRect) {
-    console.log('🎨 RectangleSelector: Not rendering - isSelecting:', isSelecting, 'selectionRect:', selectionRect);
     return null;
   }
 
@@ -23,8 +20,6 @@ const RectangleSelector: React.FC<RectangleSelectorProps> = ({
   const top = Math.min(selectionRect.startY, selectionRect.endY);
   const width = Math.abs(selectionRect.endX - selectionRect.startX);
   const height = Math.abs(selectionRect.endY - selectionRect.startY);
-
-  console.log('🎨 RectangleSelector: Rendering rectangle with dimensions:', { left, top, width, height });
 
   return (
     <div

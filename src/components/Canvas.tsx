@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect } from 'react';
 import { EnhancedNode, NodeType } from '../types/nodeTypes';
 import { EnhancedEdge } from '../types/edgeTypes';
@@ -26,11 +27,11 @@ interface CanvasProps {
   className?: string;
   nodes: EnhancedNode[];
   edges: EnhancedEdge[];
-  selectedNodeId: string | null; // Primary selected node
-  selectedEdgeId: string | null; // Primary selected edge
+  selectedNodeId: string | null;
+  selectedEdgeId: string | null;
   onAddNode: (type: NodeType, x: number, y: number) => EnhancedNode | null;
-  onSelectNode: (id: string | null) => void; // Sets primary selected node
-  onSelectEdge: (id: string | null) => void; // Sets primary selected edge
+  onSelectNode: (id: string | null) => void;
+  onSelectEdge: (id: string | null) => void;
   onMoveNode: (id: string, x: number, y: number) => void;
   onDeleteNode: (id: string) => void;
   onDeleteEdge: (id: string) => void;
@@ -78,16 +79,15 @@ const Canvas: React.FC<CanvasProps> = ({
 
   const {
     selectedNodeIds,
-    selectedEdgeIds, // New from useMultiSelection
-    isSelecting, // Rectangle selection state
+    selectedEdgeIds,
+    isSelecting,
     selectionRect,
     selectSingleNode,
-    selectSingleEdge, // New from useMultiSelection
+    selectSingleEdge,
     toggleNodeSelection,
-    toggleEdgeSelection, // New from useMultiSelection
+    toggleEdgeSelection,
     clearSelection,
-    clearNodeMultiSelection, // Renamed for clarity
-    // clearEdgeMultiSelection, // Not directly used by Canvas, useMultiSelection handles internally
+    clearNodeMultiSelection,
     startRectangleSelection,
     updateRectangleSelection,
     endRectangleSelection,
@@ -118,47 +118,32 @@ const Canvas: React.FC<CanvasProps> = ({
     selectNodeSafely,
     selectEdgeSafely,
     handleMoveNode,
-    clearAllSelections, // Now available from useCanvasHandlers
+    clearAllSelections,
   } = useCanvasHandlers({
     canvasRef,
     scrollAreaRef,
-    onSelectNode, // For primary node
-    onSelectEdge, // For primary edge
+    onSelectNode,
+    onSelectEdge,
     createNodeWithAnalytics,
     pendingNodeType,
     onClearPendingCreation,
     onMoveNode,
     nodes,
-    // Pass multi-selection functions to useCanvasHandlers
     selectSingleNode,
     selectSingleEdge,
-    clearSelection, // This is clearSelection from useMultiSelection
+    clearSelection,
   });
 
   useCanvasSelection({
     selectedNodeId,
     selectedEdgeId,
     selectedNodeIds,
-    selectedEdgeIds, // Pass new state
+    selectedEdgeIds,
     selectSingleNode,
-    selectSingleEdge, // Pass new function
-    clearNodeMultiSelection, // Pass renamed function
+    selectSingleEdge,
+    clearNodeMultiSelection,
     onSelectionStateChange,
-    isSelecting, // Pass rectangle selection state
-  });
-
-  useCanvasMouseEvents({
-    canvasRef,
-    isSelecting, // Pass rectangle selection state
-    isMultiDragging,
-    pendingNodeType,
-    nodes,
-    startRectangleSelection,
-    updateRectangleSelection: (x: number, y: number) => updateRectangleSelection(x, y, nodes),
-    endRectangleSelection,
-    clearSelection, // From useMultiSelection (passed via useCanvasHandlers or directly)
-    selectNodeSafely, // From useCanvasHandlers
-    selectEdgeSafely, // From useCanvasHandlers
+    isSelecting,
   });
 
   const {
@@ -166,30 +151,25 @@ const Canvas: React.FC<CanvasProps> = ({
     handleNodeDoubleClick,
     handleNodeDragStart,
   } = useCanvasNodeEvents({
-    toggleNodeSelection, // From useMultiSelection
-    selectNodeSafely,    // From useCanvasHandlers
-    selectSingleNode,    // From useMultiSelection
+    toggleNodeSelection,
+    selectNodeSafely,
+    selectSingleNode,
     startMultiDrag,
     nodes,
-    selectedNodeIds,     // Still needed for multi-drag logic
+    selectedNodeIds,
   });
 
   // Handler for primary edge selection (non-modifier click)
   const handleSelectSingleEdge = (edgeId: string | null) => {
-    selectEdgeSafely(edgeId); // This updates primary and multi-selection state
+    selectEdgeSafely(edgeId);
   };
   
   // Handler for toggling edge in multi-selection (modifier click)
   const handleToggleEdgeSelection = (edgeId: string, isCtrlOrShiftPressed: boolean) => {
-    // toggleEdgeSelection is already from useMultiSelection, which updates selectedEdgeIds and clears selectedNodeIds
     toggleEdgeSelection(edgeId, isCtrlOrShiftPressed);
   };
 
-  // Handle global mouse events for multi-node dragging - This is now handled inside useMultiNodeDrag hook
-  // The old useEffect has been removed.
-
   const handleEdgeDoubleClick = (edgeId: string) => {
-    // Dispatch custom event to open right panel  
     window.dispatchEvent(new CustomEvent('openPropertiesPanel', { 
       detail: { edgeId, type: 'edge' } 
     }));
@@ -206,7 +186,7 @@ const Canvas: React.FC<CanvasProps> = ({
               className={`relative transition-colors ${className} ${
                 isMobile ? 'touch-pan-y' : ''
               } ${pendingNodeType ? 'cursor-crosshair' : ''} ${
-                isSelecting ? 'cursor-crosshair' : '' // isSelecting for rectangle
+                isSelecting ? 'cursor-crosshair' : ''
               }`}
               style={{
                 width: '3000px',
@@ -217,12 +197,8 @@ const Canvas: React.FC<CanvasProps> = ({
               }}
             >
               <KeyboardHandler
-                selectedNodeId={selectedNodeId} // Primary selected node
-                selectedEdgeId={selectedEdgeId} // Primary selected edge
-                // For deletion, we might want to delete all selected items (nodes and edges)
-                // This would require passing selectedNodeIds and selectedEdgeIds
-                // And updating onDeleteNode/onDeleteEdge to handle multiple IDs.
-                // For now, keeping it to primary selected item.
+                selectedNodeId={selectedNodeId}
+                selectedEdgeId={selectedEdgeId}
                 onDeleteNode={onDeleteNode}
                 onDeleteEdge={onDeleteEdge}
               />
@@ -232,93 +208,111 @@ const Canvas: React.FC<CanvasProps> = ({
                 onAddEdge={onAddEdge}
                 canvasRef={canvasRef}
               >
-                {({ isCreatingEdge, edgePreview, hoveredNodeId, handleStartConnection }) => (
-                  <>
-                    <CanvasBackground 
-                      isDragOver={false} // This prop seems to be static false
-                      isMobile={isMobile} 
-                      nodeCount={nodes.length} 
-                    />
+                {({ isCreatingEdge, edgePreview, hoveredNodeId, handleStartConnection }) => {
+                  // Pass isCreatingEdge to useCanvasMouseEvents
+                  useCanvasMouseEvents({
+                    canvasRef,
+                    isSelecting,
+                    isMultiDragging,
+                    isCreatingEdge, // Add this prop
+                    pendingNodeType,
+                    nodes,
+                    startRectangleSelection,
+                    updateRectangleSelection: (x: number, y: number) => updateRectangleSelection(x, y, nodes),
+                    endRectangleSelection,
+                    clearSelection,
+                    selectNodeSafely,
+                    selectEdgeSafely,
+                  });
 
-                    <EnhancedEdgeRenderer
-                      edges={edges}
-                      nodes={nodes}
-                      selectedEdgeId={selectedEdgeId} // Primary selected edge
-                      selectedEdgeIds={selectedEdgeIds} // Multi-selected edges
-                      onSelectSingleEdge={handleSelectSingleEdge} // For non-modifier clicks
-                      onToggleEdgeSelection={handleToggleEdgeSelection} // For modifier clicks
-                      onDoubleClick={handleEdgeDoubleClick}
-                      getEdgeValidationClass={getEdgeValidationClass}
-                      getEdgeTooltip={getEdgeTooltip}
-                    />
+                  return (
+                    <>
+                      <CanvasBackground 
+                        isDragOver={false}
+                        isMobile={isMobile} 
+                        nodeCount={nodes.length} 
+                      />
 
-                    {/* Rectangle Selection */}
-                    <RectangleSelector
-                      selectionRect={selectionRect}
-                      isSelecting={isSelecting} // isSelecting for rectangle
-                    />
+                      <EnhancedEdgeRenderer
+                        edges={edges}
+                        nodes={nodes}
+                        selectedEdgeId={selectedEdgeId}
+                        selectedEdgeIds={selectedEdgeIds}
+                        onSelectSingleEdge={handleSelectSingleEdge}
+                        onToggleEdgeSelection={handleToggleEdgeSelection}
+                        onDoubleClick={handleEdgeDoubleClick}
+                        getEdgeValidationClass={getEdgeValidationClass}
+                        getEdgeTooltip={getEdgeTooltip}
+                      />
 
-                    {/* Edge Preview while creating */}
-                    <EdgePreview edgePreview={edgePreview} />
+                      {/* Rectangle Selection */}
+                      <RectangleSelector
+                        selectionRect={selectionRect}
+                        isSelecting={isSelecting}
+                      />
 
-                    {/* Render all nodes */}
-                    {nodes.map((node) => {
-                      const isSelected = selectedNodeIds.includes(node.id); // Check against multi-selected nodes
-                      const isPrimarySelected = selectedNodeId === node.id; // For stronger highlight if needed
-                      const displaySelected = isSelected || isPrimarySelected; // Combine for basic selection highlight
+                      {/* Edge Preview while creating */}
+                      <EdgePreview edgePreview={edgePreview} />
 
-                      const isHovered = hoveredNodeId === node.id;
-                      
-                      return (
-                        <div
-                          key={node.id}
-                          className={`${isHovered ? 'ring-2 ring-blue-400 ring-opacity-50 rounded-lg' : ''} ${
-                            displaySelected ? 'ring-4 ring-blue-500 ring-opacity-100 rounded-lg shadow-xl' : '' // Updated selection class check
-                          } ${
-                            isMobile ? 'touch-manipulation' : ''
-                          } transition-all duration-200`}
-                        >
-                          {node.type === 'conditional' ? (
-                            <ConditionalNode
-                              node={node}
-                              outgoingEdges={edges.filter(e => e.source === node.id)}
-                              isSelected={displaySelected} // Pass combined selection state
-                              canCreateEdge={canCreateEdge(node)}
-                              onSelect={(id, event) => handleNodeSelect(id, event)}
-                              onDoubleClick={() => handleNodeDoubleClick(node.id)}
-                              onMove={handleMoveNode}
-                              onDragStart={(event) => handleNodeDragStart(node.id, event)}
-                              onStartConnection={handleStartConnection}
-                              validationClass={getNodeValidationClass?.(node.id) || ''}
-                              validationTooltip={getNodeTooltip?.(node.id) || ''}
-                            />
-                          ) : (
-                            <RegularNode
-                              node={node}
-                              isSelected={displaySelected} // Pass combined selection state
-                              canCreateEdge={canCreateEdge(node)}
-                              onSelect={(id, event) => handleNodeSelect(id, event)}
-                              onDoubleClick={() => handleNodeDoubleClick(node.id)}
-                              onMove={handleMoveNode}
-                              onDragStart={(event) => handleNodeDragStart(node.id, event)}
-                              onStartConnection={handleStartConnection}
-                              validationClass={getNodeValidationClass?.(node.id) || ''}
-                              validationTooltip={getNodeTooltip?.(node.id) || ''}
-                            />
-                          )}
-                        </div>
-                      );
-                    })}
+                      {/* Render all nodes */}
+                      {nodes.map((node) => {
+                        const isSelected = selectedNodeIds.includes(node.id);
+                        const isPrimarySelected = selectedNodeId === node.id;
+                        const displaySelected = isSelected || isPrimarySelected;
 
-                    <BottomStatusBar
-                      isSelecting={isSelecting} // Rectangle selection
-                      selectedCount={selectedNodeIds.length + selectedEdgeIds.length} // Total multi-selected items
-                      pendingNodeType={pendingNodeType}
-                      isCreatingEdge={isCreatingEdge}
-                      hasUnsavedChanges={hasUnsavedChanges}
-                    />
-                  </>
-                )}
+                        const isHovered = hoveredNodeId === node.id;
+                        
+                        return (
+                          <div
+                            key={node.id}
+                            className={`${isHovered ? 'ring-2 ring-blue-400 ring-opacity-50 rounded-lg' : ''} ${
+                              displaySelected ? 'ring-4 ring-blue-500 ring-opacity-100 rounded-lg shadow-xl' : ''
+                            } ${
+                              isMobile ? 'touch-manipulation' : ''
+                            } transition-all duration-200`}
+                          >
+                            {node.type === 'conditional' ? (
+                              <ConditionalNode
+                                node={node}
+                                outgoingEdges={edges.filter(e => e.source === node.id)}
+                                isSelected={displaySelected}
+                                canCreateEdge={canCreateEdge(node)}
+                                onSelect={(id, event) => handleNodeSelect(id, event)}
+                                onDoubleClick={() => handleNodeDoubleClick(node.id)}
+                                onMove={handleMoveNode}
+                                onDragStart={(event) => handleNodeDragStart(node.id, event)}
+                                onStartConnection={handleStartConnection}
+                                validationClass={getNodeValidationClass?.(node.id) || ''}
+                                validationTooltip={getNodeTooltip?.(node.id) || ''}
+                              />
+                            ) : (
+                              <RegularNode
+                                node={node}
+                                isSelected={displaySelected}
+                                canCreateEdge={canCreateEdge(node)}
+                                onSelect={(id, event) => handleNodeSelect(id, event)}
+                                onDoubleClick={() => handleNodeDoubleClick(node.id)}
+                                onMove={handleMoveNode}
+                                onDragStart={(event) => handleNodeDragStart(node.id, event)}
+                                onStartConnection={handleStartConnection}
+                                validationClass={getNodeValidationClass?.(node.id) || ''}
+                                validationTooltip={getNodeTooltip?.(node.id) || ''}
+                              />
+                            )}
+                          </div>
+                        );
+                      })}
+
+                      <BottomStatusBar
+                        isSelecting={isSelecting}
+                        selectedCount={selectedNodeIds.length + selectedEdgeIds.length}
+                        pendingNodeType={pendingNodeType}
+                        isCreatingEdge={isCreatingEdge}
+                        hasUnsavedChanges={hasUnsavedChanges}
+                      />
+                    </>
+                  );
+                }}
               </EdgeCreationHandler>
             </div>
           </DragDropHandler>

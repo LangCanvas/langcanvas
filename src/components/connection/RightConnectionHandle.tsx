@@ -36,12 +36,24 @@ const RightConnectionHandle: React.FC<RightConnectionHandleProps> = ({
     if (!canCreateEdge) return;
     
     const pointerEvent = getPointerEvent(e);
+    // Aggressively stop all event propagation to prevent node drag/selection
     pointerEvent.preventDefault();
     pointerEvent.stopPropagation();
+    pointerEvent.stopImmediatePropagation();
     
     const edgePosition = getRightConnectionPosition(node);
-    console.log(`🔗 Starting connection from ${node.label} right handle at canvas coords (${edgePosition.x}, ${edgePosition.y})`);
     onStartConnection(node, edgePosition.x, edgePosition.y);
+  };
+
+  // Prevent any parent events from triggering
+  const handlePointerUp = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+  };
+
+  const handlePointerMove = (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation();
   };
 
   const handleStyle = node.type === 'conditional' ? {
@@ -84,6 +96,10 @@ const RightConnectionHandle: React.FC<RightConnectionHandleProps> = ({
       style={handleStyle}
       onMouseDown={handlePointerDown}
       onTouchStart={handlePointerDown}
+      onMouseUp={handlePointerUp}
+      onTouchEnd={handlePointerUp}
+      onMouseMove={handlePointerMove}
+      onTouchMove={handlePointerMove}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       title={canCreateEdge ? "Drag to connect" : "Cannot create more connections"}

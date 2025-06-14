@@ -25,7 +25,14 @@ const BaseNode: React.FC<BaseNodeComponentProps> = ({
   const sanitizedLabel = sanitizeNodeLabel(node.label);
 
   const handlePointerDown = (e: React.PointerEvent) => {
-    console.log(`🎯 BaseNode(${node.id}): PointerDown - isSelected: ${isSelected}`);
+    // Check if this is a connection handle event by looking at the target
+    const target = e.target as HTMLElement;
+    const isConnectionHandle = target.closest('[data-handle]');
+    
+    if (isConnectionHandle) {
+      // Don't interfere with connection handle events
+      return;
+    }
     
     // Always call onSelect first to update selection state
     onSelect(node.id, e);
@@ -34,10 +41,8 @@ const BaseNode: React.FC<BaseNodeComponentProps> = ({
     const willBeMultiDrag = isSelected || (e.ctrlKey || e.metaKey || e.shiftKey);
     
     if (willBeMultiDrag && onDragStart) {
-      console.log(`🎯 BaseNode(${node.id}): Will use multi-drag system`);
       onDragStart(e);
     } else {
-      console.log(`🎯 BaseNode(${node.id}): Will use single-node drag system`);
       startDrag(e);
     }
   };
