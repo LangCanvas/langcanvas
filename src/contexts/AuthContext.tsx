@@ -49,6 +49,7 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const secureAuth = useSecureAuth();
   const [authSuccessCallback, setAuthSuccessCallback] = useState<(() => void) | null>(null);
+  const [callbackExecuted, setCallbackExecuted] = useState(false);
   
   const authHandlers = useAuthHandlers(authSuccessCallback || undefined);
   const { isGoogleLoaded, diagnosticInfo, domainConfig, initializeAuth } = useAuthInitialization(
@@ -64,7 +65,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     secureAuth
   );
 
-  // Enhanced callback management with proper cleanup
+  // Enhanced callback management with proper cleanup and execution tracking
   const handleSetAuthSuccessCallback = (callback: (() => void) | null) => {
     console.log('🔐 Auth Context - Setting callback:', !!callback);
     
@@ -74,15 +75,37 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
     
     setAuthSuccessCallback(callback);
+    setCallbackExecuted(false); // Reset execution state when setting new callback
   };
 
-  // Clear callback when user becomes authenticated to prevent multiple calls
+  // Enhanced callback execution with timing improvements
   useEffect(() => {
-    if (secureAuth.isAuthenticated && secureAuth.isAdmin && authSuccessCallback) {
-      console.log('🔐 Auth Context - User authenticated, clearing callback to prevent multiple calls');
-      setAuthSuccessCallback(null);
+    if (secureAuth.isAuthenticated && secureAuth.isAdmin && authSuccessCallback && !callbackExecuted) {
+      console.log('🔐 Auth Context - User authenticated and admin, executing callback');
+      
+      // Mark callback as executed to prevent multiple calls
+      setCallbackExecuted(true);
+      
+      // Execute callback with a small delay to ensure all state updates are complete
+      setTimeout(() => {
+        console.log('🔐 Auth Context - Executing delayed navigation callback');
+        authSuccessCallback();
+        
+        // Clear callback after execution to prevent memory leaks
+        setTimeout(() => {
+          console.log('🔐 Auth Context - Clearing callback after successful execution');
+          setAuthSuccessCallback(null);
+        }, 100);
+      }, 50);
     }
-  }, [secureAuth.isAuthenticated, secureAuth.isAdmin, authSuccessCallback]);
+  }, [secureAuth.isAuthenticated, secureAuth.isAdmin, authSuccessCallback, callbackExecuted]);
+
+  // Reset callback execution state when user becomes unauthenticated
+  useEffect(() => {
+    if (!secureAuth.isAuthenticated) {
+      setCallbackExecuted(false);
+    }
+  }, [secureAuth.isAuthenticated]);
 
   return (
     <AuthContext.Provider value={{
