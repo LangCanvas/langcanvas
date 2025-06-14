@@ -61,6 +61,17 @@ const Index: React.FC = () => {
     selectedEdge: selectedEdge?.id || 'none'
   });
 
+  console.log('🚨 DEBUG - Index.tsx received panel states:', {
+    isRightPanelVisible,
+    isRightPanelExpanded,
+    timestamp: new Date().toISOString()
+  });
+
+  console.log('🚨 DEBUG - Index.tsx about to pass props to MainApplicationLayout:', {
+    isRightPanelVisible,
+    isRightPanelExpanded
+  });
+
   console.log('📄 Index.tsx - Rendering Canvas component');
 
   return (

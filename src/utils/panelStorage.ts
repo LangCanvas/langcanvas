@@ -61,6 +61,7 @@ export const savePanelSettingsToStorage = (settings: Omit<StoredPanelSettings, '
       version: panelData.version,
       timestamp: new Date(panelData.timestamp).toISOString()
     });
+    console.log('🚨 DEBUG - savePanelSettingsToStorage saved:', JSON.stringify(panelData, null, 2));
   } catch (error) {
     console.warn('❌ Failed to save panel settings to localStorage:', error);
   }
@@ -69,17 +70,21 @@ export const savePanelSettingsToStorage = (settings: Omit<StoredPanelSettings, '
 export const loadPanelSettingsFromStorage = (): Omit<StoredPanelSettings, 'version' | 'timestamp'> => {
   try {
     const stored = localStorage.getItem(PANEL_STORAGE_KEY);
+    console.log('🚨 DEBUG - loadPanelSettingsFromStorage raw stored:', stored);
     
     if (!stored) {
       console.log('🆕 No stored panel settings found - Properties Panel will be visible by default');
+      console.log('🚨 DEBUG - No stored settings, returning defaults:', JSON.stringify(DEFAULT_PANEL_SETTINGS, null, 2));
       return DEFAULT_PANEL_SETTINGS;
     }
 
     let panelData: StoredPanelSettings;
     try {
       panelData = JSON.parse(stored);
+      console.log('🚨 DEBUG - Parsed panel data:', JSON.stringify(panelData, null, 2));
     } catch (parseError) {
       console.warn('🔧 Corrupted panel settings detected, resetting to defaults - Properties Panel will be visible');
+      console.log('🚨 DEBUG - Parse error, clearing storage and returning defaults');
       localStorage.removeItem(PANEL_STORAGE_KEY);
       return DEFAULT_PANEL_SETTINGS;
     }
@@ -87,6 +92,7 @@ export const loadPanelSettingsFromStorage = (): Omit<StoredPanelSettings, 'versi
     // Handle version migration or validation failure
     if (panelData.version !== PANEL_VERSION || !validatePanelSettings(panelData)) {
       console.log(`🔄 Migrating panel settings from ${panelData.version || 'unknown'} to ${PANEL_VERSION} - Properties Panel will be visible by default`);
+      console.log('🚨 DEBUG - Version/validation mismatch, migrating');
       
       // Clear old/corrupted storage
       localStorage.removeItem('langcanvas_panel_widths');
@@ -96,11 +102,15 @@ export const loadPanelSettingsFromStorage = (): Omit<StoredPanelSettings, 'versi
       const preservedRightPanelVisible = panelData.isRightPanelVisible === false ? false : true;
       
       console.log('🔍 Preserving right panel visibility preference:', preservedRightPanelVisible);
+      console.log('🚨 DEBUG - Preserved right panel visibility:', preservedRightPanelVisible);
       
-      return {
+      const migratedSettings = {
         ...DEFAULT_PANEL_SETTINGS,
         isRightPanelVisible: preservedRightPanelVisible
       };
+      
+      console.log('🚨 DEBUG - Returning migrated settings:', JSON.stringify(migratedSettings, null, 2));
+      return migratedSettings;
     }
 
     console.log('📂 Panel settings loaded from localStorage:', {
@@ -109,7 +119,7 @@ export const loadPanelSettingsFromStorage = (): Omit<StoredPanelSettings, 'versi
       timestamp: new Date(panelData.timestamp).toISOString()
     });
 
-    return {
+    const loadedSettings = {
       isLeftPanelVisible: true, // Always force to true, regardless of stored value
       isLeftPanelExpanded: panelData.isLeftPanelExpanded ?? true,
       isRightPanelVisible: panelData.isRightPanelVisible ?? true, // Default to true if missing
@@ -117,8 +127,12 @@ export const loadPanelSettingsFromStorage = (): Omit<StoredPanelSettings, 'versi
       leftPanelWidth: panelData.leftPanelWidth || DEFAULT_PANEL_SETTINGS.leftPanelWidth,
       rightPanelWidth: panelData.rightPanelWidth || DEFAULT_PANEL_SETTINGS.rightPanelWidth
     };
+
+    console.log('🚨 DEBUG - Final loaded settings:', JSON.stringify(loadedSettings, null, 2));
+    return loadedSettings;
   } catch (error) {
     console.warn('❌ Failed to load panel settings from localStorage, using defaults - Properties Panel will be visible:', error);
+    console.log('🚨 DEBUG - Error loading settings, returning defaults');
     return DEFAULT_PANEL_SETTINGS;
   }
 };
@@ -128,6 +142,7 @@ export const clearPanelSettingsFromStorage = (): void => {
     localStorage.removeItem(PANEL_STORAGE_KEY);
     localStorage.removeItem('langcanvas_panel_widths'); // Clean up old storage
     console.log('🗑️ Panel settings cleared from localStorage');
+    console.log('🚨 DEBUG - Panel settings cleared from localStorage');
   } catch (error) {
     console.warn('❌ Failed to clear panel settings from localStorage:', error);
   }
@@ -139,7 +154,18 @@ export const forceResetPanelSettings = (): void => {
     clearPanelSettingsFromStorage();
     savePanelSettingsToStorage(DEFAULT_PANEL_SETTINGS);
     console.log('🔄 Panel settings force-reset to defaults');
+    console.log('🚨 DEBUG - Panel settings force-reset to defaults');
   } catch (error) {
     console.warn('❌ Failed to force reset panel settings:', error);
   }
+};
+
+// DEBUG: Expose global debugging functions for panel storage
+(window as any).debugPanelStorage = {
+  get: () => localStorage.getItem(PANEL_STORAGE_KEY),
+  load: loadPanelSettingsFromStorage,
+  save: savePanelSettingsToStorage,
+  clear: clearPanelSettingsFromStorage,
+  reset: forceResetPanelSettings,
+  defaults: DEFAULT_PANEL_SETTINGS
 };

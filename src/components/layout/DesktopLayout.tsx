@@ -61,6 +61,11 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     edges: edges.length
   });
 
+  console.log('🚨 DEBUG - DesktopLayout received props:', {
+    isRightPanelVisible,
+    timestamp: new Date().toISOString()
+  });
+
   const {
     leftPanelWidth,
     rightPanelWidth,
@@ -90,6 +95,12 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     canvasPercentage,
     leftVisible: isLeftPanelVisible,
     rightVisible: isRightPanelVisible
+  });
+
+  console.log('🚨 DEBUG - DesktopLayout calculated percentages:', {
+    rightPanelPercentage,
+    isRightPanelVisible,
+    willRenderRightPanel: isRightPanelVisible
   });
 
   // Calculate the maximum and minimum percentages for the left panel
@@ -140,6 +151,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
               onResize={handleRightPanelResize}
               className="relative"
             >
+              {console.log('🚨 DEBUG - DesktopLayout rendering DesktopPropertiesPanel with isVisible:', isRightPanelVisible)}
               <DesktopPropertiesPanel
                 selectedNode={selectedNode}
                 selectedEdge={selectedEdge}
@@ -163,6 +175,10 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
             </ResizablePanel>
           </>
         )}
+        {console.log('🚨 DEBUG - DesktopLayout conditional for right panel:', {
+          condition: isRightPanelVisible,
+          willRender: isRightPanelVisible ? 'YES' : 'NO'
+        })}
       </ResizablePanelGroup>
     </div>
   );

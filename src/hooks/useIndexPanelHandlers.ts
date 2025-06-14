@@ -16,6 +16,11 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
     setIsRightPanelVisible,
   } = usePanelStateManagement();
 
+  console.log('🚨 DEBUG - useIndexPanelHandlers received from usePanelStateManagement:', {
+    isRightPanelVisible,
+    timestamp: new Date().toISOString()
+  });
+
   const handlers = usePanelActionHandlers({
     isMobileMenuOpen,
     setIsMobileMenuOpen,
@@ -50,6 +55,12 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
     isRightPanelVisible: returnValues.isRightPanelVisible,
     isLeftPanelExpanded: returnValues.isLeftPanelExpanded,
     isRightPanelExpanded: returnValues.isRightPanelExpanded
+  });
+
+  console.log('🚨 DEBUG - useIndexPanelHandlers final return values:', {
+    isRightPanelVisible: returnValues.isRightPanelVisible,
+    isRightPanelExpanded: returnValues.isRightPanelExpanded,
+    timestamp: new Date().toISOString()
   });
 
   return returnValues;

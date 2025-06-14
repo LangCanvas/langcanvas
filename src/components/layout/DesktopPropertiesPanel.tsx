@@ -62,6 +62,12 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
     showValidationPanel
   });
 
+  console.log('🚨 DEBUG - DesktopPropertiesPanel received isVisible:', {
+    isVisible,
+    willReturnNull: !isVisible,
+    timestamp: new Date().toISOString()
+  });
+
   const { activeTab, setActiveTab } = useDesktopPropertiesPanelState({
     selectedNode,
     selectedEdge,
@@ -73,10 +79,12 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
   // If not visible, don't render anything
   if (!isVisible) {
     console.log('🎛️ DesktopPropertiesPanel - Not visible, returning null');
+    console.log('🚨 DEBUG - DesktopPropertiesPanel returning null because isVisible is false');
     return null;
   }
 
   console.log('🎛️ DesktopPropertiesPanel - Continuing with render');
+  console.log('🚨 DEBUG - DesktopPropertiesPanel proceeding with render, isVisible is true');
 
   // Always show expanded panel (no collapsed state)
   const isCompact = panelLayout === 'compact';
@@ -88,12 +96,14 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
   });
 
   console.log('🎛️ DesktopPropertiesPanel - Rendering aside element');
+  console.log('🚨 DEBUG - DesktopPropertiesPanel about to render aside element');
   
   return (
     <aside 
       data-panel="desktop-properties" 
       className="relative bg-background border-l border-border flex flex-col h-full flex-shrink-0"
     >
+      {console.log('🚨 DEBUG - DesktopPropertiesPanel aside element rendered')}
       <div className={`${isCompact ? 'p-2' : 'p-4'} border-b border-border flex items-center justify-between`}>
         <h2 className={`font-medium text-foreground ${isCompact ? 'text-xs' : 'text-sm'}`}>
           {isCompact ? 'Panel' : 'Properties Panel'}
