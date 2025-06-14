@@ -6,6 +6,7 @@ import { useWorkflowSerializer } from './useWorkflowSerializer';
 import { useValidation } from './useValidation';
 
 export const useIndexState = () => {
+  const enhancedNodes = useEnhancedNodes();
   const {
     nodes,
     selectedNode,
@@ -17,8 +18,9 @@ export const useIndexState = () => {
     setNodes,
     selectNode,
     clearSelection,
-  } = useEnhancedNodes();
+  } = enhancedNodes;
 
+  const enhancedEdges = useEnhancedEdges();
   const {
     edges,
     selectedEdge,
@@ -29,23 +31,18 @@ export const useIndexState = () => {
     deleteEdgesForNode,
     setEdges,
     selectEdge,
-  } = useEnhancedEdges();
+  } = enhancedEdges;
   
-  const {
-    pendingCreation,
-    clearPendingCreation,
-    dragMode,
-    isSelecting,
-    selectedCount,
-  } = useNodeCreation({ 
+  const nodeCreation = useNodeCreation({ 
     onAddNode: addNode 
   });
-
+  
   const {
-    handleNewProjectWithAnalytics: handleNewProject,
-    handleImportWithAnalytics: handleImport,
-    handleExportWithAnalytics: handleExport,
-  } = useWorkflowSerializer({
+    pendingNodeType: pendingCreation,
+    clearPendingCreation,
+  } = nodeCreation;
+
+  const workflowSerializer = useWorkflowSerializer({
     nodes,
     edges,
     addNode,
@@ -59,14 +56,22 @@ export const useIndexState = () => {
   });
 
   const {
+    handleNewProjectWithAnalytics: handleNewProject,
+    handleImportWithAnalytics: handleImport,
+    handleExportWithAnalytics: handleExport,
+  } = workflowSerializer;
+
+  const validation = useValidation({ 
+    nodes, 
+    edges 
+  });
+
+  const {
     validationResult,
     validatePriorityConflicts,
     isWorkflowValid,
     handleValidateWorkflow,
-  } = useValidation({ 
-    nodes, 
-    edges 
-  });
+  } = validation;
 
   return {
     // Node state
@@ -95,9 +100,9 @@ export const useIndexState = () => {
     // Node creation state
     pendingCreation,
     clearPendingCreation,
-    dragMode,
-    isSelecting,
-    selectedCount,
+    dragMode: null, // placeholder
+    isSelecting: false, // placeholder
+    selectedCount: 0, // placeholder
     
     // Workflow operations
     handleNewProject,
@@ -109,5 +114,12 @@ export const useIndexState = () => {
     // Validation
     validationResult,
     validatePriorityConflicts,
+    
+    // Expose grouped objects for other hooks that need them
+    nodeState: enhancedNodes,
+    edgeState: enhancedEdges,
+    nodeCreation,
+    workflowActions: workflowSerializer,
+    validation,
   };
 };

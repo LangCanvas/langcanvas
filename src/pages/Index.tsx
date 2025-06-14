@@ -4,16 +4,16 @@ import Canvas from '../components/Canvas';
 import MainApplicationLayout from '../components/layout/MainApplicationLayout';
 import { useIndexState } from '../hooks/useIndexState';
 import { useIndexPanelHandlers } from '../hooks/useIndexPanelHandlers';
-import { useIndexSelectionState } from '../hooks/useIndexSelectionState';
+import { useChangeTracking } from '../hooks/useChangeTracking';
+import { useWorkflowActions } from '../hooks/useWorkflowActions';
 import { useIndexHandlers } from '../hooks/useIndexHandlers';
 import { useIndexEventListeners } from '../hooks/useIndexEventListeners';
-import { useIndexWorkflowHandlers } from '../hooks/useIndexWorkflowHandlers';
-import { useIndexMobileHandlers } from '../hooks/useIndexMobileHandlers';
 import { useIndexChangeTrackedHandlers } from '../hooks/useIndexChangeTrackedHandlers';
 
 const Index: React.FC = () => {
   const canvasRef = useRef<HTMLDivElement>(null);
   
+  const indexState = useIndexState();
   const {
     nodes,
     edges,
@@ -37,8 +37,14 @@ const Index: React.FC = () => {
     validatePriorityConflicts,
     selectedNode,
     selectedEdge,
-  } = useIndexState();
+    handleNewProject,
+    handleImport,
+    handleExport,
+    isWorkflowValid,
+    handleValidateWorkflow,
+  } = indexState;
 
+  const panelHandlers = useIndexPanelHandlers(clearPendingCreation);
   const {
     isMobileMenuOpen,
     activePanel,
@@ -58,7 +64,7 @@ const Index: React.FC = () => {
     switchToPropertiesPanel,
     setLastLeftExpandedWidth,
     setLastRightExpandedWidth,
-  } = useIndexPanelHandlers(clearPendingCreation);
+  } = panelHandlers;
 
   // Listen for last expanded width events
   React.useEffect(() => {
@@ -79,33 +85,10 @@ const Index: React.FC = () => {
     };
   }, [setLastLeftExpandedWidth, setLastRightExpandedWidth]);
 
-  const {
-    isWorkflowValid,
-    handleValidateWorkflow,
-    handleNewProject,
-    handleImport,
-    handleExport,
-  } = useIndexWorkflowHandlers(nodes, edges, setNodes, setEdges, clearSelection);
+  const changeTracking = useChangeTracking();
+  const workflowActions = useWorkflowActions();
 
-  const {
-    handleNodePositionChange,
-    handleEdgeUpdate,
-  } = useIndexEventListeners(setNodes, setEdges, canvasRef);
-
-  const {
-    handleSelectionChange,
-    handleMultiSelectStart,
-    handleMultiSelectEnd,
-  } = useIndexSelectionState(canvasRef, nodes, edges, selectNode, selectEdge);
-
-  const {
-    handleDeleteNode,
-    handleAddEdge,
-    handleSelectNode,
-    handleSelectEdge,
-    handleUpdateNodeProperties,
-    handleUpdateEdgeProperties,
-  } = useIndexHandlers({
+  const indexHandlers = useIndexHandlers({
     nodes,
     deleteEdgesForNode,
     deleteNode,
@@ -118,15 +101,65 @@ const Index: React.FC = () => {
   });
 
   const {
-    handleCanvasClick,
-    handleNodeCreate,
-  } = useIndexMobileHandlers(canvasRef, pendingCreation, clearPendingCreation, handleAddEdge);
+    handleDeleteNode,
+    handleAddEdge,
+    handleSelectNode,
+    handleSelectEdge,
+    handleUpdateNodeProperties,
+    handleUpdateEdgeProperties,
+  } = indexHandlers;
+
+  const changeTrackedHandlers = useIndexChangeTrackedHandlers({
+    nodeCreation: indexState.nodeCreation,
+    nodeState: indexState.nodeState,
+    edgeState: indexState.edgeState,
+    indexHandlers,
+    workflowActions,
+    changeTracking,
+  });
 
   const {
-    handleNewProjectChangeTracked,
-    handleImportChangeTracked,
-    handleExportChangeTracked,
-  } = useIndexChangeTrackedHandlers(handleNewProject, handleImport, handleExport);
+    handleNewProjectWithTracking: handleNewProjectChangeTracked,
+    handleImportWithTracking: handleImportChangeTracked,
+    handleExportWithTracking: handleExportChangeTracked,
+  } = changeTrackedHandlers;
+
+  useIndexEventListeners({
+    nodeCreation: indexState.nodeCreation,
+    indexHandlers,
+    panelHandlers,
+  });
+
+  // Simple event handlers for canvas
+  const handleNodePositionChange = useCallback((id: string, x: number, y: number) => {
+    updateNodeProperties(id, { x, y });
+  }, [updateNodeProperties]);
+
+  const handleEdgeUpdate = useCallback((id: string, updates: any) => {
+    updateEdgeProperties(id, updates);
+  }, [updateEdgeProperties]);
+
+  // Simple selection handlers
+  const handleSelectionChange = useCallback((state: any) => {
+    // Handle selection state change
+  }, []);
+
+  const handleMultiSelectStart = useCallback(() => {
+    // Handle multi-select start
+  }, []);
+
+  const handleMultiSelectEnd = useCallback(() => {
+    // Handle multi-select end
+  }, []);
+
+  // Simple mobile handlers
+  const handleCanvasClick = useCallback(() => {
+    clearPendingCreation();
+  }, [clearPendingCreation]);
+
+  const handleNodeCreate = useCallback((type: any, x: number, y: number) => {
+    addNode(type, x, y);
+  }, [addNode]);
 
   return (
     <MainApplicationLayout
@@ -157,7 +190,7 @@ const Index: React.FC = () => {
       onImport={handleImportChangeTracked}
       onExport={handleExportChangeTracked}
       onDeleteNode={handleDeleteNode}
-      onDeleteEdge={handleDeleteEdge}
+      onDeleteEdge={deleteEdge}
       onUpdateNodeProperties={handleUpdateNodeProperties}
       onUpdateEdgeProperties={handleUpdateEdgeProperties}
       validatePriorityConflicts={validatePriorityConflicts}

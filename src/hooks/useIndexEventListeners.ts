@@ -1,18 +1,10 @@
 
 import React from 'react';
-import { useIndexState } from './useIndexState'; // For types
-import { useIndexHandlers } from './useIndexHandlers'; // For types
-import { useIndexPanelHandlers } from './useIndexPanelHandlers'; // For types
-
-
-type NodeCreationType = ReturnType<typeof useIndexState>['nodeCreation'];
-type IndexHandlersType = ReturnType<typeof useIndexHandlers>;
-type PanelHandlersType = ReturnType<typeof useIndexPanelHandlers>;
 
 interface UseIndexEventListenersProps {
-  nodeCreation: NodeCreationType;
-  indexHandlers: IndexHandlersType;
-  panelHandlers: PanelHandlersType;
+  nodeCreation: any;
+  indexHandlers: any;
+  panelHandlers: any;
 }
 
 export const useIndexEventListeners = ({

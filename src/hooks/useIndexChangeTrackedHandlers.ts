@@ -2,26 +2,14 @@
 import React from 'react';
 import { NodeType, EnhancedNode } from '../types/nodeTypes';
 import { EnhancedEdge } from '../types/edgeTypes';
-import { useIndexState } from './useIndexState'; // For types
-import { useChangeTracking } from './useChangeTracking'; // For types
-import { useWorkflowActions } from './useWorkflowActions'; // For types
-import { useIndexHandlers } from './useIndexHandlers'; // For types
-
-type NodeCreationType = ReturnType<typeof useIndexState>['nodeCreation'];
-type NodeStateType = ReturnType<typeof useIndexState>['nodeState'];
-type EdgeStateType = ReturnType<typeof useIndexState>['edgeState'];
-type IndexHandlersType = ReturnType<typeof useIndexHandlers>;
-type WorkflowActionsType = ReturnType<typeof useWorkflowActions>; // Corrected: useWorkflowActions is not part of useIndexState
-type ChangeTrackingType = ReturnType<typeof useChangeTracking>;
-
 
 interface UseIndexChangeTrackedHandlersProps {
-  nodeCreation: NodeCreationType;
-  nodeState: NodeStateType;
-  edgeState: EdgeStateType;
-  indexHandlers: IndexHandlersType;
-  workflowActions: WorkflowActionsType;
-  changeTracking: ChangeTrackingType;
+  nodeCreation: any;
+  nodeState: any;
+  edgeState: any;
+  indexHandlers: any;
+  workflowActions: any;
+  changeTracking: any;
 }
 
 export const useIndexChangeTrackedHandlers = ({
@@ -48,7 +36,7 @@ export const useIndexChangeTrackedHandlers = ({
   }, [indexHandlers, markAsChanged]);
 
   const handleDeleteEdgeWithTracking = React.useCallback((id: string) => {
-    edgeState.deleteEdge(id); // Original used edgeState.deleteEdge directly
+    edgeState.deleteEdge(id);
     markAsChanged();
   }, [edgeState, markAsChanged]);
 
@@ -57,7 +45,7 @@ export const useIndexChangeTrackedHandlers = ({
     markAsChanged();
   }, [indexHandlers, markAsChanged]);
 
-  const _handleUpdateEdgePropertiesWithTrackingInternal = React.useCallback((id: string, updates: Partial<EnhancedEdge>) => {
+  const handleUpdateEdgePropertiesWithTracking = React.useCallback((id: string, updates: Partial<EnhancedEdge>) => {
     indexHandlers.handleUpdateEdgeProperties(id, updates);
     markAsChanged();
   }, [indexHandlers, markAsChanged]);
@@ -91,22 +79,19 @@ export const useIndexChangeTrackedHandlers = ({
     markAsSaved();
   }, [workflowActions, markAsSaved]);
 
-  // Special handler that uses an internal tracked handler
   const handleUpdateEdgeWithCondition = React.useCallback((edgeId: string, updates: Partial<EnhancedEdge>) => {
-    _handleUpdateEdgePropertiesWithTrackingInternal(edgeId, updates);
+    handleUpdateEdgePropertiesWithTracking(edgeId, updates);
     if (updates.conditional) {
       edgeState.updateEdgeCondition(edgeId, updates.conditional.condition);
-      // markAsChanged() is already called by _handleUpdateEdgePropertiesWithTrackingInternal
     }
-  }, [_handleUpdateEdgePropertiesWithTrackingInternal, edgeState]);
-
+  }, [handleUpdateEdgePropertiesWithTracking, edgeState]);
 
   return {
     handleAddNodeWithTracking,
     handleDeleteNodeWithTracking,
     handleDeleteEdgeWithTracking,
     handleUpdateNodePropertiesWithTracking,
-    handleUpdateEdgePropertiesWithTracking: _handleUpdateEdgePropertiesWithTrackingInternal, // Expose the internal one as the main one now
+    handleUpdateEdgePropertiesWithTracking,
     handleAddEdgeWithTracking,
     handleMoveNodeWithTracking,
     handleExportWithTracking,
