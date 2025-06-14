@@ -106,8 +106,9 @@ export const useAdaptivePanelWidths = () => {
   }, [leftPanelWidth, getContentBasedLayout]);
 
   const getRightPanelLayout = useCallback((): PanelLayout => {
-    return leftPanelWidth < measurements.minWidthForText ? 'small' : 'medium';
-  }, [leftPanelWidth, measurements.minWidthForText]);
+    // Use the same logic for consistency
+    return getContentBasedLayout(leftPanelWidth);
+  }, [leftPanelWidth, getContentBasedLayout]);
 
   return {
     leftPanelWidth,

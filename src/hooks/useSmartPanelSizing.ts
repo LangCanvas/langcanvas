@@ -71,7 +71,8 @@ export const useSmartPanelSizing = () => {
   }, [measureContent]);
 
   const getContentBasedLayout = useCallback((width: number): 'small' | 'medium' => {
-    return width < measurements.minWidthForText ? 'small' : 'medium';
+    // Switch to medium when width is greater than or equal to the minimum width for text
+    return width >= measurements.minWidthForText ? 'medium' : 'small';
   }, [measurements]);
 
   return {
