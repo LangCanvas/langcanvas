@@ -13,6 +13,17 @@ export const useNodeLoopManagement = ({ onUpdateNode }: UseNodeLoopManagementPro
     
     onUpdateNode(nodeId, {
       config: {
+        timeout: 30,
+        retry: {
+          enabled: true,
+          max_attempts: 3,
+          delay: 5
+        },
+        concurrency: 'sequential',
+        metadata: {
+          tags: [],
+          notes: ''
+        },
         loop: loopConfig
       }
     });
