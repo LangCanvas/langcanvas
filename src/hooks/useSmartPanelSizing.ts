@@ -10,7 +10,7 @@ interface ContentMeasurements {
 
 export const useSmartPanelSizing = () => {
   const [measurements, setMeasurements] = useState<ContentMeasurements>({
-    minWidthForIcons: 32, // True minimum for icons only
+    minWidthForIcons: 42, // Increased from 32 to 42 (+10px)
     minWidthForText: 120,
     recommendedWidth: 140
   });
@@ -43,14 +43,15 @@ export const useSmartPanelSizing = () => {
     const buttonPadding = 8;
     const panelPadding = 8;
     
-    // Small (icon-only): just icon + minimal padding
-    const minWidthForIcons = iconWidth + buttonPadding + panelPadding;
+    // Small (icon + text): icon + text + spacing + padding + 10px
+    const minWidthForIcons = iconWidth + buttonPadding + panelPadding + 10;
     
-    // Medium (with text): icon + text + spacing + padding
-    const minWidthForText = Math.ceil(maxTextWidth + iconWidth + buttonSpacing + buttonPadding + panelPadding + 4);
+    // Medium (with text): icon + text + spacing + padding, but cap at 100px max
+    const calculatedMinWidthForText = Math.ceil(maxTextWidth + iconWidth + buttonSpacing + buttonPadding + panelPadding + 4);
+    const minWidthForText = Math.min(calculatedMinWidthForText, 100);
     
     const windowWidth = window.innerWidth;
-    const recommendedWidth = Math.max(minWidthForText, Math.min(200, windowWidth * 0.15));
+    const recommendedWidth = Math.max(minWidthForText, Math.min(100, windowWidth * 0.15));
 
     setMeasurements({
       minWidthForIcons,
