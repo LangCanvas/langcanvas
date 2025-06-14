@@ -17,11 +17,12 @@ const MediumLayoutNodeItem: React.FC<MediumLayoutNodeItemProps> = ({
   showDescription = false
 }) => {
   return (
-    <div className="group relative">
+    <div className="group relative" style={{ textAlign: 'left' }}>
       <div
         role="button"
         tabIndex={0}
-        className={`w-full h-auto p-3 ${getEnhancedNodeColors(node.type)} border-2 border-input bg-background rounded-md transition-all duration-200 flex flex-col items-start space-y-2 shadow-sm hover:shadow-md hover:bg-accent hover:text-accent-foreground active:scale-[0.98] group-hover:shadow-lg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 !text-left`}
+        className={`w-full h-auto p-3 ${getEnhancedNodeColors(node.type)} border-2 border-input bg-background rounded-md transition-all duration-200 flex flex-col items-start space-y-2 shadow-sm hover:shadow-md hover:bg-accent hover:text-accent-foreground active:scale-[0.98] group-hover:shadow-lg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2`}
+        style={{ textAlign: 'left' }}
         draggable
         onDragStart={onDragStart}
         onClick={onClick}
@@ -32,13 +33,13 @@ const MediumLayoutNodeItem: React.FC<MediumLayoutNodeItemProps> = ({
           }
         }}
       >
-        <div className="flex items-start justify-start space-x-2 w-full text-left">
-          <span className="text-lg flex-shrink-0 text-left">{node.icon}</span>
-          <span className="font-semibold text-sm text-left w-full">{node.label}</span>
+        <div className="flex items-start justify-start space-x-2 w-full" style={{ textAlign: 'left' }}>
+          <span className="text-lg flex-shrink-0" style={{ textAlign: 'left' }}>{node.icon}</span>
+          <span className="font-semibold text-sm w-full" style={{ textAlign: 'left' }}>{node.label}</span>
         </div>
         
         {showDescription && (
-          <p className="text-xs text-left leading-relaxed opacity-80 group-hover:opacity-100 transition-opacity w-full">
+          <p className="text-xs leading-relaxed opacity-80 group-hover:opacity-100 transition-opacity w-full" style={{ textAlign: 'left' }}>
             {node.description}
           </p>
         )}
