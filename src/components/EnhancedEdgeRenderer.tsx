@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { EnhancedEdge } from '../types/edgeTypes';
 import { EnhancedNode } from '../types/nodeTypes';
@@ -6,8 +5,10 @@ import { EnhancedNode } from '../types/nodeTypes';
 interface EnhancedEdgeRendererProps {
   edges: EnhancedEdge[];
   nodes: EnhancedNode[];
-  selectedEdgeId: string | null;
-  onSelectEdge: (edgeId: string | null) => void;
+  selectedEdgeId: string | null; // Primary selected edge
+  selectedEdgeIds: string[]; // All multi-selected edge IDs
+  onSelectSingleEdge: (edgeId: string | null) => void; // For single primary selection
+  onToggleEdgeSelection: (edgeId: string, isCtrlOrShiftPressed: boolean) => void; // For multi-selection toggle
   onDoubleClick?: (edgeId: string) => void;
   getEdgeValidationClass?: (edgeId: string) => string;
   getEdgeTooltip?: (edgeId: string) => string;
@@ -17,7 +18,9 @@ const EnhancedEdgeRenderer: React.FC<EnhancedEdgeRendererProps> = ({
   edges,
   nodes,
   selectedEdgeId,
-  onSelectEdge,
+  selectedEdgeIds,
+  onSelectSingleEdge,
+  onToggleEdgeSelection,
   onDoubleClick,
   getEdgeValidationClass,
   getEdgeTooltip
@@ -37,11 +40,20 @@ const EnhancedEdgeRenderer: React.FC<EnhancedEdgeRendererProps> = ({
   };
 
   const getEdgeStyle = (edgeId: string) => {
-    if (selectedEdgeId === edgeId) {
+    const isPrimarySelected = selectedEdgeId === edgeId;
+    const isMultiSelected = selectedEdgeIds.includes(edgeId);
+
+    if (isPrimarySelected) {
       return {
-        strokeColor: 'rgb(59, 130, 246)',
-        strokeWidth: '3',
+        strokeColor: 'rgb(37, 99, 235)', // Darker blue for primary
+        strokeWidth: '3.5',
         strokePattern: 'none'
+      };
+    } else if (isMultiSelected) {
+      return {
+        strokeColor: 'rgb(59, 130, 246)', // Standard blue for multi-selected
+        strokeWidth: '3',
+        strokePattern: 'none' 
       };
     } else {
       return {
@@ -55,8 +67,14 @@ const EnhancedEdgeRenderer: React.FC<EnhancedEdgeRendererProps> = ({
   const handleEdgeClick = (event: React.MouseEvent, edgeId: string) => {
     event.preventDefault();
     event.stopPropagation();
-    console.log(`🔗 Edge clicked: ${edgeId}`);
-    onSelectEdge(edgeId);
+    const isCtrlOrShiftPressed = event.ctrlKey || event.metaKey || event.shiftKey;
+
+    console.log(`🔗 Edge clicked: ${edgeId}, Ctrl/Shift: ${isCtrlOrShiftPressed}`);
+    if (isCtrlOrShiftPressed) {
+      onToggleEdgeSelection(edgeId, true);
+    } else {
+      onSelectSingleEdge(edgeId);
+    }
   };
 
   const handleEdgeDoubleClick = (event: React.MouseEvent, edgeId: string) => {
@@ -81,6 +99,12 @@ const EnhancedEdgeRenderer: React.FC<EnhancedEdgeRendererProps> = ({
         <marker id="arrowhead" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto">
           <path d="M 0 0 L 10 5 L 0 10 z" fill="rgb(75, 85, 99)" />
         </marker>
+         <marker id="arrowhead-selected" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="rgb(59, 130, 246)" />
+        </marker>
+        <marker id="arrowhead-primary-selected" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="rgb(37, 99, 235)" />
+        </marker>
       </defs>
       
       {edges.map((edge) => {
@@ -95,7 +119,16 @@ const EnhancedEdgeRenderer: React.FC<EnhancedEdgeRendererProps> = ({
         const { x: targetX, y: targetY } = getNodePosition(edge.target);
         const { startX, startY, endX, endY } = calculateLinePosition(sourceX, sourceY, targetX, targetY);
         const { strokeColor, strokeWidth, strokePattern } = getEdgeStyle(edge.id);
-        const isSelected = selectedEdgeId === edge.id;
+        
+        const isPrimarySelected = selectedEdgeId === edge.id;
+        const isMultiSelected = selectedEdgeIds.includes(edge.id);
+        let markerEndUrl = "url(#arrowhead)";
+        if (isPrimarySelected) {
+            markerEndUrl = "url(#arrowhead-primary-selected)";
+        } else if (isMultiSelected) {
+            markerEndUrl = "url(#arrowhead-selected)";
+        }
+
         const validationClass = getEdgeValidationClass?.(edge.id) || '';
         const tooltip = getEdgeTooltip?.(edge.id) || '';
 
@@ -115,25 +148,26 @@ const EnhancedEdgeRenderer: React.FC<EnhancedEdgeRendererProps> = ({
             >
               {tooltip && <title>{tooltip}</title>}
             </line>
-            {isSelected && (
-              <line
+            {(isPrimarySelected || isMultiSelected) && (
+              <line // Hitbox / thicker invisible line for easier selection might not be needed with direct line click
                 x1={startX}
                 y1={startY}
                 x2={endX}
                 y2={endY}
-                stroke="rgba(59, 130, 246, 0.3)"
-                strokeWidth="8"
-                className="pointer-events-none"
+                stroke="rgba(59, 130, 246, 0.05)" // Very transparent
+                strokeWidth={(parseFloat(strokeWidth) + 6).toString()} // Wider hitbox
+                className="pointer-events-auto cursor-pointer"
+                 onClick={(e) => handleEdgeClick(e, edge.id)} // Ensure this also triggers the handler
               />
             )}
             <line
-              x1={endX - 10}
-              y1={endY - 10}
+              x1={endX - 10} // This fixed position arrow might look odd if line is thick
+              y1={endY - 10} // This needs to be attached to the line end
               x2={endX}
               y2={endY}
-              stroke={strokeColor}
-              strokeWidth={strokeWidth}
-              markerEnd="url(#arrowhead)"
+              stroke={strokeColor} // Ensure arrow color matches line
+              strokeWidth={strokeWidth} // This might make a tiny arrow, or use a fixed size?
+              markerEnd={markerEndUrl}
               className="pointer-events-none"
             />
             {edge.label && (

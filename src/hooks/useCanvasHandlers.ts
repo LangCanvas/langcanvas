@@ -1,4 +1,3 @@
-
 import { useEffect, useCallback } from 'react';
 import { EnhancedNode, NodeType } from '../types/nodeTypes';
 import { useEnhancedAnalytics } from './useEnhancedAnalytics';
@@ -6,14 +5,18 @@ import { useEnhancedAnalytics } from './useEnhancedAnalytics';
 interface UseCanvasHandlersProps {
   canvasRef: React.RefObject<HTMLDivElement>;
   scrollAreaRef: React.RefObject<HTMLDivElement>;
-  onSelectNode: (id: string | null) => void;
-  onSelectEdge: (id: string | null) => void;
+  onSelectNode: (id: string | null) => void; // Primary node selection
+  onSelectEdge: (id: string | null) => void; // Primary edge selection
   createNodeWithAnalytics: (type: NodeType, x: number, y: number) => EnhancedNode | null;
   pendingNodeType?: NodeType | null;
   onClearPendingCreation?: () => void;
   onMoveNode: (id: string, x: number, y: number) => void;
   nodes: EnhancedNode[];
-  clearMultiSelection?: () => void;
+  
+  // Functions from useMultiSelection
+  selectSingleNode: (nodeId: string | null) => void;
+  selectSingleEdge: (edgeId: string | null) => void;
+  clearSelection: () => void; // Clears both node and edge multi-selections
 }
 
 export const useCanvasHandlers = ({
@@ -26,35 +29,34 @@ export const useCanvasHandlers = ({
   onClearPendingCreation,
   onMoveNode,
   nodes,
-  clearMultiSelection,
+  selectSingleNode,
+  selectSingleEdge,
+  clearSelection,
 }: UseCanvasHandlersProps) => {
   const analytics = useEnhancedAnalytics();
 
-  // Clear selection helper function
   const clearAllSelections = useCallback(() => {
-    console.log('🔄 Clearing all selections');
-    onSelectNode(null);
-    onSelectEdge(null);
-    clearMultiSelection?.();
+    console.log('🔄 Clearing all selections (primary and multi)');
+    onSelectNode(null); // Clear primary selected node
+    onSelectEdge(null); // Clear primary selected edge
+    clearSelection();   // Clear multi-selected nodes and edges
     
-    // Track selection clearing
     analytics.trackFeatureUsage('selections_cleared');
-  }, [onSelectNode, onSelectEdge, clearMultiSelection, analytics]);
+  }, [onSelectNode, onSelectEdge, clearSelection, analytics]);
 
-  // Safe node selection that clears edge selection
   const selectNodeSafely = useCallback((nodeId: string | null) => {
-    console.log(`🎯 Selecting node: ${nodeId}, clearing edge selection`);
-    onSelectEdge(null); // Clear edge selection first
-    onSelectNode(nodeId);
-  }, [onSelectNode, onSelectEdge]);
+    console.log(`🎯 Selecting node safely (primary): ${nodeId}`);
+    onSelectEdge(null);   // Clear primary selected edge
+    onSelectNode(nodeId); // Set primary selected node
+    selectSingleNode(nodeId); // Update multi-selection state to this single node
+  }, [onSelectNode, onSelectEdge, selectSingleNode]);
 
-  // Safe edge selection that clears node selection and multi-selection
   const selectEdgeSafely = useCallback((edgeId: string | null) => {
-    console.log(`🔗 Selecting edge: ${edgeId}, clearing node and multi-selection`);
-    onSelectNode(null); // Clear node selection first
-    clearMultiSelection?.(); // Clear multi-selection
-    onSelectEdge(edgeId);
-  }, [onSelectNode, onSelectEdge, clearMultiSelection]);
+    console.log(`🔗 Selecting edge safely (primary): ${edgeId}`);
+    onSelectNode(null);   // Clear primary selected node
+    onSelectEdge(edgeId); // Set primary selected edge
+    selectSingleEdge(edgeId); // Update multi-selection state to this single edge
+  }, [onSelectNode, onSelectEdge, selectSingleEdge]);
 
   // Enhanced move handler with analytics
   const handleMoveNode = useCallback((id: string, x: number, y: number) => {

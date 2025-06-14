@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { EnhancedNode } from '../types/nodeTypes';
 import { isNodeInRectangle, getNodesBoundingBox } from '../utils/canvasCoordinates';
@@ -12,73 +11,46 @@ export interface SelectionRectangle {
 
 export const useMultiSelection = (canvasRef: React.RefObject<HTMLDivElement>) => {
   const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
+  const [selectedEdgeIds, setSelectedEdgeIds] = useState<string[]>([]);
   const [isSelecting, setIsSelecting] = useState(false);
   const [selectionRect, setSelectionRect] = useState<SelectionRectangle | null>(null);
   const lastSelectedNodeRef = useRef<string | null>(null);
 
   const selectSingleNode = useCallback((nodeId: string | null) => {
     console.log('🎯 Multi-selection: selectSingleNode called with:', nodeId);
-    if (nodeId) {
-      setSelectedNodeIds([nodeId]);
-      lastSelectedNodeRef.current = nodeId;
-    } else {
-      setSelectedNodeIds([]);
-      lastSelectedNodeRef.current = null;
-    }
+    setSelectedNodeIds(nodeId ? [nodeId] : []);
+    setSelectedEdgeIds([]);
+    lastSelectedNodeRef.current = nodeId;
+  }, []);
+
+  const selectSingleEdge = useCallback((edgeId: string | null) => {
+    console.log('🎯 Multi-selection: selectSingleEdge called with:', edgeId);
+    setSelectedEdgeIds(edgeId ? [edgeId] : []);
+    setSelectedNodeIds([]);
   }, []);
 
   const clearSelection = useCallback(() => {
     console.log('🧹 Multi-selection: clearSelection called');
     setSelectedNodeIds([]);
+    setSelectedEdgeIds([]);
     lastSelectedNodeRef.current = null;
   }, []);
 
-  // Clear multi-selection when edge is selected
-  const clearMultiSelection = useCallback(() => {
-    console.log('🧹 Multi-selection: clearMultiSelection called (edge selected)');
+  const clearNodeMultiSelection = useCallback(() => {
+    console.log('🧹 Multi-selection: clearNodeMultiSelection called');
     setSelectedNodeIds([]);
     lastSelectedNodeRef.current = null;
-    setIsSelecting(false);
-    setSelectionRect(null);
   }, []);
 
-  const toggleNodeSelection = useCallback((nodeId: string, isCtrlPressed: boolean, isShiftPressed: boolean = false, nodes: EnhancedNode[] = []) => {
-    console.log('🎯 Multi-selection: toggleNodeSelection called with:', { nodeId, isCtrlPressed, isShiftPressed });
+  const clearEdgeMultiSelection = useCallback(() => {
+    console.log('🧹 Multi-selection: clearEdgeMultiSelection called');
+    setSelectedEdgeIds([]);
+  }, []);
+
+  const toggleNodeSelection = useCallback((nodeId: string, isCtrlOrShiftPressed: boolean, nodes: EnhancedNode[] = []) => {
+    console.log('🎯 Multi-selection: toggleNodeSelection called with:', { nodeId, isCtrlOrShiftPressed });
     
-    if (isShiftPressed && lastSelectedNodeRef.current && nodes.length > 0) {
-      // Shift key: spatial range selection
-      setSelectedNodeIds(prev => {
-        const lastSelectedId = lastSelectedNodeRef.current;
-        if (!lastSelectedId) {
-          lastSelectedNodeRef.current = nodeId;
-          return [nodeId];
-        }
-        
-        // Get bounding box of the two nodes
-        const boundingBox = getNodesBoundingBox([lastSelectedId, nodeId], canvasRef);
-        if (!boundingBox) {
-          lastSelectedNodeRef.current = nodeId;
-          return [nodeId];
-        }
-        
-        // Select all nodes within the bounding box
-        const nodesInRange = nodes.filter(node => 
-          isNodeInRectangle(
-            node.id,
-            canvasRef,
-            boundingBox.minX,
-            boundingBox.minY,
-            boundingBox.maxX,
-            boundingBox.maxY
-          )
-        );
-        
-        const rangeNodeIds = nodesInRange.map(n => n.id);
-        console.log('🎯 Multi-selection: Shift+click spatial range result:', rangeNodeIds);
-        return rangeNodeIds;
-      });
-    } else if (isCtrlPressed) {
-      // Ctrl/Cmd key: toggle selection
+    if (isCtrlOrShiftPressed) {
       setSelectedNodeIds(prev => {
         const newSelection = prev.includes(nodeId) 
           ? prev.filter(id => id !== nodeId)
@@ -86,17 +58,38 @@ export const useMultiSelection = (canvasRef: React.RefObject<HTMLDivElement>) =>
         
         if (newSelection.includes(nodeId)) {
           lastSelectedNodeRef.current = nodeId;
+        } else if (lastSelectedNodeRef.current === nodeId) {
+          lastSelectedNodeRef.current = null;
         }
         
-        console.log('🎯 Multi-selection: Ctrl+click result:', newSelection);
+        console.log('🎯 Multi-selection: Ctrl/Shift+click node result:', newSelection);
         return newSelection;
       });
+      setSelectedEdgeIds([]);
     } else {
-      // No modifier: single selection
       setSelectedNodeIds([nodeId]);
+      setSelectedEdgeIds([]);
       lastSelectedNodeRef.current = nodeId;
     }
-  }, [canvasRef]);
+  }, []);
+
+  const toggleEdgeSelection = useCallback((edgeId: string, isCtrlOrShiftPressed: boolean) => {
+    console.log('🎯 Multi-selection: toggleEdgeSelection called with:', { edgeId, isCtrlOrShiftPressed });
+
+    if (isCtrlOrShiftPressed) {
+      setSelectedEdgeIds(prev => {
+        const newSelection = prev.includes(edgeId)
+          ? prev.filter(id => id !== edgeId)
+          : [...prev, edgeId];
+        console.log('🎯 Multi-selection: Ctrl/Shift+click edge result:', newSelection);
+        return newSelection;
+      });
+      setSelectedNodeIds([]);
+    } else {
+      setSelectedEdgeIds([edgeId]);
+      setSelectedNodeIds([]);
+    }
+  }, []);
 
   const updateNodesSelectionInRealTime = useCallback((nodes: EnhancedNode[], rect: SelectionRectangle) => {
     const rectLeft = Math.min(rect.startX, rect.endX);
@@ -104,7 +97,7 @@ export const useMultiSelection = (canvasRef: React.RefObject<HTMLDivElement>) =>
     const rectTop = Math.min(rect.startY, rect.endY);
     const rectBottom = Math.max(rect.startY, rect.endY);
 
-    console.log('🔍 Real-time selection update:', {
+    console.log('🔍 Real-time rectangle selection update:', {
       rect: { left: rectLeft, right: rectRight, top: rectTop, bottom: rectBottom },
       width: rectRight - rectLeft,
       height: rectBottom - rectTop
@@ -123,7 +116,8 @@ export const useMultiSelection = (canvasRef: React.RefObject<HTMLDivElement>) =>
 
     const newSelection = selectedNodes.map(node => node.id);
     setSelectedNodeIds(newSelection);
-    
+    setSelectedEdgeIds([]);
+
     if (newSelection.length > 0) {
       lastSelectedNodeRef.current = newSelection[newSelection.length - 1];
     }
@@ -135,6 +129,7 @@ export const useMultiSelection = (canvasRef: React.RefObject<HTMLDivElement>) =>
     // Start with a point rectangle
     const newRect = { startX: x, startY: y, endX: x, endY: y };
     setSelectionRect(newRect);
+    setSelectedEdgeIds([]);
     console.log('🔲 Initial rectangle set:', newRect);
   }, []);
 
@@ -168,23 +163,19 @@ export const useMultiSelection = (canvasRef: React.RefObject<HTMLDivElement>) =>
 
   const endRectangleSelection = useCallback(() => {
     console.log('🔲 Ending rectangle selection');
-    
-    // Keep the current selection and just clean up the rectangle
     setSelectionRect(null);
     setIsSelecting(false);
   }, []);
 
   const cancelRectangleSelection = useCallback(() => {
     console.log('🔲 Canceling rectangle selection');
-    
-    // Clear everything
     setSelectionRect(null);
     setIsSelecting(false);
     setSelectedNodeIds([]);
+    setSelectedEdgeIds([]);
     lastSelectedNodeRef.current = null;
   }, []);
 
-  // Add escape key handling
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && isSelecting) {
@@ -200,21 +191,33 @@ export const useMultiSelection = (canvasRef: React.RefObject<HTMLDivElement>) =>
     }
   }, [isSelecting, cancelRectangleSelection]);
 
-  // Debug logging for rectangle state changes
   useEffect(() => {
     if (selectionRect) {
       console.log('🔲 Rectangle state changed:', selectionRect, 'isSelecting:', isSelecting);
     }
   }, [selectionRect, isSelecting]);
 
+  useEffect(() => {
+    console.log('📊 MultiSelection State:', {
+      selectedNodeIds,
+      selectedEdgeIds,
+      isSelectingRect: isSelecting,
+      lastSelectedNode: lastSelectedNodeRef.current
+    });
+  }, [selectedNodeIds, selectedEdgeIds, isSelecting]);
+
   return {
     selectedNodeIds,
+    selectedEdgeIds,
     isSelecting,
     selectionRect,
     selectSingleNode,
+    selectSingleEdge,
     toggleNodeSelection,
+    toggleEdgeSelection,
     clearSelection,
-    clearMultiSelection,
+    clearNodeMultiSelection,
+    clearEdgeMultiSelection,
     startRectangleSelection,
     updateRectangleSelection,
     endRectangleSelection,

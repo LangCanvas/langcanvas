@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect } from 'react';
 import { EnhancedNode, NodeType } from '../types/nodeTypes';
 import { EnhancedEdge } from '../types/edgeTypes';
@@ -27,11 +26,11 @@ interface CanvasProps {
   className?: string;
   nodes: EnhancedNode[];
   edges: EnhancedEdge[];
-  selectedNodeId: string | null;
-  selectedEdgeId: string | null;
+  selectedNodeId: string | null; // Primary selected node
+  selectedEdgeId: string | null; // Primary selected edge
   onAddNode: (type: NodeType, x: number, y: number) => EnhancedNode | null;
-  onSelectNode: (id: string | null) => void;
-  onSelectEdge: (id: string | null) => void;
+  onSelectNode: (id: string | null) => void; // Sets primary selected node
+  onSelectEdge: (id: string | null) => void; // Sets primary selected edge
   onMoveNode: (id: string, x: number, y: number) => void;
   onDeleteNode: (id: string) => void;
   onDeleteEdge: (id: string) => void;
@@ -44,7 +43,7 @@ interface CanvasProps {
   pendingNodeType?: NodeType | null;
   onClearPendingCreation?: () => void;
   hasUnsavedChanges?: boolean;
-  onSelectionStateChange?: (state: { isSelecting: boolean; selectedCount: number }) => void;
+  onSelectionStateChange?: (state: { isSelecting: boolean; selectedNodeCount: number; selectedEdgeCount: number }) => void;
 }
 
 const Canvas: React.FC<CanvasProps> = ({ 
@@ -77,15 +76,18 @@ const Canvas: React.FC<CanvasProps> = ({
   
   const { createNode } = useNodeCreation({ onAddNode });
 
-  // Multi-selection state with canvas ref
   const {
     selectedNodeIds,
-    isSelecting,
+    selectedEdgeIds, // New from useMultiSelection
+    isSelecting, // Rectangle selection state
     selectionRect,
     selectSingleNode,
+    selectSingleEdge, // New from useMultiSelection
     toggleNodeSelection,
+    toggleEdgeSelection, // New from useMultiSelection
     clearSelection,
-    clearMultiSelection,
+    clearNodeMultiSelection, // Renamed for clarity
+    // clearEdgeMultiSelection, // Not directly used by Canvas, useMultiSelection handles internally
     startRectangleSelection,
     updateRectangleSelection,
     endRectangleSelection,
@@ -99,7 +101,6 @@ const Canvas: React.FC<CanvasProps> = ({
     endDrag: endMultiDrag,
   } = useMultiNodeDrag(selectedNodeIds, nodes, onMoveNode);
 
-  // Enhanced createNode with analytics tracking
   const createNodeWithAnalytics = (type: NodeType, x: number, y: number) => {
     const result = createNode(type, x, y);
     
@@ -119,42 +120,47 @@ const Canvas: React.FC<CanvasProps> = ({
     selectNodeSafely,
     selectEdgeSafely,
     handleMoveNode,
+    clearAllSelections, // Now available from useCanvasHandlers
   } = useCanvasHandlers({
     canvasRef,
     scrollAreaRef,
-    onSelectNode,
-    onSelectEdge,
+    onSelectNode, // For primary node
+    onSelectEdge, // For primary edge
     createNodeWithAnalytics,
     pendingNodeType,
     onClearPendingCreation,
     onMoveNode,
     nodes,
-    clearMultiSelection,
+    // Pass multi-selection functions to useCanvasHandlers
+    selectSingleNode,
+    selectSingleEdge,
+    clearSelection, // This is clearSelection from useMultiSelection
   });
 
-  // Use custom hooks for selection and events
   useCanvasSelection({
     selectedNodeId,
     selectedEdgeId,
     selectedNodeIds,
+    selectedEdgeIds, // Pass new state
     selectSingleNode,
-    selectNodeSafely,
-    clearMultiSelection,
+    selectSingleEdge, // Pass new function
+    clearNodeMultiSelection, // Pass renamed function
     onSelectionStateChange,
-    isSelecting,
+    isSelecting, // Pass rectangle selection state
   });
 
   useCanvasMouseEvents({
     canvasRef,
-    isSelecting,
+    isSelecting, // Pass rectangle selection state
     isMultiDragging,
     pendingNodeType,
     nodes,
     startRectangleSelection,
     updateRectangleSelection: (x: number, y: number) => updateRectangleSelection(x, y, nodes),
     endRectangleSelection,
-    clearSelection,
-    selectNodeSafely,
+    clearSelection, // From useMultiSelection (passed via useCanvasHandlers or directly)
+    selectNodeSafely, // From useCanvasHandlers
+    selectEdgeSafely, // From useCanvasHandlers
   });
 
   const {
@@ -162,13 +168,24 @@ const Canvas: React.FC<CanvasProps> = ({
     handleNodeDoubleClick,
     handleNodeDragStart,
   } = useCanvasNodeEvents({
-    selectedNodeIds,
-    toggleNodeSelection,
-    selectNodeSafely,
-    selectSingleNode,
+    toggleNodeSelection, // From useMultiSelection
+    selectNodeSafely,    // From useCanvasHandlers
+    selectSingleNode,    // From useMultiSelection
     startMultiDrag,
     nodes,
+    selectedNodeIds,     // Still needed for multi-drag logic
   });
+
+  // Handler for primary edge selection (non-modifier click)
+  const handleSelectSingleEdge = (edgeId: string | null) => {
+    selectEdgeSafely(edgeId); // This updates primary and multi-selection state
+  };
+  
+  // Handler for toggling edge in multi-selection (modifier click)
+  const handleToggleEdgeSelection = (edgeId: string, isCtrlOrShiftPressed: boolean) => {
+    // toggleEdgeSelection is already from useMultiSelection, which updates selectedEdgeIds and clears selectedNodeIds
+    toggleEdgeSelection(edgeId, isCtrlOrShiftPressed);
+  };
 
   // Handle global mouse events for multi-node dragging
   useEffect(() => {
@@ -209,7 +226,7 @@ const Canvas: React.FC<CanvasProps> = ({
               className={`relative transition-colors ${className} ${
                 isMobile ? 'touch-pan-y' : ''
               } ${pendingNodeType ? 'cursor-crosshair' : ''} ${
-                isSelecting ? 'cursor-crosshair' : ''
+                isSelecting ? 'cursor-crosshair' : '' // isSelecting for rectangle
               }`}
               style={{
                 width: '3000px',
@@ -220,8 +237,12 @@ const Canvas: React.FC<CanvasProps> = ({
               }}
             >
               <KeyboardHandler
-                selectedNodeId={selectedNodeId}
-                selectedEdgeId={selectedEdgeId}
+                selectedNodeId={selectedNodeId} // Primary selected node
+                selectedEdgeId={selectedEdgeId} // Primary selected edge
+                // For deletion, we might want to delete all selected items (nodes and edges)
+                // This would require passing selectedNodeIds and selectedEdgeIds
+                // And updating onDeleteNode/onDeleteEdge to handle multiple IDs.
+                // For now, keeping it to primary selected item.
                 onDeleteNode={onDeleteNode}
                 onDeleteEdge={onDeleteEdge}
               />
@@ -234,17 +255,18 @@ const Canvas: React.FC<CanvasProps> = ({
                 {({ isCreatingEdge, edgePreview, hoveredNodeId, handleStartConnection }) => (
                   <>
                     <CanvasBackground 
-                      isDragOver={false} 
+                      isDragOver={false} // This prop seems to be static false
                       isMobile={isMobile} 
                       nodeCount={nodes.length} 
                     />
 
-                    {/* Enhanced Edge Renderer */}
                     <EnhancedEdgeRenderer
                       edges={edges}
                       nodes={nodes}
-                      selectedEdgeId={selectedEdgeId}
-                      onSelectEdge={selectEdgeSafely}
+                      selectedEdgeId={selectedEdgeId} // Primary selected edge
+                      selectedEdgeIds={selectedEdgeIds} // Multi-selected edges
+                      onSelectSingleEdge={handleSelectSingleEdge} // For non-modifier clicks
+                      onToggleEdgeSelection={handleToggleEdgeSelection} // For modifier clicks
                       onDoubleClick={handleEdgeDoubleClick}
                       getEdgeValidationClass={getEdgeValidationClass}
                       getEdgeTooltip={getEdgeTooltip}
@@ -253,7 +275,7 @@ const Canvas: React.FC<CanvasProps> = ({
                     {/* Rectangle Selection */}
                     <RectangleSelector
                       selectionRect={selectionRect}
-                      isSelecting={isSelecting}
+                      isSelecting={isSelecting} // isSelecting for rectangle
                     />
 
                     {/* Edge Preview while creating */}
@@ -261,14 +283,17 @@ const Canvas: React.FC<CanvasProps> = ({
 
                     {/* Render all nodes */}
                     {nodes.map((node) => {
-                      const isSelected = selectedNodeIds.includes(node.id);
+                      const isSelected = selectedNodeIds.includes(node.id); // Check against multi-selected nodes
+                      const isPrimarySelected = selectedNodeId === node.id; // For stronger highlight if needed
+                      const displaySelected = isSelected || isPrimarySelected; // Combine for basic selection highlight
+
                       const isHovered = hoveredNodeId === node.id;
                       
                       return (
                         <div
                           key={node.id}
                           className={`${isHovered ? 'ring-2 ring-blue-400 ring-opacity-50 rounded-lg' : ''} ${
-                            isSelected ? 'ring-4 ring-blue-500 ring-opacity-100 rounded-lg shadow-xl' : ''
+                            displaySelected ? 'ring-4 ring-blue-500 ring-opacity-100 rounded-lg shadow-xl' : '' // Updated selection class check
                           } ${
                             isMobile ? 'touch-manipulation' : ''
                           } transition-all duration-200`}
@@ -277,7 +302,7 @@ const Canvas: React.FC<CanvasProps> = ({
                             <ConditionalNode
                               node={node}
                               outgoingEdges={edges.filter(e => e.source === node.id)}
-                              isSelected={isSelected}
+                              isSelected={displaySelected} // Pass combined selection state
                               canCreateEdge={canCreateEdge(node)}
                               onSelect={(id, event) => handleNodeSelect(id, event)}
                               onDoubleClick={() => handleNodeDoubleClick(node.id)}
@@ -290,7 +315,7 @@ const Canvas: React.FC<CanvasProps> = ({
                           ) : (
                             <RegularNode
                               node={node}
-                              isSelected={isSelected}
+                              isSelected={displaySelected} // Pass combined selection state
                               canCreateEdge={canCreateEdge(node)}
                               onSelect={(id, event) => handleNodeSelect(id, event)}
                               onDoubleClick={() => handleNodeDoubleClick(node.id)}
@@ -305,10 +330,9 @@ const Canvas: React.FC<CanvasProps> = ({
                       );
                     })}
 
-                    {/* Status Bar */}
                     <BottomStatusBar
-                      isSelecting={isSelecting}
-                      selectedCount={selectedNodeIds.length}
+                      isSelecting={isSelecting} // Rectangle selection
+                      selectedCount={selectedNodeIds.length + selectedEdgeIds.length} // Total multi-selected items
                       pendingNodeType={pendingNodeType}
                       isCreatingEdge={isCreatingEdge}
                       hasUnsavedChanges={hasUnsavedChanges}
