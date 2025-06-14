@@ -179,7 +179,7 @@ const IssueCard: React.FC<IssueCardProps> = ({ issue, onQuickFix }) => {
             ) : (
               <AlertTriangle className="w-4 h-4 text-orange-600 mr-2" />
             )}
-            <Badge variant="outline" size="sm">
+            <Badge variant="outline">
               {issue.category}
             </Badge>
           </div>

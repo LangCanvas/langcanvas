@@ -1,11 +1,13 @@
 
 import React from 'react';
 import { EnhancedNode } from '../../types/nodeTypes';
+import { EnhancedEdge } from '../../types/edgeTypes';
 import { useCanvasMouseEvents } from '../../hooks/useCanvasMouseEvents';
 import EdgeCreationHandler from './EdgeCreationHandler';
 
 interface CanvasEventHandlersProps {
   nodes: EnhancedNode[];
+  edges: EnhancedEdge[];
   onAddEdge: any;
   canvasRef: React.RefObject<HTMLDivElement>;
   multiSelection: any;
@@ -22,6 +24,7 @@ interface CanvasEventHandlersProps {
 
 const CanvasEventHandlers: React.FC<CanvasEventHandlersProps> = ({
   nodes,
+  edges,
   onAddEdge,
   canvasRef,
   multiSelection,
@@ -33,6 +36,7 @@ const CanvasEventHandlers: React.FC<CanvasEventHandlersProps> = ({
   return (
     <EdgeCreationHandler
       nodes={nodes}
+      edges={edges}
       onAddEdge={onAddEdge}
       canvasRef={canvasRef}
     >

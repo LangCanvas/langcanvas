@@ -108,6 +108,7 @@ const Canvas: React.FC<CanvasProps> = ({
 
             <CanvasEventHandlers
               nodes={nodes}
+              edges={edges}
               onAddEdge={onAddEdge}
               canvasRef={canvasRef}
               multiSelection={multiSelection}
