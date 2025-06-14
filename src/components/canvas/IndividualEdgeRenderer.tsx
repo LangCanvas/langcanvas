@@ -5,6 +5,7 @@ import { EnhancedNode } from '../../types/nodeTypes';
 import { calculateEnhancedOrthogonalPath } from '../../utils/enhancedEdgeCalculations';
 import { EdgeLODManager } from '../../utils/edgePerformance';
 import DataFlowAnimations from './DataFlowAnimations';
+import LoopEdgeRenderer from './LoopEdgeRenderer';
 
 interface IndividualEdgeRendererProps {
   edge: EnhancedEdge;
@@ -43,6 +44,23 @@ const IndividualEdgeRenderer: React.FC<IndividualEdgeRendererProps> = ({
   stopDataFlow,
   dataFlowParticles = []
 }) => {
+  // If this is a loop edge, render with the specialized loop renderer
+  if (edge.loop) {
+    return (
+      <LoopEdgeRenderer
+        edge={edge}
+        sourceNode={sourceNode}
+        targetNode={targetNode}
+        isSelected={isSelected}
+        animatedOpacity={animatedOpacity}
+        onEdgeClick={onEdgeClick}
+        onEdgeDoubleClick={onEdgeDoubleClick}
+        onEdgeHover={onEdgeHover}
+      />
+    );
+  }
+
+  // Regular edge rendering logic
   try {
     const waypoints = calculateEnhancedOrthogonalPath(sourceNode, targetNode);
     const optimizedWaypoints = EdgeLODManager.getSimplifiedPath(waypoints, lodLevel);

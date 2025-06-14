@@ -1,0 +1,87 @@
+
+/* Loop flow animations */
+@keyframes loop-flow {
+  0% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: -20;
+  }
+}
+
+@keyframes loop-pulse {
+  0%, 100% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+.loop-edge-group {
+  transition: all 0.3s ease-out;
+}
+
+.loop-edge-group:hover {
+  filter: brightness(1.1);
+}
+
+/* Loop safety indicators */
+.loop-safety-safe {
+  color: #10b981;
+}
+
+.loop-safety-warning {
+  color: #d97706;
+}
+
+.loop-safety-dangerous {
+  color: #dc2626;
+}
+
+/* Loop template cards */
+.loop-template-card {
+  transition: all 0.2s ease-out;
+}
+
+.loop-template-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Debug panel animations */
+.debug-execution-item {
+  animation: fade-in 0.3s ease-out;
+}
+
+@keyframes execution-success {
+  0% {
+    background-color: #f0fdf4;
+    border-color: #22c55e;
+  }
+  100% {
+    background-color: transparent;
+    border-color: #d1d5db;
+  }
+}
+
+@keyframes execution-error {
+  0% {
+    background-color: #fef2f2;
+    border-color: #ef4444;
+  }
+  100% {
+    background-color: transparent;
+    border-color: #d1d5db;
+  }
+}
+
+.execution-success {
+  animation: execution-success 2s ease-out;
+}
+
+.execution-error {
+  animation: execution-error 2s ease-out;
+}

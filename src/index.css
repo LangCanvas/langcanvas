@@ -1,5 +1,9 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
-@import './styles/validation.css';
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+@import "./styles/validation.css";
+@import "./styles/loopAnimations.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

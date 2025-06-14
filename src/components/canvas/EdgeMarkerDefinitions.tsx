@@ -1,5 +1,6 @@
 
 import React from 'react';
+import EnhancedLoopMarkers from './EnhancedLoopMarkers';
 
 const EdgeMarkerDefinitions: React.FC = () => {
   return (
@@ -136,6 +137,9 @@ const EdgeMarkerDefinitions: React.FC = () => {
           }}
         />
       </marker>
+
+      {/* Include loop-specific markers */}
+      <EnhancedLoopMarkers />
     </defs>
   );
 };
