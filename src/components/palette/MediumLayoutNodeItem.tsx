@@ -27,8 +27,8 @@ const MediumLayoutNodeItem: React.FC<MediumLayoutNodeItemProps> = ({
         onClick={onClick}
       >
         <div className="flex items-center space-x-2 w-full">
-          <span className="text-lg">{node.icon}</span>
-          <span className="font-semibold text-sm">{node.label}</span>
+          <span className="text-lg flex-shrink-0">{node.icon}</span>
+          <span className="font-semibold text-sm flex-1 text-left">{node.label}</span>
         </div>
         
         {showDescription && (
