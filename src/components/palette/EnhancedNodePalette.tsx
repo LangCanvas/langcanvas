@@ -107,7 +107,7 @@ const EnhancedNodePalette: React.FC<EnhancedNodePaletteProps> = ({
     <div className={`${paddingClass} h-full flex flex-col`}>
       <div className="flex items-center justify-between mb-4">
         <h2 className={`font-medium text-gray-700 ${panelLayout === 'small' ? 'text-xs' : 'text-sm'}`}>
-          {panelLayout === 'small' ? '' : 'Node Palette'}
+          {panelLayout === 'small' ? 'Nodes' : 'Node Palette'}
         </h2>
       </div>
 
