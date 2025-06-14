@@ -2,6 +2,8 @@
 import React from 'react';
 import DesktopSidebar from './DesktopSidebar';
 import DesktopPropertiesPanel from './DesktopPropertiesPanel';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
+import { useAdaptivePanelWidths } from '../../hooks/useAdaptivePanelWidths';
 import { EnhancedNode } from '../../types/nodeTypes';
 import { EnhancedEdge } from '../../types/edgeTypes';
 import { ValidationResult } from '../../hooks/useValidation';
@@ -55,73 +57,95 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   onUpdateEdgeProperties,
   validatePriorityConflicts,
 }) => {
-  // Calculate margins for desktop layout
-  const getLeftMargin = () => {
-    if (!isLeftPanelVisible) return 0;
-    return isLeftPanelExpanded ? 256 : 56; // 256px expanded, 56px collapsed
-  };
+  const {
+    leftPanelWidth,
+    rightPanelWidth,
+    leftPanelLayout,
+    rightPanelLayout,
+    handleLeftPanelResize,
+    handleRightPanelResize
+  } = useAdaptivePanelWidths();
 
-  const getRightMargin = () => {
-    if (!isRightPanelVisible) return 0;
-    return isRightPanelExpanded ? 320 : 56; // 320px expanded, 56px collapsed
-  };
+  // Calculate panel sizes for ResizablePanelGroup
+  const totalAvailableWidth = window.innerWidth;
+  const leftPanelPercentage = isLeftPanelVisible ? (leftPanelWidth / totalAvailableWidth) * 100 : 0;
+  const rightPanelPercentage = isRightPanelVisible ? (rightPanelWidth / totalAvailableWidth) * 100 : 0;
+  const canvasPercentage = 100 - leftPanelPercentage - rightPanelPercentage;
 
   return (
-    <>
-      {/* Left Panel */}
-      {isLeftPanelVisible && (
-        <div 
-          className="fixed left-0 top-14 bottom-8 z-20 transition-all duration-300 ease-in-out"
-          style={{ width: isLeftPanelExpanded ? '256px' : '56px' }}
-        >
-          <DesktopSidebar
-            isVisible={isLeftPanelVisible}
-            isExpanded={isLeftPanelExpanded}
-            onToggle={onToggleLeftPanel}
-            onExpand={onExpandLeftPanel}
-          />
-        </div>
-      )}
+    <div className="flex-1 h-full">
+      <ResizablePanelGroup direction="horizontal" className="h-full">
+        {/* Left Panel */}
+        {isLeftPanelVisible && (
+          <>
+            <ResizablePanel
+              defaultSize={leftPanelPercentage}
+              minSize={5}
+              maxSize={40}
+              onResize={(size) => {
+                const newWidth = (size / 100) * totalAvailableWidth;
+                handleLeftPanelResize(newWidth);
+              }}
+              className="relative"
+            >
+              <DesktopSidebar
+                isVisible={isLeftPanelVisible}
+                isExpanded={isLeftPanelExpanded}
+                onToggle={onToggleLeftPanel}
+                onExpand={onExpandLeftPanel}
+                panelWidth={leftPanelWidth}
+                panelLayout={leftPanelLayout}
+              />
+            </ResizablePanel>
+            <ResizableHandle withHandle />
+          </>
+        )}
 
-      {/* Main Canvas Area */}
-      <div 
-        className="flex-1 transition-all duration-300 ease-in-out overflow-hidden"
-        style={{
-          marginLeft: `${getLeftMargin()}px`,
-          marginRight: `${getRightMargin()}px`,
-        }}
-      >
-        {children}
-      </div>
+        {/* Main Canvas Area */}
+        <ResizablePanel defaultSize={canvasPercentage} minSize={30} className="relative overflow-hidden">
+          {children}
+        </ResizablePanel>
 
-      {/* Right Panel */}
-      {isRightPanelVisible && (
-        <div 
-          className="fixed right-0 top-14 bottom-8 z-20 transition-all duration-300 ease-in-out"
-          style={{ width: isRightPanelExpanded ? '320px' : '56px' }}
-        >
-          <DesktopPropertiesPanel
-            selectedNode={selectedNode}
-            selectedEdge={selectedEdge}
-            allNodes={nodes}
-            allEdges={edges}
-            validationResult={validationResult}
-            showValidationPanel={showValidationPanel}
-            isVisible={isRightPanelVisible}
-            isExpanded={isRightPanelExpanded}
-            onUpdateNode={onUpdateNodeProperties}
-            onUpdateEdge={onUpdateEdgeProperties}
-            onDeleteNode={onDeleteNode}
-            onDeleteEdge={onDeleteEdge}
-            setShowValidationPanel={setShowValidationPanel}
-            onToggle={onToggleRightPanel}
-            onExpand={onExpandRightPanel}
-            switchToPropertiesPanel={switchToPropertiesPanel}
-            validatePriorityConflicts={validatePriorityConflicts}
-          />
-        </div>
-      )}
-    </>
+        {/* Right Panel */}
+        {isRightPanelVisible && (
+          <>
+            <ResizableHandle withHandle />
+            <ResizablePanel
+              defaultSize={rightPanelPercentage}
+              minSize={5}
+              maxSize={40}
+              onResize={(size) => {
+                const newWidth = (size / 100) * totalAvailableWidth;
+                handleRightPanelResize(newWidth);
+              }}
+              className="relative"
+            >
+              <DesktopPropertiesPanel
+                selectedNode={selectedNode}
+                selectedEdge={selectedEdge}
+                allNodes={nodes}
+                allEdges={edges}
+                validationResult={validationResult}
+                showValidationPanel={showValidationPanel}
+                isVisible={isRightPanelVisible}
+                isExpanded={isRightPanelExpanded}
+                onUpdateNode={onUpdateNodeProperties}
+                onUpdateEdge={onUpdateEdgeProperties}
+                onDeleteNode={onDeleteNode}
+                onDeleteEdge={onDeleteEdge}
+                setShowValidationPanel={setShowValidationPanel}
+                onToggle={onToggleRightPanel}
+                onExpand={onExpandRightPanel}
+                switchToPropertiesPanel={switchToPropertiesPanel}
+                validatePriorityConflicts={validatePriorityConflicts}
+                panelWidth={rightPanelWidth}
+                panelLayout={rightPanelLayout}
+              />
+            </ResizablePanel>
+          </>
+        )}
+      </ResizablePanelGroup>
+    </div>
   );
 };
 

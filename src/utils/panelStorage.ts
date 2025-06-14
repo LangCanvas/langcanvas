@@ -1,12 +1,14 @@
 
 const PANEL_STORAGE_KEY = 'langcanvas_panel_settings';
-const PANEL_VERSION = '1.0';
+const PANEL_VERSION = '1.1'; // Updated version to include widths
 
 export interface StoredPanelSettings {
   isLeftPanelVisible: boolean;
   isLeftPanelExpanded: boolean;
   isRightPanelVisible: boolean;
   isRightPanelExpanded: boolean;
+  leftPanelWidth?: number;
+  rightPanelWidth?: number;
   version: string;
   timestamp: number;
 }
@@ -15,7 +17,9 @@ const DEFAULT_PANEL_SETTINGS: Omit<StoredPanelSettings, 'version' | 'timestamp'>
   isLeftPanelVisible: true,
   isLeftPanelExpanded: true,
   isRightPanelVisible: true,
-  isRightPanelExpanded: true
+  isRightPanelExpanded: true,
+  leftPanelWidth: 256,
+  rightPanelWidth: 320
 };
 
 export const savePanelSettingsToStorage = (settings: Omit<StoredPanelSettings, 'version' | 'timestamp'>): void => {
@@ -42,7 +46,20 @@ export const loadPanelSettingsFromStorage = (): Omit<StoredPanelSettings, 'versi
 
     const panelData: StoredPanelSettings = JSON.parse(stored);
     
-    // Version check for future migrations
+    // Handle version migration
+    if (panelData.version === '1.0') {
+      // Migrate from old version - add default widths
+      console.log('Migrating panel settings from v1.0 to v1.1');
+      return {
+        isLeftPanelVisible: panelData.isLeftPanelVisible,
+        isLeftPanelExpanded: panelData.isLeftPanelExpanded,
+        isRightPanelVisible: panelData.isRightPanelVisible,
+        isRightPanelExpanded: panelData.isRightPanelExpanded,
+        leftPanelWidth: 256,
+        rightPanelWidth: 320
+      };
+    }
+    
     if (panelData.version !== PANEL_VERSION) {
       console.warn('Panel settings version mismatch, using defaults');
       return DEFAULT_PANEL_SETTINGS;
@@ -53,7 +70,9 @@ export const loadPanelSettingsFromStorage = (): Omit<StoredPanelSettings, 'versi
       isLeftPanelVisible: panelData.isLeftPanelVisible,
       isLeftPanelExpanded: panelData.isLeftPanelExpanded,
       isRightPanelVisible: panelData.isRightPanelVisible,
-      isRightPanelExpanded: panelData.isRightPanelExpanded
+      isRightPanelExpanded: panelData.isRightPanExpanded,
+      leftPanelWidth: panelData.leftPanelWidth || 256,
+      rightPanelWidth: panelData.rightPanelWidth || 320
     };
   } catch (error) {
     console.warn('Failed to load panel settings from localStorage:', error);

@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,7 @@ import CollapsedPropertiesPanel from './CollapsedPropertiesPanel';
 import { EnhancedNode } from '../../types/nodeTypes';
 import { EnhancedEdge } from '../../types/edgeTypes';
 import { ValidationResult } from '../../hooks/useValidation';
+import { PanelLayout } from '../../hooks/useAdaptivePanelWidths';
 
 interface DesktopPropertiesPanelProps {
   selectedNode: EnhancedNode | null;
@@ -19,6 +21,8 @@ interface DesktopPropertiesPanelProps {
   showValidationPanel: boolean;
   isVisible?: boolean;
   isExpanded?: boolean;
+  panelWidth?: number;
+  panelLayout?: PanelLayout;
   
   onUpdateNode: (nodeId: string, updates: Partial<EnhancedNode>) => void;
   onUpdateEdge: (edgeId: string, updates: Partial<EnhancedEdge>) => void;
@@ -40,6 +44,8 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
   showValidationPanel,
   isVisible = true,
   isExpanded = true,
+  panelWidth = 320,
+  panelLayout = 'standard',
   onUpdateNode,
   onUpdateEdge,
   onDeleteNode,
@@ -94,14 +100,13 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
     return null;
   }
 
-  // Show collapsed panel when not expanded
-  if (!isExpanded) {
+  // Show collapsed panel when not expanded or in icon-only mode
+  if (!isExpanded || panelLayout === 'icon-only') {
     console.log('🎛️ DesktopPropertiesPanel rendering collapsed state');
     return (
       <aside 
         data-panel="desktop-properties" 
-        className="relative bg-background border-l border-border flex flex-col w-14 flex-shrink-0 z-10"
-        style={{ minWidth: '3.5rem', width: '3.5rem' }}
+        className="relative bg-background border-l border-border flex flex-col h-full flex-shrink-0 z-10"
       >
         <CollapsedPropertiesPanel
           selectedNode={selectedNode}
@@ -115,14 +120,18 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
 
   // Show expanded panel with tabs
   console.log('🎛️ DesktopPropertiesPanel rendering expanded state');
+  const isCompact = panelLayout === 'compact' || panelLayout === 'ultra-compact';
+  
   return (
     <aside 
       data-panel="desktop-properties" 
-      className="relative w-80 bg-background border-l border-border flex flex-col flex-shrink-0"
+      className="relative bg-background border-l border-border flex flex-col h-full flex-shrink-0"
     >
-      <div className="p-4 border-b border-border flex items-center justify-between">
-        <h2 className="text-sm font-medium text-foreground">Panel</h2>
-        {onToggle && (
+      <div className={`${isCompact ? 'p-2' : 'p-4'} border-b border-border flex items-center justify-between`}>
+        <h2 className={`font-medium text-foreground ${isCompact ? 'text-xs' : 'text-sm'}`}>
+          {isCompact ? 'Panel' : 'Properties Panel'}
+        </h2>
+        {onToggle && !isCompact && (
           <Button
             variant="ghost"
             size="sm"
@@ -136,21 +145,21 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
       </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-        <div className="px-4 pt-2">
+        <div className={`${isCompact ? 'px-2 pt-1' : 'px-4 pt-2'}`}>
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="properties" className="text-xs">
-              Properties
+            <TabsTrigger value="properties" className={isCompact ? 'text-xs px-1' : 'text-xs'}>
+              {isCompact ? 'Props' : 'Properties'}
             </TabsTrigger>
-            <TabsTrigger value="validation" className="text-xs">
-              Issues
+            <TabsTrigger value="validation" className={isCompact ? 'text-xs px-1' : 'text-xs'}>
+              {isCompact ? 'Issues' : 'Issues'}
               {validationResult.issues.length > 0 && (
-                <span className="ml-1 bg-destructive text-destructive-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                <span className={`ml-1 bg-destructive text-destructive-foreground text-xs rounded-full flex items-center justify-center ${isCompact ? 'w-4 h-4' : 'w-5 h-5'}`}>
                   {validationResult.issues.length}
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="settings" className="text-xs">
-              Settings
+            <TabsTrigger value="settings" className={isCompact ? 'text-xs px-1' : 'text-xs'}>
+              {isCompact ? 'Set' : 'Settings'}
             </TabsTrigger>
           </TabsList>
         </div>
@@ -170,16 +179,16 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
         </TabsContent>
         
         <TabsContent value="validation" className="flex-1 mt-0">
-          <div className="p-4">
+          <div className={isCompact ? 'p-2' : 'p-4'}>
             <ValidationPanel 
               validationResult={validationResult}
-              compact={false}
+              compact={isCompact}
             />
           </div>
         </TabsContent>
 
         <TabsContent value="settings" className="flex-1 mt-0">
-          <div className="p-4">
+          <div className={isCompact ? 'p-2' : 'p-4'}>
             <PathfindingSettingsPanel 
               nodes={allNodes}
               edges={allEdges}

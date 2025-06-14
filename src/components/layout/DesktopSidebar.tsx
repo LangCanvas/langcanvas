@@ -2,10 +2,13 @@
 import React from 'react';
 import EnhancedNodePalette from '../palette/EnhancedNodePalette';
 import CollapsedNodePalette from './CollapsedNodePalette';
+import { PanelLayout } from '../../hooks/useAdaptivePanelWidths';
 
 interface DesktopSidebarProps {
   isVisible?: boolean;
   isExpanded?: boolean;
+  panelWidth?: number;
+  panelLayout?: PanelLayout;
   onExpand?: () => void;
   onToggle?: () => void;
 }
@@ -13,6 +16,8 @@ interface DesktopSidebarProps {
 const DesktopSidebar: React.FC<DesktopSidebarProps> = ({ 
   isVisible = true, 
   isExpanded = true,
+  panelWidth = 256,
+  panelLayout = 'standard',
   onExpand,
   onToggle
 }) => {
@@ -31,10 +36,10 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
     }
   };
 
-  // Show collapsed panel when not expanded
-  if (!isExpanded) {
+  // Show collapsed panel when not expanded or in icon-only mode
+  if (!isExpanded || panelLayout === 'icon-only') {
     return (
-      <aside className="relative w-14 bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out">
+      <aside className="relative h-full bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out">
         <CollapsedNodePalette onToggle={handleToggle} isExpanded={isExpanded} />
       </aside>
     );
@@ -42,7 +47,7 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
 
   // Show expanded panel with enhanced palette
   return (
-    <aside className="relative w-64 bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out">
+    <aside className="relative h-full bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out">
       <EnhancedNodePalette 
         onNodeTypeSelect={(type) => {
           const event = new CustomEvent('setPendingCreation', { detail: type });
@@ -50,6 +55,8 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
         }}
         onToggle={handleToggle}
         isExpanded={isExpanded}
+        panelWidth={panelWidth}
+        panelLayout={panelLayout}
       />
     </aside>
   );

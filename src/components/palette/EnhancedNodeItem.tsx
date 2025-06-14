@@ -1,9 +1,9 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { NodeDefinition } from '../../utils/nodeCategories';
 import { NodeType } from '../../types/nodeTypes';
+import { PanelLayout } from '../../hooks/useAdaptivePanelWidths';
 
 interface EnhancedNodeItemProps {
   node: NodeDefinition;
@@ -11,6 +11,7 @@ interface EnhancedNodeItemProps {
   onClick: (e: React.MouseEvent, nodeType: NodeType) => void;
   showDescription?: boolean;
   compact?: boolean;
+  panelLayout?: PanelLayout;
 }
 
 const EnhancedNodeItem: React.FC<EnhancedNodeItemProps> = ({
@@ -18,7 +19,8 @@ const EnhancedNodeItem: React.FC<EnhancedNodeItemProps> = ({
   onDragStart,
   onClick,
   showDescription = true,
-  compact = false
+  compact = false,
+  panelLayout = 'standard'
 }) => {
   const createDragImage = (nodeType: NodeType, label: string): HTMLElement => {
     const dragImage = document.createElement('div');
@@ -147,7 +149,26 @@ const EnhancedNodeItem: React.FC<EnhancedNodeItemProps> = ({
     }
   };
 
-  if (compact) {
+  // Ultra-compact layout for very narrow panels
+  if (panelLayout === 'ultra-compact') {
+    return (
+      <div className="group">
+        <Button
+          variant="outline"
+          className={`w-full h-6 ${getEnhancedNodeColors(node.type)} border transition-all duration-200 text-xs p-1 shadow-sm hover:shadow-md active:scale-95`}
+          draggable
+          onDragStart={handleDragStart}
+          onClick={handleClick}
+          title={`${node.label}: ${node.description}`}
+        >
+          <span className="text-xs">{node.icon}</span>
+        </Button>
+      </div>
+    );
+  }
+
+  // Compact layout
+  if (compact || panelLayout === 'compact') {
     return (
       <div className="group">
         <Button
@@ -159,11 +180,15 @@ const EnhancedNodeItem: React.FC<EnhancedNodeItemProps> = ({
           title={node.description}
         >
           <span className="mr-1.5 text-sm">{node.icon}</span>
-          <span className="font-medium">{node.label}</span>
+          <span className="font-medium truncate">{node.label}</span>
         </Button>
       </div>
     );
   }
+
+  // Standard and wide layouts
+  const showTags = panelLayout === 'wide' && node.tags.length > 0;
+  const maxTags = panelLayout === 'wide' ? 5 : 3;
 
   return (
     <div className="group relative">
@@ -176,10 +201,10 @@ const EnhancedNodeItem: React.FC<EnhancedNodeItemProps> = ({
       >
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center space-x-3">
-            <span className="text-xl">{node.icon}</span>
+            <span className={panelLayout === 'wide' ? 'text-xl' : 'text-lg'}>{node.icon}</span>
             <span className="font-semibold text-sm">{node.label}</span>
           </div>
-          {node.tags.length > 0 && (
+          {showTags && (
             <Badge variant="secondary" className="text-xs px-2 py-0.5 h-5 bg-white/50">
               {node.tags.length}
             </Badge>
@@ -192,16 +217,16 @@ const EnhancedNodeItem: React.FC<EnhancedNodeItemProps> = ({
           </p>
         )}
         
-        {node.tags.length > 0 && showDescription && (
+        {showTags && showDescription && (
           <div className="flex flex-wrap gap-1.5 w-full">
-            {node.tags.slice(0, 3).map((tag) => (
+            {node.tags.slice(0, maxTags).map((tag) => (
               <Badge key={tag} variant="secondary" className="text-xs px-2 py-0.5 h-5 bg-white/70">
                 {tag}
               </Badge>
             ))}
-            {node.tags.length > 3 && (
+            {node.tags.length > maxTags && (
               <Badge variant="secondary" className="text-xs px-2 py-0.5 h-5 bg-white/70">
-                +{node.tags.length - 3}
+                +{node.tags.length - maxTags}
               </Badge>
             )}
           </div>

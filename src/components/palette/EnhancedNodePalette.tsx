@@ -5,6 +5,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { NodeType } from '../../types/nodeTypes';
 import { getAllNodes, getNodesByCategory, searchNodes, NodeDefinition } from '../../utils/nodeCategories';
 import { useEnhancedAnalytics } from '../../hooks/useEnhancedAnalytics';
+import { PanelLayout } from '../../hooks/useAdaptivePanelWidths';
 import NodePaletteSearch from './NodePaletteSearch';
 import NodeCategorySelector from './NodeCategorySelector';
 import EnhancedNodeItem from './EnhancedNodeItem';
@@ -13,14 +14,16 @@ interface EnhancedNodePaletteProps {
   onNodeTypeSelect?: (type: NodeType) => void;
   onToggle?: () => void;
   isExpanded?: boolean;
-  compact?: boolean;
+  panelWidth?: number;
+  panelLayout?: PanelLayout;
 }
 
 const EnhancedNodePalette: React.FC<EnhancedNodePaletteProps> = ({ 
   onNodeTypeSelect, 
   onToggle, 
   isExpanded = true,
-  compact = false
+  panelWidth = 256,
+  panelLayout = 'standard'
 }) => {
   const analytics = useEnhancedAnalytics();
   const [searchQuery, setSearchQuery] = useState('');
@@ -43,7 +46,9 @@ const EnhancedNodePalette: React.FC<EnhancedNodePaletteProps> = ({
       nodeType, 
       method: 'drag_and_drop',
       category: selectedCategory || 'all',
-      searchQuery: searchQuery || undefined
+      searchQuery: searchQuery || undefined,
+      panelWidth,
+      panelLayout
     });
   };
 
@@ -57,7 +62,9 @@ const EnhancedNodePalette: React.FC<EnhancedNodePaletteProps> = ({
       nodeType, 
       method: 'click_to_select',
       category: selectedCategory || 'all',
-      searchQuery: searchQuery || undefined
+      searchQuery: searchQuery || undefined,
+      panelWidth,
+      panelLayout
     });
     
     if (onNodeTypeSelect) {
@@ -86,44 +93,70 @@ const EnhancedNodePalette: React.FC<EnhancedNodePaletteProps> = ({
     setSelectedCategory(null);
   };
 
-  if (compact) {
-    return (
-      <div className="p-2 space-y-2 h-full flex flex-col">
-        <NodePaletteSearch
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          placeholder="Search..."
-        />
-        
-        <ScrollArea className="flex-1">
-          <div className="space-y-1 pr-3">
-            {filteredNodes.slice(0, 5).map((node) => (
-              <EnhancedNodeItem
-                key={node.type}
-                node={node}
-                onDragStart={handleDragStart}
-                onClick={handleClick}
-                showDescription={false}
-                compact={true}
-              />
-            ))}
-          </div>
-        </ScrollArea>
-        
-        {filteredNodes.length > 5 && (
-          <div className="text-xs text-gray-500 text-center">
-            +{filteredNodes.length - 5} more
-          </div>
-        )}
-      </div>
-    );
-  }
+  // Layout configuration based on panel size
+  const layoutConfig = useMemo(() => {
+    switch (panelLayout) {
+      case 'ultra-compact':
+        return {
+          showSearch: false,
+          showCategories: false,
+          showDescriptions: false,
+          showNodeCount: false,
+          compactItems: true,
+          maxVisibleNodes: 8
+        };
+      case 'compact':
+        return {
+          showSearch: true,
+          showCategories: false,
+          showDescriptions: false,
+          showNodeCount: false,
+          compactItems: true,
+          maxVisibleNodes: 12
+        };
+      case 'standard':
+        return {
+          showSearch: true,
+          showCategories: true,
+          showDescriptions: false,
+          showNodeCount: true,
+          compactItems: false,
+          maxVisibleNodes: null
+        };
+      case 'wide':
+        return {
+          showSearch: true,
+          showCategories: true,
+          showDescriptions: true,
+          showNodeCount: true,
+          compactItems: false,
+          maxVisibleNodes: null
+        };
+      default:
+        return {
+          showSearch: true,
+          showCategories: true,
+          showDescriptions: true,
+          showNodeCount: true,
+          compactItems: false,
+          maxVisibleNodes: null
+        };
+    }
+  }, [panelLayout]);
+
+  const displayNodes = layoutConfig.maxVisibleNodes 
+    ? filteredNodes.slice(0, layoutConfig.maxVisibleNodes)
+    : filteredNodes;
+
+  const paddingClass = panelLayout === 'ultra-compact' ? 'p-2' : panelLayout === 'compact' ? 'p-3' : 'p-4';
 
   return (
-    <div className="p-4 h-full flex flex-col">
+    <div className={`${paddingClass} h-full flex flex-col`}>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-sm font-medium text-gray-700">Node Palette</h2>
-        {onToggle && (
+        <h2 className={`font-medium text-gray-700 ${panelLayout === 'ultra-compact' ? 'text-xs' : 'text-sm'}`}>
+          {panelLayout === 'ultra-compact' ? 'Nodes' : 'Node Palette'}
+        </h2>
+        {onToggle && panelLayout !== 'ultra-compact' && (
           <button
             onClick={onToggle}
             className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
@@ -135,12 +168,15 @@ const EnhancedNodePalette: React.FC<EnhancedNodePaletteProps> = ({
       </div>
 
       <div className="space-y-4 flex-1 overflow-hidden flex flex-col">
-        <NodePaletteSearch
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-        />
+        {layoutConfig.showSearch && (
+          <NodePaletteSearch
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            placeholder={panelLayout === 'compact' ? 'Search...' : 'Search nodes...'}
+          />
+        )}
 
-        {!searchQuery && (
+        {layoutConfig.showCategories && !searchQuery && (
           <NodeCategorySelector
             selectedCategory={selectedCategory}
             onCategorySelect={setSelectedCategory}
@@ -148,8 +184,8 @@ const EnhancedNodePalette: React.FC<EnhancedNodePaletteProps> = ({
         )}
 
         <ScrollArea className="flex-1">
-          <div className="space-y-3 pr-3">
-            {filteredNodes.length === 0 ? (
+          <div className={`space-y-3 pr-3 ${layoutConfig.compactItems ? 'space-y-1' : ''}`}>
+            {displayNodes.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <p className="text-sm">No nodes found</p>
                 {(searchQuery || selectedCategory) && (
@@ -162,24 +198,35 @@ const EnhancedNodePalette: React.FC<EnhancedNodePaletteProps> = ({
                 )}
               </div>
             ) : (
-              filteredNodes.map((node) => (
+              displayNodes.map((node) => (
                 <EnhancedNodeItem
                   key={node.type}
                   node={node}
                   onDragStart={handleDragStart}
                   onClick={handleClick}
-                  showDescription={true}
-                  compact={false}
+                  showDescription={layoutConfig.showDescriptions}
+                  compact={layoutConfig.compactItems}
+                  panelLayout={panelLayout}
                 />
               ))
             )}
           </div>
         </ScrollArea>
 
+        {layoutConfig.maxVisibleNodes && filteredNodes.length > layoutConfig.maxVisibleNodes && (
+          <div className="text-xs text-gray-500 text-center">
+            +{filteredNodes.length - layoutConfig.maxVisibleNodes} more
+          </div>
+        )}
+
         <div className="mt-4 text-xs text-gray-500">
-          <p className="hidden lg:block">Drag nodes to the canvas to create them</p>
-          <p className="lg:hidden">Tap a node type, then tap on the canvas to place it</p>
-          {filteredNodes.length > 0 && (
+          {panelLayout !== 'ultra-compact' && (
+            <>
+              <p className="hidden lg:block">Drag nodes to the canvas to create them</p>
+              <p className="lg:hidden">Tap a node type, then tap on the canvas to place it</p>
+            </>
+          )}
+          {layoutConfig.showNodeCount && filteredNodes.length > 0 && (
             <p className="mt-1">
               {filteredNodes.length} node{filteredNodes.length !== 1 ? 's' : ''} available
             </p>
