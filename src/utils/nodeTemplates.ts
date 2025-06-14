@@ -36,7 +36,8 @@ export const nodeTemplates: NodeTemplate[] = [
       },
       config: {
         metadata: {
-          notes: 'Performs HTTP requests with configurable method, headers, and data'
+          notes: 'Performs HTTP requests with configurable method, headers, and data',
+          tags: []
         }
       }
     },
@@ -61,7 +62,8 @@ export const nodeTemplates: NodeTemplate[] = [
       },
       config: {
         metadata: {
-          notes: 'Applies transformation rules to input data'
+          notes: 'Applies transformation rules to input data',
+          tags: []
         }
       }
     },
@@ -79,7 +81,8 @@ export const nodeTemplates: NodeTemplate[] = [
           evaluationMode: 'first-match'
         },
         metadata: {
-          notes: 'Evaluates conditions and routes to appropriate branch'
+          notes: 'Evaluates conditions and routes to appropriate branch',
+          tags: []
         }
       }
     },
@@ -95,7 +98,8 @@ export const nodeTemplates: NodeTemplate[] = [
       config: {
         concurrency: 'parallel',
         metadata: {
-          notes: 'Executes multiple workflow branches simultaneously'
+          notes: 'Executes multiple workflow branches simultaneously',
+          tags: []
         }
       }
     },
@@ -124,7 +128,8 @@ export const nodeTemplates: NodeTemplate[] = [
       },
       config: {
         metadata: {
-          notes: 'Sends email notifications with configurable recipients and content'
+          notes: 'Sends email notifications with configurable recipients and content',
+          tags: []
         }
       }
     },

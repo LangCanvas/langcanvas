@@ -1,340 +1,222 @@
 
-import { EnhancedNode } from '../types/nodeTypes';
-import { EnhancedEdge } from '../types/edgeTypes';
 import { WorkflowJSON } from '../types/workflowTypes';
+import { EnhancedNode, NodeType } from '../types/nodeTypes';
+import { EnhancedEdge } from '../types/edgeTypes';
 
 export interface WorkflowTemplate {
   id: string;
   name: string;
   description: string;
   category: string;
-  difficulty: 'beginner' | 'intermediate' | 'advanced';
   tags: string[];
-  workflow: WorkflowJSON;
-  preview?: string;
-  estimatedTime?: string;
+  nodes: EnhancedNode[];
+  edges: EnhancedEdge[];
+  metadata: {
+    created: string;
+    version: string;
+    author: string;
+    complexity: 'beginner' | 'intermediate' | 'advanced';
+  };
 }
+
+const createNode = (
+  id: string,
+  type: NodeType,
+  label: string,
+  x: number,
+  y: number,
+  functionName?: string
+): EnhancedNode => ({
+  id,
+  type,
+  label,
+  x,
+  y,
+  function: {
+    name: functionName || `${type}_function`,
+    input_schema: {},
+    output_schema: {}
+  },
+  config: {
+    timeout: 30,
+    retry: {
+      enabled: false,
+      max_attempts: 3,
+      delay: 1000
+    },
+    concurrency: 'sequential',
+    metadata: {
+      tags: [],
+      notes: ''
+    }
+  },
+  transitions: {
+    default: '',
+    conditions: []
+  }
+});
 
 export const workflowTemplates: WorkflowTemplate[] = [
   {
     id: 'simple-api-workflow',
     name: 'Simple API Workflow',
-    description: 'Basic workflow that calls an API and processes the response',
-    category: 'API Integration',
-    difficulty: 'beginner',
-    tags: ['api', 'http', 'basic', 'starter'],
-    estimatedTime: '5 minutes',
-    workflow: {
-      nodes: [
-        {
-          id: 'start-1',
-          label: 'Start',
-          type: 'start',
-          position: { x: 100, y: 100 },
-          function: {
-            name: 'workflow_start',
-            input_schema: {},
-            output_schema: { trigger: 'string' }
-          },
-          config: {
-            timeout: 30,
-            retry: { enabled: false, max_attempts: 1, delay: 1000 },
-            concurrency: 'sequential',
-            metadata: { tags: [], notes: 'Workflow entry point' }
-          },
-          transitions: {
-            default: 'api-call',
-            conditions: []
-          }
-        },
-        {
-          id: 'api-call-1',
-          label: 'API Call',
-          type: 'function',
-          position: { x: 300, y: 100 },
-          function: {
-            name: 'http_request',
-            input_schema: {
-              url: 'string',
-              method: 'string',
-              headers: 'object'
-            },
-            output_schema: {
-              response: 'object',
-              status: 'number'
-            }
-          },
-          config: {
-            timeout: 30,
-            retry: { enabled: true, max_attempts: 3, delay: 1000 },
-            concurrency: 'sequential',
-            metadata: { tags: ['api'], notes: 'Makes HTTP request to external API' }
-          },
-          transitions: {
-            default: 'end',
-            conditions: []
-          }
-        },
-        {
-          id: 'end-1',
-          label: 'End',
-          type: 'end',
-          position: { x: 500, y: 100 },
-          function: {
-            name: 'workflow_end',
-            input_schema: { result: 'object' },
-            output_schema: {}
-          },
-          config: {
-            timeout: 30,
-            retry: { enabled: false, max_attempts: 1, delay: 1000 },
-            concurrency: 'sequential',
-            metadata: { tags: [], notes: 'Workflow completion' }
-          },
-          transitions: {
-            default: '',
-            conditions: []
-          }
-        }
-      ],
-      edges: [
-        {
-          id: 'edge-1',
-          source: 'Start',
-          target: 'API Call',
-          label: 'proceed'
-        },
-        {
-          id: 'edge-2',
-          source: 'API Call',
-          target: 'End',
-          label: 'complete'
-        }
-      ],
-      entryPoint: 'API Call',
-      version: '1.0'
+    description: 'Basic workflow that makes an API call and processes the response',
+    category: 'Integration',
+    tags: ['api', 'basic', 'http'],
+    nodes: [
+      createNode('start-1', 'start', 'Start', 100, 100),
+      createNode('api-call-1', 'function', 'API Call', 300, 100, 'make_api_call'),
+      createNode('process-data-1', 'function', 'Process Data', 500, 100, 'process_response'),
+      createNode('end-1', 'end', 'End', 700, 100)
+    ],
+    edges: [
+      {
+        id: 'edge-1',
+        source: 'start-1',
+        target: 'api-call-1'
+      },
+      {
+        id: 'edge-2',
+        source: 'api-call-1',
+        target: 'process-data-1'
+      },
+      {
+        id: 'edge-3',
+        source: 'process-data-1',
+        target: 'end-1'
+      }
+    ],
+    metadata: {
+      created: '2024-01-01',
+      version: '1.0.0',
+      author: 'System',
+      complexity: 'beginner'
     }
   },
   {
-    id: 'conditional-processing',
-    name: 'Conditional Data Processing',
+    id: 'conditional-workflow',
+    name: 'Conditional Processing Workflow',
     description: 'Workflow with conditional branching based on data validation',
-    category: 'Data Processing',
-    difficulty: 'intermediate',
-    tags: ['conditional', 'data', 'validation', 'branching'],
-    estimatedTime: '10 minutes',
-    workflow: {
-      nodes: [
-        {
-          id: 'start-2',
-          label: 'Start',
-          type: 'start',
-          position: { x: 100, y: 200 },
-          function: {
-            name: 'workflow_start',
-            input_schema: {},
-            output_schema: { data: 'object' }
-          },
-          config: {
-            timeout: 30,
-            retry: { enabled: false, max_attempts: 1, delay: 1000 },
-            concurrency: 'sequential',
-            metadata: { tags: [], notes: 'Receives input data' }
-          },
-          transitions: {
-            default: 'validate-data',
-            conditions: []
-          }
-        },
-        {
-          id: 'validate-data',
-          label: 'Validate Data',
-          type: 'function',
-          position: { x: 300, y: 200 },
-          function: {
-            name: 'validate_input',
-            input_schema: { data: 'object' },
-            output_schema: { valid: 'boolean', errors: 'array' }
-          },
-          config: {
-            timeout: 30,
-            retry: { enabled: true, max_attempts: 2, delay: 1000 },
-            concurrency: 'sequential',
-            metadata: { tags: ['validation'], notes: 'Validates input data structure' }
-          },
-          transitions: {
-            default: 'check-validity',
-            conditions: []
-          }
-        },
-        {
-          id: 'check-validity',
-          label: 'Check Validity',
-          type: 'conditional',
-          position: { x: 500, y: 200 },
-          function: {
-            name: 'condition_check',
-            input_schema: { valid: 'boolean' },
-            output_schema: { branch: 'string' }
-          },
-          config: {
-            timeout: 30,
-            retry: { enabled: false, max_attempts: 1, delay: 1000 },
-            concurrency: 'sequential',
-            conditional: { evaluationMode: 'first-match' },
-            metadata: { tags: ['condition'], notes: 'Routes based on validation result' }
-          },
-          transitions: {
-            default: 'handle-error',
-            conditions: [
-              { expression: 'valid == true', next_node: 'process-data' },
-              { expression: 'valid == false', next_node: 'handle-error' }
-            ]
-          }
-        },
-        {
-          id: 'process-data',
-          label: 'Process Data',
-          type: 'function',
-          position: { x: 700, y: 150 },
-          function: {
-            name: 'process_valid_data',
-            input_schema: { data: 'object' },
-            output_schema: { processed: 'object' }
-          },
-          config: {
-            timeout: 60,
-            retry: { enabled: true, max_attempts: 3, delay: 2000 },
-            concurrency: 'sequential',
-            metadata: { tags: ['processing'], notes: 'Processes valid data' }
-          },
-          transitions: {
-            default: 'success-end',
-            conditions: []
-          }
-        },
-        {
-          id: 'handle-error',
-          label: 'Handle Error',
-          type: 'function',
-          position: { x: 700, y: 250 },
-          function: {
-            name: 'handle_validation_error',
-            input_schema: { errors: 'array' },
-            output_schema: { error_report: 'object' }
-          },
-          config: {
-            timeout: 30,
-            retry: { enabled: false, max_attempts: 1, delay: 1000 },
-            concurrency: 'sequential',
-            metadata: { tags: ['error'], notes: 'Handles validation errors' }
-          },
-          transitions: {
-            default: 'error-end',
-            conditions: []
-          }
-        },
-        {
-          id: 'success-end',
-          label: 'Success',
-          type: 'end',
-          position: { x: 900, y: 150 },
-          function: {
-            name: 'workflow_success',
-            input_schema: { processed: 'object' },
-            output_schema: {}
-          },
-          config: {
-            timeout: 30,
-            retry: { enabled: false, max_attempts: 1, delay: 1000 },
-            concurrency: 'sequential',
-            metadata: { tags: [], notes: 'Successful completion' }
-          },
-          transitions: {
-            default: '',
-            conditions: []
-          }
-        },
-        {
-          id: 'error-end',
-          label: 'Error End',
-          type: 'end',
-          position: { x: 900, y: 250 },
-          function: {
-            name: 'workflow_error',
-            input_schema: { error_report: 'object' },
-            output_schema: {}
-          },
-          config: {
-            timeout: 30,
-            retry: { enabled: false, max_attempts: 1, delay: 1000 },
-            concurrency: 'sequential',
-            metadata: { tags: [], notes: 'Error completion' }
-          },
-          transitions: {
-            default: '',
-            conditions: []
-          }
-        }
-      ],
-      edges: [
-        {
-          id: 'edge-3',
-          source: 'Start',
-          target: 'Validate Data',
-          label: 'input'
-        },
-        {
-          id: 'edge-4',
-          source: 'Validate Data',
-          target: 'Check Validity',
-          label: 'validation_result'
-        },
-        {
-          id: 'edge-5',
-          source: 'Check Validity',
-          target: 'Process Data',
-          label: 'valid',
-          conditional: {
-            condition: {
-              expression: 'valid == true',
-              functionName: 'is_valid',
-              parameters: {}
-            },
+    category: 'Control Flow',
+    tags: ['conditional', 'branching', 'validation'],
+    nodes: [
+      createNode('start-2', 'start', 'Start', 100, 200),
+      createNode('validate-2', 'function', 'Validate Input', 300, 200, 'validate_input'),
+      createNode('condition-2', 'conditional', 'Check Valid', 500, 200),
+      createNode('process-valid-2', 'function', 'Process Valid', 700, 150, 'process_valid_data'),
+      createNode('handle-error-2', 'function', 'Handle Error', 700, 250, 'handle_error'),
+      createNode('end-2', 'end', 'End', 900, 200)
+    ],
+    edges: [
+      {
+        id: 'edge-4',
+        source: 'start-2',
+        target: 'validate-2'
+      },
+      {
+        id: 'edge-5',
+        source: 'validate-2',
+        target: 'condition-2'
+      },
+      {
+        id: 'edge-6',
+        source: 'condition-2',
+        target: 'process-valid-2',
+        conditional: {
+          condition: {
+            functionName: 'is_valid',
+            expression: 'data.valid == true',
             priority: 1,
             isDefault: false
-          }
-        },
-        {
-          id: 'edge-6',
-          source: 'Check Validity',
-          target: 'Handle Error',
-          label: 'invalid',
-          conditional: {
-            condition: {
-              expression: 'valid == false',
-              functionName: 'is_invalid',
-              parameters: {}
-            },
+          },
+          sourceNodeType: 'conditional',
+          evaluationMode: 'first-match'
+        }
+      },
+      {
+        id: 'edge-7',
+        source: 'condition-2',
+        target: 'handle-error-2',
+        conditional: {
+          condition: {
+            functionName: 'is_invalid',
+            expression: 'data.valid == false',
             priority: 2,
             isDefault: true
-          }
-        },
-        {
-          id: 'edge-7',
-          source: 'Process Data',
-          target: 'Success',
-          label: 'processed'
-        },
-        {
-          id: 'edge-8',
-          source: 'Handle Error',
-          target: 'Error End',
-          label: 'error_handled'
+          },
+          sourceNodeType: 'conditional',
+          evaluationMode: 'first-match'
         }
-      ],
-      entryPoint: 'Validate Data',
-      version: '1.0'
+      },
+      {
+        id: 'edge-8',
+        source: 'process-valid-2',
+        target: 'end-2'
+      },
+      {
+        id: 'edge-9',
+        source: 'handle-error-2',
+        target: 'end-2'
+      }
+    ],
+    metadata: {
+      created: '2024-01-01',
+      version: '1.0.0',
+      author: 'System',
+      complexity: 'intermediate'
+    }
+  },
+  {
+    id: 'parallel-processing-workflow',
+    name: 'Parallel Processing Workflow',
+    description: 'Workflow that processes data in parallel branches',
+    category: 'Performance',
+    tags: ['parallel', 'performance', 'concurrent'],
+    nodes: [
+      createNode('start-3', 'start', 'Start', 100, 300),
+      createNode('split-3', 'parallel', 'Split Data', 300, 300),
+      createNode('process-a-3', 'function', 'Process A', 500, 250, 'process_branch_a'),
+      createNode('process-b-3', 'function', 'Process B', 500, 350, 'process_branch_b'),
+      createNode('merge-3', 'function', 'Merge Results', 700, 300, 'merge_results'),
+      createNode('end-3', 'end', 'End', 900, 300)
+    ],
+    edges: [
+      {
+        id: 'edge-10',
+        source: 'start-3',
+        target: 'split-3'
+      },
+      {
+        id: 'edge-11',
+        source: 'split-3',
+        target: 'process-a-3'
+      },
+      {
+        id: 'edge-12',
+        source: 'split-3',
+        target: 'process-b-3'
+      },
+      {
+        id: 'edge-13',
+        source: 'process-a-3',
+        target: 'merge-3'
+      },
+      {
+        id: 'edge-14',
+        source: 'process-b-3',
+        target: 'merge-3'
+      },
+      {
+        id: 'edge-15',
+        source: 'merge-3',
+        target: 'end-3'
+      }
+    ],
+    metadata: {
+      created: '2024-01-01',
+      version: '1.0.0',
+      author: 'System',
+      complexity: 'advanced'
     }
   }
 ];
@@ -344,8 +226,8 @@ export const getTemplatesByCategory = (category?: string): WorkflowTemplate[] =>
   return workflowTemplates.filter(template => template.category === category);
 };
 
-export const getTemplatesByDifficulty = (difficulty: WorkflowTemplate['difficulty']): WorkflowTemplate[] => {
-  return workflowTemplates.filter(template => template.difficulty === difficulty);
+export const getTemplatesByComplexity = (complexity: 'beginner' | 'intermediate' | 'advanced'): WorkflowTemplate[] => {
+  return workflowTemplates.filter(template => template.metadata.complexity === complexity);
 };
 
 export const searchWorkflowTemplates = (query: string): WorkflowTemplate[] => {
@@ -353,11 +235,44 @@ export const searchWorkflowTemplates = (query: string): WorkflowTemplate[] => {
   return workflowTemplates.filter(template =>
     template.name.toLowerCase().includes(lowerQuery) ||
     template.description.toLowerCase().includes(lowerQuery) ||
-    template.tags.some(tag => tag.toLowerCase().includes(lowerQuery)) ||
-    template.category.toLowerCase().includes(lowerQuery)
+    template.tags.some(tag => tag.toLowerCase().includes(lowerQuery))
   );
 };
 
 export const getTemplateCategories = (): string[] => {
   return Array.from(new Set(workflowTemplates.map(template => template.category)));
+};
+
+export const createWorkflowFromTemplate = (templateId: string): { nodes: EnhancedNode[]; edges: EnhancedEdge[] } | null => {
+  const template = workflowTemplates.find(t => t.id === templateId);
+  if (!template) return null;
+
+  // Create new IDs for nodes and update edge references
+  const nodeIdMap = new Map<string, string>();
+  
+  const newNodes = template.nodes.map(node => {
+    const newId = `${node.type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    nodeIdMap.set(node.id, newId);
+    
+    return {
+      ...node,
+      id: newId
+    };
+  });
+
+  const newEdges = template.edges.map(edge => {
+    const newSource = nodeIdMap.get(edge.source);
+    const newTarget = nodeIdMap.get(edge.target);
+    
+    if (!newSource || !newTarget) return null;
+    
+    return {
+      ...edge,
+      id: `edge-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      source: newSource,
+      target: newTarget
+    };
+  }).filter(Boolean) as EnhancedEdge[];
+
+  return { nodes: newNodes, edges: newEdges };
 };
