@@ -1,4 +1,3 @@
-
 import { GOOGLE_CLIENT_ID, GoogleAuthUser, AuthenticationError, AuthErrorHandler } from './googleAuthConfig';
 
 export class GoogleAuthOperations {
@@ -89,18 +88,38 @@ export class GoogleAuthOperations {
       });
     }
 
-    window.google.accounts.id.renderButton(container, {
-      theme: 'outline',
-      size: 'large',
-      type: 'standard',
-      text: 'signin_with',
-      shape: 'rectangular',
-      logo_alignment: 'left',
-      width: 280,
-      locale: 'en'
-    });
-    
-    console.log('🔐 Google Auth button rendered successfully');
+    // Clear any existing content in the container
+    container.innerHTML = '';
+
+    try {
+      window.google.accounts.id.renderButton(container, {
+        theme: 'outline',
+        size: 'large',
+        type: 'standard',
+        text: 'signin_with',
+        shape: 'rectangular',
+        logo_alignment: 'left',
+        width: 280,
+        locale: 'en'
+      });
+      
+      console.log('🔐 Google Auth button rendered successfully');
+      
+      // Wait a bit longer for the button to be properly rendered
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Check if button was actually rendered
+      const buttonElement = container.querySelector('div[role="button"]') as HTMLElement;
+      if (!buttonElement) {
+        console.warn('🔐 Button element not found after rendering');
+        throw new Error('Google Sign-in button was not properly rendered');
+      }
+      
+      console.log('🔐 Button element found and ready');
+    } catch (error) {
+      console.error('🔐 Error rendering Google Auth button:', error);
+      throw AuthErrorHandler.createAuthError('initialization_failed', 'Failed to render Google Sign-in button');
+    }
   }
 
   static parseCredential(credential: string): GoogleAuthUser {

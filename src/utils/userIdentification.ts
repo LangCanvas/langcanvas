@@ -1,6 +1,8 @@
+
 import { firestoreAnalytics, FirestoreUserSession } from '@/utils/firestoreAnalytics';
 import { SessionStorageManager } from '@/utils/sessionStorage';
 import { DoNotTrackDetector } from '@/utils/doNotTrackDetection';
+import { DevelopmentModeManager } from '@/utils/developmentMode';
 import { Timestamp } from 'firebase/firestore';
 
 export interface UserSession {
@@ -152,7 +154,12 @@ export class UserIdentificationManager {
       };
 
       localStorage.setItem(this.SESSION_KEY, JSON.stringify(session));
-      this.storeSessionInFirestore(session).catch(console.warn);
+      
+      // Only store in Firestore if not in development
+      if (!DevelopmentModeManager.shouldSkipFirestore()) {
+        this.storeSessionInFirestore(session).catch(console.warn);
+      }
+      
       return session;
     });
   }
@@ -167,7 +174,12 @@ export class UserIdentificationManager {
       session.pageViews += 1;
 
       localStorage.setItem(this.SESSION_KEY, JSON.stringify(session));
-      this.updateSessionInFirestore(session).catch(console.warn);
+      
+      // Only update in Firestore if not in development
+      if (!DevelopmentModeManager.shouldSkipFirestore()) {
+        this.updateSessionInFirestore(session).catch(console.warn);
+      }
+      
       return session;
     });
   }
@@ -178,7 +190,11 @@ export class UserIdentificationManager {
       if (session) {
         session.isActive = false;
         localStorage.setItem(this.SESSION_KEY, JSON.stringify(session));
-        this.updateSessionInFirestore(session).catch(console.warn);
+        
+        // Only update in Firestore if not in development
+        if (!DevelopmentModeManager.shouldSkipFirestore()) {
+          this.updateSessionInFirestore(session).catch(console.warn);
+        }
       }
     });
   }

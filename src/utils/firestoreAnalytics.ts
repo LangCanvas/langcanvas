@@ -1,4 +1,3 @@
-
 import { 
   collection, 
   addDoc, 
@@ -15,6 +14,7 @@ import {
   DocumentData
 } from 'firebase/firestore';
 import { db } from '@/config/firebase';
+import { DevelopmentModeManager } from '@/utils/developmentMode';
 
 export interface AnalyticsEvent {
   id: string;
@@ -55,6 +55,11 @@ class FirestoreAnalyticsManager {
   private consentCollection = 'consent_records';
 
   async storeEvent(event: Omit<AnalyticsEvent, 'timestamp' | 'environment'>): Promise<void> {
+    if (DevelopmentModeManager.shouldSkipFirestore()) {
+      DevelopmentModeManager.logFirestoreSkip('storeEvent');
+      return;
+    }
+
     try {
       const firestoreEvent: AnalyticsEvent = {
         ...event,
@@ -71,6 +76,11 @@ class FirestoreAnalyticsManager {
   }
 
   async storeUserSession(session: FirestoreUserSession): Promise<void> {
+    if (DevelopmentModeManager.shouldSkipFirestore()) {
+      DevelopmentModeManager.logFirestoreSkip('storeUserSession');
+      return;
+    }
+
     try {
       await setDoc(doc(db, this.sessionsCollection, session.sessionId), session);
     } catch (error) {
@@ -79,6 +89,11 @@ class FirestoreAnalyticsManager {
   }
 
   async updateUserSession(sessionId: string, updates: Partial<FirestoreUserSession>): Promise<void> {
+    if (DevelopmentModeManager.shouldSkipFirestore()) {
+      DevelopmentModeManager.logFirestoreSkip('updateUserSession');
+      return;
+    }
+
     try {
       const sessionRef = doc(db, this.sessionsCollection, sessionId);
       await updateDoc(sessionRef, {
@@ -91,6 +106,11 @@ class FirestoreAnalyticsManager {
   }
 
   async storeConsentRecord(consent: Omit<ConsentRecord, 'timestamp'>): Promise<void> {
+    if (DevelopmentModeManager.shouldSkipFirestore()) {
+      DevelopmentModeManager.logFirestoreSkip('storeConsentRecord');
+      return;
+    }
+
     try {
       const consentRecord: ConsentRecord = {
         ...consent,
@@ -104,6 +124,11 @@ class FirestoreAnalyticsManager {
   }
 
   async getUserConsent(userId: string): Promise<ConsentRecord | null> {
+    if (DevelopmentModeManager.shouldSkipFirestore()) {
+      DevelopmentModeManager.logFirestoreSkip('getUserConsent');
+      return null;
+    }
+
     try {
       const consentRef = doc(db, this.consentCollection, userId);
       const consentSnap = await getDoc(consentRef);
@@ -119,6 +144,11 @@ class FirestoreAnalyticsManager {
   }
 
   async getRecentEvents(limitCount: number = 100): Promise<AnalyticsEvent[]> {
+    if (DevelopmentModeManager.shouldSkipFirestore()) {
+      DevelopmentModeManager.logFirestoreSkip('getRecentEvents');
+      return [];
+    }
+
     try {
       const q = query(
         collection(db, this.eventsCollection),
@@ -135,6 +165,11 @@ class FirestoreAnalyticsManager {
   }
 
   async getEventsByType(eventType: AnalyticsEvent['type'], limitCount: number = 50): Promise<AnalyticsEvent[]> {
+    if (DevelopmentModeManager.shouldSkipFirestore()) {
+      DevelopmentModeManager.logFirestoreSkip('getEventsByType');
+      return [];
+    }
+
     try {
       const q = query(
         collection(db, this.eventsCollection),
@@ -152,6 +187,11 @@ class FirestoreAnalyticsManager {
   }
 
   async getUserSessions(userId: string): Promise<FirestoreUserSession[]> {
+    if (DevelopmentModeManager.shouldSkipFirestore()) {
+      DevelopmentModeManager.logFirestoreSkip('getUserSessions');
+      return [];
+    }
+
     try {
       const q = query(
         collection(db, this.sessionsCollection),

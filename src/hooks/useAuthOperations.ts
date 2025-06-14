@@ -74,27 +74,38 @@ export const useAuthOperations = (
       buttonContainer.style.position = 'absolute';
       buttonContainer.style.top = '-9999px';
       buttonContainer.style.left = '-9999px';
+      buttonContainer.style.width = '300px';
+      buttonContainer.style.height = '50px';
       buttonContainer.id = 'temp-google-signin-button';
       document.body.appendChild(buttonContainer);
 
       await GoogleAuthService.renderButton(buttonContainer, handleCredentialResponse);
 
+      // Wait for button to be ready and then click it
       setTimeout(() => {
         const button = buttonContainer.querySelector('div[role="button"]') as HTMLElement;
         if (button) {
           debugLogger.addLog('Clicking alternative sign-in button...');
-          button.click();
+          
+          // Simulate a proper click event
+          const clickEvent = new MouseEvent('click', {
+            view: window,
+            bubbles: true,
+            cancelable: true
+          });
+          button.dispatchEvent(clickEvent);
         } else {
           debugLogger.addLog('Button not found in container');
-          throw new Error('Sign-in button could not be rendered');
+          throw new Error('Sign-in button could not be found after rendering');
         }
         
+        // Clean up after a delay
         setTimeout(() => {
           if (document.body.contains(buttonContainer)) {
             document.body.removeChild(buttonContainer);
           }
-        }, 2000);
-      }, 800);
+        }, 5000);
+      }, 1200); // Increased delay to ensure button is ready
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Alternative sign-in failed';
       debugLogger.addLog(`Alternative sign-in failed: ${errorMessage}`);
