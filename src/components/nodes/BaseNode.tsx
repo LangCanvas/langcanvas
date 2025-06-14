@@ -30,19 +30,15 @@ const BaseNode: React.FC<BaseNodeComponentProps> = ({
     // Always call onSelect first to update selection state
     onSelect(node.id, e);
     
-    // Then call onDragStart which will determine which drag system to use
-    if (onDragStart) {
-      console.log(`🎯 BaseNode(${node.id}): Calling onDragStart`);
-      onDragStart(e);
-    }
+    // Check if this will be a multi-drag scenario BEFORE calling onDragStart
+    const willBeMultiDrag = isSelected || (e.ctrlKey || e.metaKey || e.shiftKey);
     
-    // Only call startDrag for unselected nodes (single node drag)
-    // Multi-drag is handled by onDragStart -> handleNodeDragStart
-    if (!isSelected) {
-      console.log(`🎯 BaseNode(${node.id}): Starting single-node drag (unselected)`);
-      startDrag(e);
+    if (willBeMultiDrag && onDragStart) {
+      console.log(`🎯 BaseNode(${node.id}): Will use multi-drag system`);
+      onDragStart(e);
     } else {
-      console.log(`🎯 BaseNode(${node.id}): Skipping single-node drag (selected - multi-drag will handle)`);
+      console.log(`🎯 BaseNode(${node.id}): Will use single-node drag system`);
+      startDrag(e);
     }
   };
 

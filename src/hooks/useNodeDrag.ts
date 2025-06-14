@@ -94,18 +94,12 @@ export const useNodeDrag = (
   }, [handlePointerMove, node.id]);
 
   const startDrag = useCallback((e: PointerDragEvent) => {
-    // Critical: Only handle unselected nodes
-    if (isSelected) {
-      console.log(`useNodeDrag(${node.id}): Ignoring drag - node is selected (multi-drag will handle)`);
-      return;
-    }
-
     if (e.defaultPrevented) {
       console.log(`useNodeDrag(${node.id}): Event defaultPrevented, not starting drag`);
       return;
     }
     
-    console.log(`useNodeDrag(${node.id}): Starting drag for unselected node`);
+    console.log(`useNodeDrag(${node.id}): Starting single-node drag (isSelected: ${isSelected})`);
     
     e.stopPropagation();
 
@@ -115,7 +109,7 @@ export const useNodeDrag = (
       dragOffset: { x: 0, y: 0 }
     };
     
-    console.log(`useNodeDrag(${node.id}): Adding event listeners`);
+    console.log(`useNodeDrag(${node.id}): Adding event listeners for single drag`);
     document.addEventListener('pointermove', handlePointerMove);
     document.addEventListener('pointerup', handlePointerUp);
   }, [handlePointerMove, handlePointerUp, isSelected, node.id]);

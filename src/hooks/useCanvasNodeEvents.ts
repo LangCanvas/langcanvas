@@ -54,11 +54,12 @@ export const useCanvasNodeEvents = ({
   const handleNodeDragStart = useCallback((nodeId: string, event: React.PointerEvent) => {
     console.log('🚩 Node drag start requested:', { nodeId, eventX: event.clientX, eventY: event.clientY, selectedNodeIds });
 
-    // Use current selection state (after handleNodeSelect was called)
-    // Check if the node is now selected (selection happens before drag start)
-    const isNodeSelected = selectedNodeIds.includes(nodeId);
+    // Check if this node or multiple nodes are selected
+    // Note: selection state should be current by now since handleNodeSelect was called first
+    const currentlySelected = selectedNodeIds.includes(nodeId);
+    const hasMultipleSelected = selectedNodeIds.length > 1;
     
-    if (isNodeSelected || selectedNodeIds.length > 1) {
+    if (currentlySelected || hasMultipleSelected) {
       console.log('✅ Initiating multi-drag for selected node(s):', selectedNodeIds);
       // Prevent single-node drag system from activating
       event.preventDefault();
