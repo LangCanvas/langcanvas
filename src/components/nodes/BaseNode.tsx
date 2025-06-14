@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BaseNodeProps } from '../../types/nodeProps';
 import { useNodeDrag } from '../../hooks/useNodeDrag';
@@ -24,16 +25,25 @@ const BaseNode: React.FC<BaseNodeComponentProps> = ({
   const sanitizedLabel = sanitizeNodeLabel(node.label);
 
   const handlePointerDown = (e: React.PointerEvent) => {
-    // Pass the event to onSelect for multi-selection support.
-    // PointerEvent is a type of MouseEvent, so this is safe.
+    console.log(`🎯 BaseNode(${node.id}): PointerDown - isSelected: ${isSelected}`);
+    
+    // Always call onSelect first to update selection state
     onSelect(node.id, e);
     
+    // Then call onDragStart which will determine which drag system to use
     if (onDragStart) {
+      console.log(`🎯 BaseNode(${node.id}): Calling onDragStart`);
       onDragStart(e);
     }
     
-    // startDrag now has internal logic to ignore if the node is already selected.
-    startDrag(e);
+    // Only call startDrag for unselected nodes (single node drag)
+    // Multi-drag is handled by onDragStart -> handleNodeDragStart
+    if (!isSelected) {
+      console.log(`🎯 BaseNode(${node.id}): Starting single-node drag (unselected)`);
+      startDrag(e);
+    } else {
+      console.log(`🎯 BaseNode(${node.id}): Skipping single-node drag (selected - multi-drag will handle)`);
+    }
   };
 
   const handleDoubleClick = (e: React.MouseEvent) => {

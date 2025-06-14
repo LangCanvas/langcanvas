@@ -21,7 +21,10 @@ export const useNodeDrag = (
   const [isVisualDragging, setVisualDragging] = useState(false);
 
   const handlePointerMove = useCallback((e: PointerEvent) => {
-    if (!dragStateRef.current) return;
+    if (!dragStateRef.current) {
+      console.log(`useNodeDrag(${node.id}): No drag state in move handler`);
+      return;
+    }
 
     if (isDraggingRef.current) {
       const canvas = document.getElementById('canvas');
@@ -44,12 +47,16 @@ export const useNodeDrag = (
           3000 - (nodeRef.current?.offsetHeight || 60)
         ));
         
+        console.log(`useNodeDrag(${node.id}): Moving to ${newX}, ${newY}`);
         onMove(node.id, newX, newY);
       }
     } else {
       const dx = e.clientX - dragStateRef.current.startX;
       const dy = e.clientY - dragStateRef.current.startY;
-      if (Math.sqrt(dx * dx + dy * dy) > DRAG_THRESHOLD) {
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      if (distance > DRAG_THRESHOLD) {
+        console.log(`useNodeDrag(${node.id}): Threshold exceeded (${distance}px), starting drag`);
         isDraggingRef.current = true;
         setVisualDragging(true);
 
@@ -57,45 +64,48 @@ export const useNodeDrag = (
         const canvasRect = canvas?.getBoundingClientRect();
         const scrollContainer = document.querySelector('[data-radix-scroll-area-viewport]');
         if (canvasRect && scrollContainer) {
-            const scrollLeft = scrollContainer.scrollLeft || 0;
-            const scrollTop = scrollContainer.scrollTop || 0;
-            const canvasX = e.clientX - canvasRect.left + scrollLeft;
-            const canvasY = e.clientY - canvasRect.top + scrollTop;
-            
-            dragStateRef.current.dragOffset = {
-                x: canvasX - node.x,
-                y: canvasY - node.y
-            };
-            console.log(`useNodeDrag: Starting single drag for ${node.id}`);
+          const scrollLeft = scrollContainer.scrollLeft || 0;
+          const scrollTop = scrollContainer.scrollTop || 0;
+          const canvasX = e.clientX - canvasRect.left + scrollLeft;
+          const canvasY = e.clientY - canvasRect.top + scrollTop;
+          
+          dragStateRef.current.dragOffset = {
+            x: canvasX - node.x,
+            y: canvasY - node.y
+          };
+          console.log(`useNodeDrag(${node.id}): Set drag offset:`, dragStateRef.current.dragOffset);
         }
       }
     }
   }, [node.id, node.x, node.y, onMove]);
   
   const handlePointerUp = useCallback(() => {
+    console.log(`useNodeDrag(${node.id}): Pointer up - cleaning up listeners`);
+    
     document.removeEventListener('pointermove', handlePointerMove);
     document.removeEventListener('pointerup', handlePointerUp);
     
     if (isDraggingRef.current) {
-        console.log(`useNodeDrag: Ending single drag for ${node.id}`);
-        isDraggingRef.current = false;
-        setVisualDragging(false);
+      console.log(`useNodeDrag(${node.id}): Ending single drag`);
+      isDraggingRef.current = false;
+      setVisualDragging(false);
     }
     dragStateRef.current = null;
-  }, [handlePointerMove]);
+  }, [handlePointerMove, node.id]);
 
   const startDrag = useCallback((e: PointerDragEvent) => {
-    // New Guard: If the node is already selected, do nothing.
-    // The multi-drag handler is now responsible for all selected nodes.
+    // Critical: Only handle unselected nodes
     if (isSelected) {
+      console.log(`useNodeDrag(${node.id}): Ignoring drag - node is selected (multi-drag will handle)`);
       return;
     }
 
     if (e.defaultPrevented) {
-      console.log("useNodeDrag: Event defaultPrevented, not starting single drag for node:", node.id);
+      console.log(`useNodeDrag(${node.id}): Event defaultPrevented, not starting drag`);
       return;
     }
-    console.log("useNodeDrag: Preparing to drag UNSELECTED node:", node.id);
+    
+    console.log(`useNodeDrag(${node.id}): Starting drag for unselected node`);
     
     e.stopPropagation();
 
@@ -105,16 +115,19 @@ export const useNodeDrag = (
       dragOffset: { x: 0, y: 0 }
     };
     
+    console.log(`useNodeDrag(${node.id}): Adding event listeners`);
     document.addEventListener('pointermove', handlePointerMove);
     document.addEventListener('pointerup', handlePointerUp);
   }, [handlePointerMove, handlePointerUp, isSelected, node.id]);
 
+  // Cleanup effect
   useEffect(() => {
     return () => {
+      console.log(`useNodeDrag(${node.id}): Cleanup - removing event listeners`);
       document.removeEventListener('pointermove', handlePointerMove);
       document.removeEventListener('pointerup', handlePointerUp);
     };
-  }, [handlePointerMove, handlePointerUp]);
+  }, [handlePointerMove, handlePointerUp, node.id]);
 
   return {
     nodeRef,

@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { EnhancedNode } from '../types/nodeTypes';
 
@@ -30,7 +31,10 @@ export const useMultiNodeDrag = (
 
   const handlePointerMove = useCallback((event: PointerEvent) => {
     const { clientX, clientY } = event;
-    if (!dragStateRef.current.initialPositions.size || !dragStateRef.current.primaryNodeId) return;
+    if (!dragStateRef.current.initialPositions.size || !dragStateRef.current.primaryNodeId) {
+      console.log('useMultiNodeDrag: No initial positions or primary node in move handler');
+      return;
+    }
 
     if (dragStateRef.current.isDragging) {
       const canvas = document.getElementById('canvas');
@@ -51,6 +55,8 @@ export const useMultiNodeDrag = (
         const deltaX = newPrimaryX - primaryNodeInitial.x;
         const deltaY = newPrimaryY - primaryNodeInitial.y;
 
+        console.log(`useMultiNodeDrag: Moving ${dragStateRef.current.initialPositions.size} nodes by delta (${deltaX}, ${deltaY})`);
+
         dragStateRef.current.initialPositions.forEach((initialPos, nodeId) => {
           const node = nodes.find(n => n.id === nodeId);
           const nodeElement = document.querySelector(`[data-node-id="${nodeId}"]`) as HTMLElement;
@@ -65,8 +71,10 @@ export const useMultiNodeDrag = (
     } else {
       const dx = clientX - dragStateRef.current.startX;
       const dy = clientY - dragStateRef.current.startY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
 
-      if (Math.sqrt(dx * dx + dy * dy) > DRAG_THRESHOLD) {
+      if (distance > DRAG_THRESHOLD) {
+        console.log(`useMultiNodeDrag: Threshold exceeded (${distance}px), starting multi-drag`);
         dragStateRef.current.isDragging = true;
         setVisualDragging(true);
 
@@ -84,20 +92,24 @@ export const useMultiNodeDrag = (
         const primaryNodeInitialPos = dragStateRef.current.initialPositions.get(dragStateRef.current.primaryNodeId);
 
         if (primaryNodeInitialPos) {
-            dragStateRef.current.dragOffset = {
-                x: canvasX - primaryNodeInitialPos.x,
-                y: canvasY - primaryNodeInitialPos.y,
-            };
+          dragStateRef.current.dragOffset = {
+            x: canvasX - primaryNodeInitialPos.x,
+            y: canvasY - primaryNodeInitialPos.y,
+          };
+          console.log('useMultiNodeDrag: Set drag offset:', dragStateRef.current.dragOffset);
         }
-        console.log('🎯 Starting multi-drag with offset:', dragStateRef.current.dragOffset);
       }
     }
   }, [onMoveNode, nodes]);
 
   const handlePointerUp = useCallback(() => {
+    console.log('useMultiNodeDrag: Pointer up - cleaning up listeners');
+    
     if (dragStateRef.current.isDragging) {
-      console.log('🎯 Ending multi-drag');
+      console.log('useMultiNodeDrag: Ending multi-drag');
     }
+    
+    // Clean up state
     dragStateRef.current = {
       isDragging: false,
       primaryNodeId: null,
@@ -108,6 +120,7 @@ export const useMultiNodeDrag = (
     };
     setVisualDragging(false);
 
+    // Remove listeners
     document.removeEventListener('pointermove', handlePointerMove);
     document.removeEventListener('pointerup', handlePointerUp);
   }, [handlePointerMove]);
@@ -121,9 +134,12 @@ export const useMultiNodeDrag = (
       }
     });
 
-    if (initialPositions.size === 0) return;
+    if (initialPositions.size === 0) {
+      console.log('useMultiNodeDrag: No nodes to drag');
+      return;
+    }
 
-    console.log('🎯 Preparing multi-drag for nodes:', [...initialPositions.keys()]);
+    console.log('useMultiNodeDrag: Preparing multi-drag for nodes:', [...initialPositions.keys()]);
     
     dragStateRef.current = {
       isDragging: false,
@@ -135,12 +151,15 @@ export const useMultiNodeDrag = (
     };
     setVisualDragging(false);
 
+    console.log('useMultiNodeDrag: Adding event listeners');
     document.addEventListener('pointermove', handlePointerMove);
     document.addEventListener('pointerup', handlePointerUp);
   }, [selectedNodeIds, nodes, handlePointerMove, handlePointerUp]);
 
+  // Cleanup effect
   useEffect(() => {
     return () => {
+      console.log('useMultiNodeDrag: Cleanup - removing event listeners');
       document.removeEventListener('pointermove', handlePointerMove);
       document.removeEventListener('pointerup', handlePointerUp);
     };

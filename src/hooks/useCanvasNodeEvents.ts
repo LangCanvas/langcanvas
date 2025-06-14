@@ -54,16 +54,22 @@ export const useCanvasNodeEvents = ({
   const handleNodeDragStart = useCallback((nodeId: string, event: React.PointerEvent) => {
     console.log('🚩 Node drag start requested:', { nodeId, eventX: event.clientX, eventY: event.clientY, selectedNodeIds });
 
-    // Multi-drag should handle ANY selected node, even if it's just one.
-    if (selectedNodeIds.includes(nodeId)) {
-      console.log('✅ Initiating drag for selected node(s):', selectedNodeIds);
+    // Use current selection state (after handleNodeSelect was called)
+    // Check if the node is now selected (selection happens before drag start)
+    const isNodeSelected = selectedNodeIds.includes(nodeId);
+    
+    if (isNodeSelected || selectedNodeIds.length > 1) {
+      console.log('✅ Initiating multi-drag for selected node(s):', selectedNodeIds);
+      // Prevent single-node drag system from activating
+      event.preventDefault();
+      event.stopPropagation();
+      
+      // Start multi-drag
       startMultiDrag(nodeId, event.clientX, event.clientY);
-      event.preventDefault(); // Crucial: Prevent useNodeDrag
-      event.stopPropagation(); // Stop event from bubbling further
     } else {
-      // If the node is not selected, we let the single-node drag handler (useNodeDrag) take over.
-      // This happens when you click and drag an unselected node in a single motion.
+      // Let single-node drag handle this (unselected node)
       console.log('🤔 Letting single-node drag take over for unselected node:', nodeId);
+      // Don't prevent default - let useNodeDrag handle it
     }
   }, [selectedNodeIds, startMultiDrag]);
 
