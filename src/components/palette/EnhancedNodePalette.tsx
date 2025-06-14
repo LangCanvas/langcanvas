@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { NodeType } from '../../types/nodeTypes';
 import { getAllNodes, getNodesByCategory, searchNodes, NodeDefinition } from '../../utils/nodeCategories';
@@ -9,6 +8,7 @@ import NodeCategorySelector from './NodeCategorySelector';
 import PaletteContent from './PaletteContent';
 import PaletteFooter from './PaletteFooter';
 import { getLayoutConfig } from './PaletteLayoutConfig';
+import './NodePaletteAlignment.css';
 
 interface EnhancedNodePaletteProps {
   onNodeTypeSelect?: (type: NodeType) => void;
@@ -105,23 +105,14 @@ const EnhancedNodePalette: React.FC<EnhancedNodePaletteProps> = ({
   const paddingClass = panelLayout === 'small' ? 'p-1' : 'p-3';
 
   return (
-    <div 
-      className={`${paddingClass} h-full flex flex-col`} 
-      style={{ textAlign: 'left !important' } as React.CSSProperties}
-    >
+    <div className={`${paddingClass} h-full flex flex-col node-palette-left-align`}>
       <div className="flex items-center justify-center mb-4">
-        <h2 
-          className={`font-medium text-gray-700 ${panelLayout === 'small' ? 'text-xs' : 'text-sm'}`} 
-          style={{ textAlign: 'center !important' } as React.CSSProperties}
-        >
+        <h2 className={`font-medium text-gray-700 ${panelLayout === 'small' ? 'text-xs' : 'text-sm'} node-palette-center-align`}>
           {panelLayout === 'small' ? 'Nodes' : 'Node Palette'}
         </h2>
       </div>
 
-      <div 
-        className="space-y-4 flex-1 overflow-hidden flex flex-col" 
-        style={{ textAlign: 'left !important' } as React.CSSProperties}
-      >
+      <div className="space-y-4 flex-1 overflow-hidden flex flex-col">
         {layoutConfig.showSearch && (
           <NodePaletteSearch
             searchQuery={searchQuery}
