@@ -189,8 +189,8 @@ export class AStarPathfinder {
   }
 
   private hasLineOfSight(start: { x: number, y: number }, end: { x: number, y: number }): boolean {
-    const dx = Math.abs(end.x - start.x);
-    const dy = Math.abs(end.y - start.y);
+    let dx = Math.abs(end.x - start.x);
+    let dy = Math.abs(end.y - start.y);
     const x1 = start.x;
     const y1 = start.y;
     const x2 = end.x;
