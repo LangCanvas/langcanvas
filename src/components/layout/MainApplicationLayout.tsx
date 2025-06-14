@@ -131,7 +131,7 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
 
             {/* Main Canvas Area */}
             <div 
-              className="flex-1 transition-all duration-300 ease-in-out"
+              className="flex-1 transition-all duration-300 ease-in-out overflow-hidden"
               style={{
                 marginLeft: `${getLeftMargin()}px`,
                 marginRight: `${getRightMargin()}px`,
