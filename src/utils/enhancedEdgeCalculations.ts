@@ -1,9 +1,9 @@
-
 import { EnhancedNode } from '../types/nodeTypes';
 import { GridSystem } from './gridSystem';
 import { AStarPathfinder, PathfindingResult } from './astarPathfinding';
 import { getNodeDimensions } from './edgeCalculations';
 import { PathfindingCache } from './pathfindingCache';
+import { createQualityAwarePathfinder, PathQuality } from './pathQualityModes';
 
 export interface EnhancedPathResult {
   waypoints: Array<{ x: number, y: number }>;
@@ -13,24 +13,35 @@ export interface EnhancedPathResult {
     gridPath: Array<{ x: number, y: number }>;
     nodesExplored: number;
     cached: boolean;
+    quality: PathQuality;
   };
 }
 
 export class EnhancedEdgeCalculator {
   private grid: GridSystem;
   private pathfinder: AStarPathfinder;
+  private qualityPathfinder: any;
   private canvasWidth: number;
   private canvasHeight: number;
   private cache: PathfindingCache;
   private batchUpdateTimeout: NodeJS.Timeout | null = null;
   private pendingUpdates = new Set<string>();
+  private currentQuality: PathQuality = 'balanced';
 
   constructor(canvasWidth: number = 3000, canvasHeight: number = 3000) {
     this.canvasWidth = canvasWidth;
     this.canvasHeight = canvasHeight;
     this.grid = new GridSystem(canvasWidth, canvasHeight, 20);
     this.pathfinder = new AStarPathfinder(this.grid);
+    this.qualityPathfinder = createQualityAwarePathfinder(this.pathfinder, this.grid);
     this.cache = new PathfindingCache();
+  }
+
+  public setPathQuality(quality: PathQuality): void {
+    if (this.currentQuality !== quality) {
+      this.currentQuality = quality;
+      this.cache.invalidateGrid(); // Clear cache when quality changes
+    }
   }
 
   public updateNodes(nodes: EnhancedNode[]): void {
@@ -78,9 +89,10 @@ export class EnhancedEdgeCalculator {
   }
 
   public calculatePath(sourceNode: EnhancedNode, targetNode: EnhancedNode): EnhancedPathResult {
-    // Check cache first
+    // Check cache first (include quality in cache key)
+    const cacheKey = `${sourceNode.id}-${targetNode.id}-${this.currentQuality}`;
     const cachedResult = this.cache.get(sourceNode.id, targetNode.id);
-    if (cachedResult) {
+    if (cachedResult && cachedResult.debug?.quality === this.currentQuality) {
       return {
         ...cachedResult,
         debug: {
@@ -100,8 +112,8 @@ export class EnhancedEdgeCalculator {
     const clearStart = this.findClearPoint(gridStart, gridEnd, sourceNode);
     const clearEnd = this.findClearPoint(gridEnd, gridStart, targetNode);
     
-    // Use A* to find the path
-    const pathResult = this.pathfinder.findPathWithSmoothing(clearStart, clearEnd);
+    // Use quality-aware A* to find the path
+    const pathResult = this.qualityPathfinder.findPath(clearStart, clearEnd, this.currentQuality);
     
     if (!pathResult.found) {
       // Fallback to direct line if no path found
@@ -112,7 +124,8 @@ export class EnhancedEdgeCalculator {
         debug: {
           gridPath: [],
           nodesExplored: pathResult.nodesExplored,
-          cached: false
+          cached: false,
+          quality: this.currentQuality
         }
       };
       
@@ -135,7 +148,8 @@ export class EnhancedEdgeCalculator {
       debug: {
         gridPath: pathResult.path,
         nodesExplored: pathResult.nodesExplored,
-        cached: false
+        cached: false,
+        quality: this.currentQuality
       }
     };
 
@@ -238,6 +252,11 @@ export const getEnhancedEdgeCalculator = (): EnhancedEdgeCalculator => {
 export const updateEdgeCalculatorNodes = (nodes: EnhancedNode[]): void => {
   const calculator = getEnhancedEdgeCalculator();
   calculator.updateNodesBatch(nodes);
+};
+
+export const setPathfindingQuality = (quality: PathQuality): void => {
+  const calculator = getEnhancedEdgeCalculator();
+  calculator.setPathQuality(quality);
 };
 
 // Enhanced calculation functions that match the existing API

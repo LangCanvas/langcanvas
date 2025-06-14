@@ -1,5 +1,6 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { setPathfindingQuality } from '../utils/enhancedEdgeCalculations';
 
 export interface PathfindingSettings {
   enableDebugGrid: boolean;
@@ -22,6 +23,11 @@ export const usePathfindingSettings = () => {
     const stored = localStorage.getItem('pathfinding-settings');
     return stored ? { ...defaultSettings, ...JSON.parse(stored) } : defaultSettings;
   });
+
+  // Update the edge calculator when path quality changes
+  useEffect(() => {
+    setPathfindingQuality(settings.pathQuality);
+  }, [settings.pathQuality]);
 
   const updateSetting = useCallback(<K extends keyof PathfindingSettings>(
     key: K, 
