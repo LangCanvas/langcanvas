@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -29,11 +30,6 @@ const ToolbarMenu: React.FC = () => {
       console.log('🔧 Trying fallback navigation');
       window.location.href = '/admin';
     }
-  };
-
-  const handleAdminLogin = () => {
-    console.log('🔧 Admin Login clicked - navigating to /admin-login');
-    navigate('/admin-login');
   };
 
   // Simple boolean check for rendering
@@ -68,18 +64,14 @@ const ToolbarMenu: React.FC = () => {
           Privacy Dashboard
         </DropdownMenuItem>
         
-        <DropdownMenuSeparator />
-        
-        {showAdminDashboard ? (
-          <DropdownMenuItem onClick={handleAdminDashboard}>
-            <Shield className="w-4 h-4 mr-2" />
-            Admin Dashboard
-          </DropdownMenuItem>
-        ) : (
-          <DropdownMenuItem onClick={handleAdminLogin}>
-            <Shield className="w-4 h-4 mr-2" />
-            Admin Login
-          </DropdownMenuItem>
+        {showAdminDashboard && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleAdminDashboard}>
+              <Shield className="w-4 h-4 mr-2" />
+              Admin Dashboard
+            </DropdownMenuItem>
+          </>
         )}
       </DropdownMenuContent>
     </DropdownMenu>
