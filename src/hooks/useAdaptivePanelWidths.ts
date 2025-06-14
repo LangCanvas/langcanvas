@@ -2,12 +2,12 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useSmartPanelSizing } from './useSmartPanelSizing';
 
-// Updated panel breakpoints with proper constraints
+// Updated panel breakpoints with new constraints
 export const PANEL_BREAKPOINTS = {
-  MIN: 60, // Minimum for small layout (icon + text)
-  SWITCH_THRESHOLD: 70, // Switch to medium layout at this width
+  MIN: 80, // Updated minimum for small layout (icon + text)
+  SWITCH_THRESHOLD: 90, // Updated switch to medium layout threshold
   MAX: 100, // Maximum for medium layout to keep it compact
-  DEFAULT_LEFT: 85,
+  DEFAULT_LEFT: 95,
   DEFAULT_RIGHT: 320
 } as const;
 
@@ -21,7 +21,7 @@ interface PanelWidthSettings {
 }
 
 const PANEL_WIDTH_STORAGE_KEY = 'langcanvas_panel_widths';
-const PANEL_WIDTH_VERSION = '3.1';
+const PANEL_WIDTH_VERSION = '3.2'; // Updated version for new constraints
 
 export const useAdaptivePanelWidths = () => {
   const { measurements, getContentBasedLayout } = useSmartPanelSizing();
@@ -88,13 +88,23 @@ export const useAdaptivePanelWidths = () => {
     return Math.round((percentage / 100) * referenceWidth);
   }, []);
 
+  // Calculate the maximum percentage that represents 100px
+  const getMaxPercentageForLeftPanel = useCallback(() => {
+    const referenceWidth = 1400;
+    return (PANEL_BREAKPOINTS.MAX / referenceWidth) * 100;
+  }, []);
+
   const handleLeftPanelResize = useCallback((percentage: number) => {
-    const pixelWidth = convertPercentageToPixels(percentage);
+    // Cap the percentage to ensure it doesn't exceed 100px equivalent
+    const maxPercentage = getMaxPercentageForLeftPanel();
+    const cappedPercentage = Math.min(percentage, maxPercentage);
+    
+    const pixelWidth = convertPercentageToPixels(cappedPercentage);
     // Enforce strict width constraints for left panel
     const constrainedWidth = Math.max(PANEL_BREAKPOINTS.MIN, Math.min(PANEL_BREAKPOINTS.MAX, pixelWidth));
     setLeftPanelWidth(constrainedWidth);
     saveWidthsToStorage(constrainedWidth, rightPanelWidth);
-  }, [rightPanelWidth, saveWidthsToStorage, convertPercentageToPixels]);
+  }, [rightPanelWidth, saveWidthsToStorage, convertPercentageToPixels, getMaxPercentageForLeftPanel]);
 
   const handleRightPanelResize = useCallback((percentage: number) => {
     const pixelWidth = convertPercentageToPixels(percentage);
@@ -120,6 +130,7 @@ export const useAdaptivePanelWidths = () => {
     handleLeftPanelResize,
     handleRightPanelResize,
     getInitialPercentage,
+    getMaxPercentageForLeftPanel, // Export this for use in DesktopLayout
     measurements,
   };
 };

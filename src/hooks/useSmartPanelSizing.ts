@@ -10,20 +10,20 @@ interface ContentMeasurements {
 
 export const useSmartPanelSizing = () => {
   const [measurements, setMeasurements] = useState<ContentMeasurements>({
-    minWidthForIcons: 60, // Minimum for small layout (icon + text)
-    minWidthForText: 70, // Threshold to switch to medium layout
-    recommendedWidth: 85 // Default recommended width
+    minWidthForIcons: 80, // Updated minimum for small layout (icon + text)
+    minWidthForText: 90, // Updated threshold to switch to medium layout
+    recommendedWidth: 95 // Default recommended width
   });
   const measurementRef = useRef<HTMLDivElement>();
 
   const measureContent = useCallback(() => {
     if (typeof window === 'undefined') return;
 
-    // Fixed measurements based on requirements
-    const minWidthForIcons = 60; // Small layout minimum (icon + text)
-    const minWidthForText = 70; // Switch threshold to medium layout
+    // Fixed measurements based on updated requirements
+    const minWidthForIcons = 80; // Small layout minimum (icon + text)
+    const minWidthForText = 90; // Switch threshold to medium layout
     const windowWidth = window.innerWidth;
-    const recommendedWidth = Math.max(70, Math.min(100, windowWidth * 0.15));
+    const recommendedWidth = Math.max(80, Math.min(100, windowWidth * 0.15));
 
     setMeasurements({
       minWidthForIcons,
@@ -44,8 +44,8 @@ export const useSmartPanelSizing = () => {
   }, [measureContent]);
 
   const getContentBasedLayout = useCallback((width: number): 'small' | 'medium' => {
-    // Simple threshold: switch to medium when width reaches 70px
-    return width >= 70 ? 'medium' : 'small';
+    // Simple threshold: switch to medium when width reaches 90px
+    return width >= 90 ? 'medium' : 'small';
   }, []);
 
   return {
