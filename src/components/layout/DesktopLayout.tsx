@@ -88,7 +88,6 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
               <DesktopSidebar
                 isVisible={isLeftPanelVisible}
                 isExpanded={true}
-                onToggle={onToggleLeftPanel}
                 panelWidth={leftPanelWidth}
                 panelLayout={leftPanelLayout}
               />
