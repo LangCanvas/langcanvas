@@ -1,5 +1,4 @@
-
-export const GOOGLE_CLIENT_ID = '882832843852-1i8vk04nmofd5ck3iad89q5tnt5o3v4r.apps.googleusercontent.com';
+export const GOOGLE_CLIENT_ID = '425198427847-rfucr78mvnma3qv94pn9utas046svokk.apps.googleusercontent.com';
 
 export interface GoogleAuthConfig {
   client_id: string;
