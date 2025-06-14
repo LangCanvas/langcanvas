@@ -6,6 +6,7 @@ import { exportToJSON } from '../utils/workflowExporter';
 import { importFromJSON } from '../utils/workflowImporter';
 import { validateWorkflowJSON } from '../utils/workflowValidator';
 import { clearWorkflowFromStorage } from '../utils/workflowStorage';
+import { sanitizeNodeLabel } from '../utils/security';
 
 interface UseWorkflowSerializerProps {
   nodes: EnhancedNode[];
