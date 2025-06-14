@@ -31,6 +31,7 @@ export const useIndexState = () => {
     deleteEdgesForNode,
     setEdges,
     selectEdge,
+    validatePriorityConflicts,
   } = enhancedEdges;
   
   const nodeCreation = useNodeCreation({ 
@@ -38,7 +39,7 @@ export const useIndexState = () => {
   });
   
   const {
-    pendingNodeType: pendingCreation,
+    pendingNodeType,
     clearPendingCreation,
   } = nodeCreation;
 
@@ -68,7 +69,6 @@ export const useIndexState = () => {
 
   const {
     validationResult,
-    validatePriorityConflicts,
     isWorkflowValid,
     handleValidateWorkflow,
   } = validation;
@@ -98,7 +98,7 @@ export const useIndexState = () => {
     selectEdge,
     
     // Node creation state
-    pendingCreation,
+    pendingCreation: pendingNodeType,
     clearPendingCreation,
     dragMode: null, // placeholder
     isSelecting: false, // placeholder

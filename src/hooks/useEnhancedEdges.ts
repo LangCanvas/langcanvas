@@ -41,12 +41,13 @@ export const useEnhancedEdges = () => {
     reorderConditionalEdges,
     deleteEdge,
     deleteEdgesForNode,
+    setEdges,
     selectEdge,
     validateConnection,
     canCreateEdge,
-    getNodeOutgoingEdges: (nodeId: string) => getNodeOutgoingEdges(nodeId, edges),
-    getConditionalNodeEdges: (nodeId: string) => getConditionalNodeEdges(nodeId, edges),
     validatePriorityConflicts: (nodeId: string, priority: number, currentEdgeId?: string) => 
-      validatePriorityConflicts(nodeId, priority, edges, currentEdgeId)
+      validatePriorityConflicts(nodeId, priority, edges, currentEdgeId),
+    getNodeOutgoingEdges: (nodeId: string) => getNodeOutgoingEdges(nodeId, edges),
+    getConditionalNodeEdges: (nodeId: string) => getConditionalNodeEdges(nodeId, edges)
   };
 };

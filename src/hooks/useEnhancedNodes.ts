@@ -64,6 +64,10 @@ export const useEnhancedNodes = () => {
     setSelectedNodeId(id);
   }, []);
 
+  const clearSelection = useCallback(() => {
+    setSelectedNodeId(null);
+  }, []);
+
   const selectedNode = selectedNodeId ? nodes.find(node => node.id === selectedNodeId) : null;
 
   return {
@@ -74,6 +78,8 @@ export const useEnhancedNodes = () => {
     updateNodePosition,
     updateNodeProperties,
     deleteNode,
-    selectNode
+    setNodes,
+    selectNode,
+    clearSelection
   };
 };

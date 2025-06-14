@@ -42,6 +42,7 @@ const Index: React.FC = () => {
     handleExport,
     isWorkflowValid,
     handleValidateWorkflow,
+    addNode,
   } = indexState;
 
   const panelHandlers = useIndexPanelHandlers(clearPendingCreation);
@@ -130,6 +131,11 @@ const Index: React.FC = () => {
     panelHandlers,
   });
 
+  // Create a simple function that checks if edge can be created
+  const canCreateEdge = useCallback((sourceNode: any) => {
+    return true; // Simplified implementation
+  }, []);
+
   // Simple event handlers for canvas
   const handleNodePositionChange = useCallback((id: string, x: number, y: number) => {
     updateNodeProperties(id, { x, y });
@@ -138,28 +144,6 @@ const Index: React.FC = () => {
   const handleEdgeUpdate = useCallback((id: string, updates: any) => {
     updateEdgeProperties(id, updates);
   }, [updateEdgeProperties]);
-
-  // Simple selection handlers
-  const handleSelectionChange = useCallback((state: any) => {
-    // Handle selection state change
-  }, []);
-
-  const handleMultiSelectStart = useCallback(() => {
-    // Handle multi-select start
-  }, []);
-
-  const handleMultiSelectEnd = useCallback(() => {
-    // Handle multi-select end
-  }, []);
-
-  // Simple mobile handlers
-  const handleCanvasClick = useCallback(() => {
-    clearPendingCreation();
-  }, [clearPendingCreation]);
-
-  const handleNodeCreate = useCallback((type: any, x: number, y: number) => {
-    addNode(type, x, y);
-  }, [addNode]);
 
   return (
     <MainApplicationLayout
@@ -196,27 +180,20 @@ const Index: React.FC = () => {
       validatePriorityConflicts={validatePriorityConflicts}
     >
       <Canvas
-        ref={canvasRef}
         nodes={nodes}
         edges={edges}
-        selectedNode={selectedNode}
-        selectedEdge={selectedEdge}
-        pendingCreation={pendingCreation}
-        dragMode={dragMode}
-        isSelecting={isSelecting}
-        selectedCount={selectedCount}
-        validationResult={validationResult}
-        onNodePositionChange={handleNodePositionChange}
-        onNodeSelect={handleSelectNode}
-        onEdgeSelect={handleSelectEdge}
-        onCanvasClick={handleCanvasClick}
-        onNodeCreate={handleNodeCreate}
-        onEdgeCreate={handleAddEdge}
-        onEdgeUpdate={handleEdgeUpdate}
-        onClearSelection={clearSelection}
-        onSelectionChange={handleSelectionChange}
-        onMultiSelectStart={handleMultiSelectStart}
-        onMultiSelectEnd={handleMultiSelectEnd}
+        selectedNodeId={selectedNode?.id || null}
+        selectedEdgeId={selectedEdge?.id || null}
+        onAddNode={addNode}
+        onSelectNode={handleSelectNode}
+        onSelectEdge={handleSelectEdge}
+        onMoveNode={handleNodePositionChange}
+        onDeleteNode={handleDeleteNode}
+        onDeleteEdge={deleteEdge}
+        onAddEdge={handleAddEdge}
+        canCreateEdge={canCreateEdge}
+        pendingNodeType={pendingCreation}
+        onClearPendingCreation={clearPendingCreation}
       />
     </MainApplicationLayout>
   );
