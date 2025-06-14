@@ -2,7 +2,10 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { EnhancedNode } from '../../types/nodeTypes';
 import { usePointerEvents } from '../../hooks/usePointerEvents';
+import { useRealTimeValidation } from '../../hooks/useRealTimeValidation';
 import { getNodeEdgePoint, getNodeCenter } from '../../utils/edgeCalculations';
+import SmartConnectionPreview from './SmartConnectionPreview';
+import ConnectionConstraints from './ConnectionConstraints';
 
 interface EdgePreview {
   startX: number;
@@ -10,10 +13,13 @@ interface EdgePreview {
   endX: number;
   endY: number;
   targetNode?: EnhancedNode;
+  isValid: boolean;
+  errorMessage?: string;
 }
 
 interface EdgeCreationHandlerProps {
   nodes: EnhancedNode[];
+  edges: any[];
   onAddEdge: (sourceNode: EnhancedNode, targetNode: EnhancedNode) => { success: boolean; error?: string };
   canvasRef: React.RefObject<HTMLDivElement>;
   children: (props: {
@@ -26,6 +32,7 @@ interface EdgeCreationHandlerProps {
 
 const EdgeCreationHandler: React.FC<EdgeCreationHandlerProps> = ({
   nodes,
+  edges,
   onAddEdge,
   canvasRef,
   children
@@ -35,6 +42,11 @@ const EdgeCreationHandler: React.FC<EdgeCreationHandlerProps> = ({
   const [sourceNode, setSourceNode] = useState<EnhancedNode | null>(null);
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const { getPointerEvent, addPointerEventListeners } = usePointerEvents();
+  const { validateConnectionAttempt, showValidationToast } = useRealTimeValidation({
+    nodes,
+    edges,
+    enableRealTimeValidation: true
+  });
 
   const handleStartConnection = useCallback((node: EnhancedNode, startX: number, startY: number) => {
     console.log(`🔗 Starting edge creation from ${node.label} at (${startX}, ${startY})`);
@@ -44,7 +56,8 @@ const EdgeCreationHandler: React.FC<EdgeCreationHandlerProps> = ({
       startX,
       startY,
       endX: startX,
-      endY: startY
+      endY: startY,
+      isValid: true
     });
   }, []);
 
@@ -76,6 +89,9 @@ const EdgeCreationHandler: React.FC<EdgeCreationHandlerProps> = ({
     if (targetNode && targetNode.id !== sourceNode.id) {
       setHoveredNodeId(targetNode.id);
       
+      // Validate the connection attempt
+      const validation = validateConnectionAttempt(sourceNode, targetNode);
+      
       // Calculate edge-to-edge connection using canvas coordinates
       const targetCenter = getNodeCenter(targetNode);
       const sourceEdgePoint = getNodeEdgePoint(sourceNode, targetCenter.x, targetCenter.y);
@@ -86,7 +102,9 @@ const EdgeCreationHandler: React.FC<EdgeCreationHandlerProps> = ({
         startY: sourceEdgePoint.y,
         endX: targetEdgePoint.x,
         endY: targetEdgePoint.y,
-        targetNode
+        targetNode,
+        isValid: validation.isValid,
+        errorMessage: validation.errorMessage
       });
     } else {
       setHoveredNodeId(null);
@@ -98,10 +116,11 @@ const EdgeCreationHandler: React.FC<EdgeCreationHandlerProps> = ({
         startX: sourceEdgePoint.x,
         startY: sourceEdgePoint.y,
         endX: canvasCoords.x,
-        endY: canvasCoords.y
+        endY: canvasCoords.y,
+        isValid: true
       });
     }
-  }, [isCreatingEdge, sourceNode, nodes, getCanvasCoordinates]);
+  }, [isCreatingEdge, sourceNode, nodes, getCanvasCoordinates, validateConnectionAttempt]);
 
   const handlePointerEnd = useCallback((pointerEvent: any) => {
     if (!isCreatingEdge || !sourceNode) return;
@@ -114,14 +133,22 @@ const EdgeCreationHandler: React.FC<EdgeCreationHandlerProps> = ({
     if (targetNodeId && targetNodeId !== sourceNode.id) {
       const targetNode = nodes.find(node => node.id === targetNodeId);
       if (targetNode) {
-        console.log(`🔗 Completing edge: ${sourceNode.label} -> ${targetNode.label}`);
-        const result = onAddEdge(sourceNode, targetNode);
-        if (!result.success && result.error) {
-          console.error('Edge creation failed:', result.error);
-          // Show error to user
-          alert(result.error);
-        } else if (result.success) {
-          console.log(`✅ Edge created successfully: ${sourceNode.label} -> ${targetNode.label}`);
+        // Validate before attempting to create
+        const validation = validateConnectionAttempt(sourceNode, targetNode);
+        
+        if (validation.isValid) {
+          console.log(`🔗 Completing edge: ${sourceNode.label} -> ${targetNode.label}`);
+          const result = onAddEdge(sourceNode, targetNode);
+          
+          if (!result.success && result.error) {
+            console.error('Edge creation failed:', result.error);
+            showValidationToast('error', result.error);
+          } else if (result.success) {
+            console.log(`✅ Edge created successfully: ${sourceNode.label} -> ${targetNode.label}`);
+            showValidationToast('success', 'Connection created successfully');
+          }
+        } else {
+          showValidationToast('error', validation.errorMessage || 'Invalid connection');
         }
       }
     }
@@ -131,7 +158,7 @@ const EdgeCreationHandler: React.FC<EdgeCreationHandlerProps> = ({
     setEdgePreview(null);
     setSourceNode(null);
     setHoveredNodeId(null);
-  }, [isCreatingEdge, sourceNode, nodes, onAddEdge]);
+  }, [isCreatingEdge, sourceNode, nodes, onAddEdge, validateConnectionAttempt, showValidationToast]);
 
   React.useEffect(() => {
     if (!isCreatingEdge) return;
@@ -141,14 +168,36 @@ const EdgeCreationHandler: React.FC<EdgeCreationHandlerProps> = ({
   }, [isCreatingEdge, handlePointerMove, handlePointerEnd, addPointerEventListeners]);
 
   return (
-    <>
-      {children({
-        isCreatingEdge,
-        edgePreview,
-        hoveredNodeId,
-        handleStartConnection
-      })}
-    </>
+    <ConnectionConstraints sourceNode={sourceNode} nodes={nodes}>
+      {(isValidTarget) => (
+        <>
+          {children({
+            isCreatingEdge,
+            edgePreview,
+            hoveredNodeId,
+            handleStartConnection
+          })}
+          
+          {/* Render smart connection preview */}
+          {edgePreview && (
+            <div className="absolute inset-0 pointer-events-none z-20">
+              <svg className="w-full h-full">
+                <SmartConnectionPreview
+                  sourceNode={sourceNode}
+                  targetNode={edgePreview.targetNode}
+                  startX={edgePreview.startX}
+                  startY={edgePreview.startY}
+                  endX={edgePreview.endX}
+                  endY={edgePreview.endY}
+                  isValid={edgePreview.isValid}
+                  errorMessage={edgePreview.errorMessage}
+                />
+              </svg>
+            </div>
+          )}
+        </>
+      )}
+    </ConnectionConstraints>
   );
 };
 
