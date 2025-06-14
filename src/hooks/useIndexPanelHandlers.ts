@@ -16,8 +16,8 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
   // Load panel settings from localStorage
   const storedSettings = loadPanelSettingsFromStorage();
   
-  // Desktop panel states - simplified to just visibility
-  const [isLeftPanelVisible, setIsLeftPanelVisible] = useState(storedSettings.isLeftPanelVisible);
+  // Desktop panel states - left panel is ALWAYS visible, only right panel can be toggled
+  const [isLeftPanelVisible] = useState(true); // Always true, no setter needed
   const [isRightPanelVisible, setIsRightPanelVisible] = useState(storedSettings.isRightPanelVisible);
   
   const analytics = useEnhancedAnalytics();
@@ -25,14 +25,14 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
   // Save panel settings to localStorage whenever they change, including actual widths
   useEffect(() => {
     savePanelSettingsToStorage({
-      isLeftPanelVisible,
+      isLeftPanelVisible: true, // Always true
       isLeftPanelExpanded: true, // Always expanded when visible
       isRightPanelVisible,
       isRightPanelExpanded: true, // Always expanded when visible
       leftPanelWidth, // Use actual width from adaptive panel widths
       rightPanelWidth // Use actual width from adaptive panel widths
     });
-  }, [isLeftPanelVisible, isRightPanelVisible, leftPanelWidth, rightPanelWidth]);
+  }, [isRightPanelVisible, leftPanelWidth, rightPanelWidth]);
 
   const handleMobileMenuToggle = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -53,14 +53,16 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
     });
   };
 
+  // Left panel handlers - simplified since it's always visible
   const handleShowLeftPanel = () => {
-    setIsLeftPanelVisible(true);
-    analytics.trackFeatureUsage('desktop_left_panel_shown');
+    // No-op since left panel is always visible
+    analytics.trackFeatureUsage('desktop_left_panel_show_attempted');
   };
 
   const handleHideLeftPanel = () => {
-    setIsLeftPanelVisible(false);
-    analytics.trackFeatureUsage('desktop_left_panel_hidden');
+    // No-op since left panel cannot be hidden
+    console.log('🚫 Left panel cannot be hidden - always visible');
+    analytics.trackFeatureUsage('desktop_left_panel_hide_attempted');
   };
 
   const handleShowRightPanel = () => {
@@ -98,23 +100,24 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
     handlePanelToggle,
     closePanels,
     
-    // Desktop panel states - simplified
-    isLeftPanelVisible,
+    // Desktop panel states - left panel always visible
+    isLeftPanelVisible: true, // Always true
     isRightPanelVisible,
-    // Removed: isLeftPanelExpanded, isRightPanelExpanded
-    // Panels are always expanded when visible, only visibility matters
-    isLeftPanelExpanded: isLeftPanelVisible,
+    // Panels are always expanded when visible
+    isLeftPanelExpanded: true, // Always true
     isRightPanelExpanded: isRightPanelVisible,
     
-    // Panel control handlers - simplified
+    // Panel control handlers
     handleShowLeftPanel,
     handleHideLeftPanel,
     handleShowRightPanel,
     handleHideRightPanel,
-    // Legacy aliases for compatibility
-    handleToggleLeftPanel: () => isLeftPanelVisible ? handleHideLeftPanel() : handleShowLeftPanel(),
+    // Legacy aliases for compatibility - left panel handlers are no-ops
+    handleToggleLeftPanel: () => {
+      console.log('🚫 Left panel toggle disabled - always visible');
+    },
     handleToggleRightPanel: () => isRightPanelVisible ? handleHideRightPanel() : handleShowRightPanel(),
-    handleExpandLeftPanel: handleShowLeftPanel,
+    handleExpandLeftPanel: handleShowLeftPanel, // No-op
     handleExpandRightPanel: handleShowRightPanel,
     switchToPropertiesPanel,
   };
