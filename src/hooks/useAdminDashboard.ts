@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -12,23 +12,34 @@ export const useAdminDashboard = () => {
   const location = useLocation();
   const { toast } = useToast();
   const [stats, setStats] = useState<AggregatedStats | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [isAnalyticsLoading, setIsAnalyticsLoading] = useState(false);
   const [isMigrating, setIsMigrating] = useState(false);
   const [redirectAttempted, setRedirectAttempted] = useState(false);
+  const analyticsLoadedRef = useRef(false);
 
-  // Enhanced authentication check with loop prevention
+  // Separate auth initialization from analytics loading
   useEffect(() => {
-    console.log('🏛️ AdminDashboard - Auth check:', { 
+    console.log('🏛️ AdminDashboard - Auth initialization:', { 
       isAuthenticated, 
       isAdmin, 
       userEmail: user?.email,
-      currentPath: location.pathname,
-      redirectAttempted
+      currentPath: location.pathname
     });
     
-    // Only check auth after initial loading is complete
-    if (isLoading) {
-      console.log('🏛️ AdminDashboard - Still loading, skipping auth check');
+    // Set auth loading to false after a brief moment to allow auth context to settle
+    const timer = setTimeout(() => {
+      setIsAuthLoading(false);
+    }, 50);
+    
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Handle authentication and authorization separately from analytics
+  useEffect(() => {
+    // Skip if still doing initial auth loading
+    if (isAuthLoading) {
+      console.log('🏛️ AdminDashboard - Still in auth loading phase');
       return;
     }
     
@@ -56,24 +67,29 @@ export const useAdminDashboard = () => {
       return;
     }
     
-    console.log('🏛️ AdminDashboard - Access granted, loading analytics');
-    loadAnalytics();
-  }, [isAuthenticated, isAdmin, isLoading, location.pathname, redirectAttempted, navigate, toast, user]);
-
-  // Set loading to false after a brief delay to ensure auth context is initialized
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 100);
+    console.log('🏛️ AdminDashboard - Access granted, user is authenticated admin');
     
-    return () => clearTimeout(timer);
-  }, []);
+    // Load analytics only once when properly authenticated
+    if (!analyticsLoadedRef.current && !isAnalyticsLoading) {
+      console.log('🏛️ AdminDashboard - Loading analytics for the first time');
+      analyticsLoadedRef.current = true;
+      loadAnalytics();
+    }
+  }, [isAuthenticated, isAdmin, isAuthLoading, location.pathname, redirectAttempted, navigate, toast, user]);
 
   const loadAnalytics = async () => {
+    // Prevent multiple simultaneous calls
+    if (isAnalyticsLoading) {
+      console.log('🏛️ AdminDashboard - Analytics already loading, skipping');
+      return;
+    }
+
     try {
-      setIsLoading(true);
+      console.log('🏛️ AdminDashboard - Starting analytics load');
+      setIsAnalyticsLoading(true);
       const analyticsStats = await unifiedAnalytics.getAggregatedStats();
       setStats(analyticsStats);
+      console.log('🏛️ AdminDashboard - Analytics loaded successfully');
     } catch (error) {
       console.error('Failed to load analytics:', error);
       toast({
@@ -82,7 +98,7 @@ export const useAdminDashboard = () => {
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      setIsAnalyticsLoading(false);
     }
   };
 
@@ -166,6 +182,9 @@ export const useAdminDashboard = () => {
       });
     }
   };
+
+  // Return combined loading state for the component
+  const isLoading = isAuthLoading || isAnalyticsLoading;
 
   return {
     user,

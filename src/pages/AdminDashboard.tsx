@@ -20,11 +20,11 @@ const AdminDashboard = () => {
     handleCleanup
   } = useAdminDashboard();
 
-  // Show loading state while auth is being checked
+  // Show loading state while initializing
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-muted-foreground">Loading...</div>
+        <div className="text-muted-foreground">Loading admin dashboard...</div>
       </div>
     );
   }
@@ -32,7 +32,11 @@ const AdminDashboard = () => {
   // If not authenticated or not admin, the hook will handle the redirect
   // This is just a safety check - the component shouldn't render in this state
   if (!isAuthenticated || !isAdmin) {
-    return null;
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-muted-foreground">Redirecting...</div>
+      </div>
+    );
   }
 
   return (
