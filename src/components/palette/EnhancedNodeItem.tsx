@@ -157,13 +157,13 @@ const EnhancedNodeItem: React.FC<EnhancedNodeItemProps> = ({
             <TooltipTrigger asChild>
               <Button
                 variant="outline"
-                className={`w-full h-6 ${getEnhancedNodeColors(node.type)} border transition-all duration-200 text-xs p-1 shadow-sm hover:shadow-md active:scale-95 flex items-center justify-center space-x-1`}
+                className={`w-full h-6 ${getEnhancedNodeColors(node.type)} border transition-all duration-200 text-xs p-1 shadow-sm hover:shadow-md active:scale-95 relative`}
                 draggable
                 onDragStart={handleDragStart}
                 onClick={handleClick}
               >
-                <span className="text-xs">{node.icon}</span>
-                <span className="text-xs font-medium truncate">{node.label}</span>
+                <span className="text-xs absolute left-2">{node.icon}</span>
+                <span className="text-xs font-medium w-full text-center">{node.label}</span>
               </Button>
             </TooltipTrigger>
             <TooltipContent side="right" className="text-xs">
