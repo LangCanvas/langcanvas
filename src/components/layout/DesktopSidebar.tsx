@@ -15,7 +15,7 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
   isVisible = true, 
   isExpanded = true,
   panelWidth = 256,
-  panelLayout = 'standard',
+  panelLayout = 'medium', // Changed from 'standard' to 'medium'
   onToggle
 }) => {
   // If not visible at all, don't render anything
