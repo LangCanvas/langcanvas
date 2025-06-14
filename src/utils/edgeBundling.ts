@@ -1,6 +1,8 @@
 
 import { EnhancedEdge } from '../types/edgeTypes';
 import { EnhancedNode } from '../types/nodeTypes';
+import { EdgeClustering, ClusterableEdge } from './edgeClustering';
+import { BundleGeometry } from './bundleGeometry';
 
 export interface BundleGroup {
   id: string;
@@ -28,13 +30,22 @@ export const defaultBundlingSettings: BundlingSettings = {
 
 export class EdgeBundlingCalculator {
   private settings: BundlingSettings;
+  private clustering: EdgeClustering;
 
   constructor(settings: BundlingSettings = defaultBundlingSettings) {
     this.settings = settings;
+    this.clustering = new EdgeClustering(
+      settings.maxBundleDistance, 
+      settings.minEdgesForBundle
+    );
   }
 
   public updateSettings(newSettings: Partial<BundlingSettings>): void {
     this.settings = { ...this.settings, ...newSettings };
+    this.clustering = new EdgeClustering(
+      this.settings.maxBundleDistance,
+      this.settings.minEdgesForBundle
+    );
   }
 
   public calculateBundles(
@@ -46,11 +57,11 @@ export class EdgeBundlingCalculator {
     }
 
     const edgeData = this.preprocessEdges(edges, nodes);
-    const clusters = this.clusterSimilarEdges(edgeData);
-    return this.createBundleGroups(clusters, edgeData);
+    const clusters = this.clustering.clusterSimilarEdges(edgeData);
+    return this.createBundleGroups(clusters);
   }
 
-  private preprocessEdges(edges: EnhancedEdge[], nodes: EnhancedNode[]) {
+  private preprocessEdges(edges: EnhancedEdge[], nodes: EnhancedNode[]): ClusterableEdge[] {
     return edges.map(edge => {
       const sourceNode = nodes.find(n => n.id === edge.source);
       const targetNode = nodes.find(n => n.id === edge.target);
@@ -68,8 +79,8 @@ export class EdgeBundlingCalculator {
         y: targetNode.y + 30 
       };
       
-      const direction = this.calculateDirection(startPoint, endPoint);
-      const length = this.calculateDistance(startPoint, endPoint);
+      const direction = BundleGeometry.calculateDirection(startPoint, endPoint);
+      const length = BundleGeometry.calculateDistance(startPoint, endPoint);
       
       return {
         edge,
@@ -82,53 +93,18 @@ export class EdgeBundlingCalculator {
           y: (startPoint.y + endPoint.y) / 2
         }
       };
-    }).filter(Boolean);
+    }).filter(Boolean) as ClusterableEdge[];
   }
 
-  private clusterSimilarEdges(edgeData: any[]): any[][] {
-    const clusters: any[][] = [];
-    const used = new Set<number>();
-
-    for (let i = 0; i < edgeData.length; i++) {
-      if (used.has(i)) continue;
-
-      const cluster = [edgeData[i]];
-      used.add(i);
-
-      for (let j = i + 1; j < edgeData.length; j++) {
-        if (used.has(j)) continue;
-
-        if (this.areEdgesSimilar(edgeData[i], edgeData[j])) {
-          cluster.push(edgeData[j]);
-          used.add(j);
-        }
-      }
-
-      if (cluster.length >= this.settings.minEdgesForBundle) {
-        clusters.push(cluster);
-      }
-    }
-
-    return clusters;
-  }
-
-  private areEdgesSimilar(edge1: any, edge2: any): boolean {
-    // Check if edges are parallel and close to each other
-    const directionDiff = Math.abs(edge1.direction - edge2.direction);
-    const normalizedDirDiff = Math.min(directionDiff, 360 - directionDiff);
-    
-    if (normalizedDirDiff > 30) return false; // Not parallel enough
-    
-    const midPointDistance = this.calculateDistance(edge1.midPoint, edge2.midPoint);
-    return midPointDistance < this.settings.maxBundleDistance;
-  }
-
-  private createBundleGroups(clusters: any[][], edgeData: any[]): BundleGroup[] {
+  private createBundleGroups(clusters: ClusterableEdge[][]): BundleGroup[] {
     return clusters.map((cluster, index) => {
       const bundleId = `bundle-${index}`;
       const edges = cluster.map(item => item.edge);
       
-      const controlPoints = this.calculateBundleControlPoints(cluster);
+      const controlPoints = BundleGeometry.createBundleControlPoints(
+        cluster, 
+        this.settings.bundleStrength
+      );
       
       return {
         id: bundleId,
@@ -138,62 +114,6 @@ export class EdgeBundlingCalculator {
         separationDistance: this.settings.separationDistance
       };
     });
-  }
-
-  private calculateBundleControlPoints(cluster: any[]): Array<{ x: number, y: number }> {
-    if (cluster.length === 0) return [];
-
-    // Calculate the bundle center line
-    const avgStartX = cluster.reduce((sum, item) => sum + item.startPoint.x, 0) / cluster.length;
-    const avgStartY = cluster.reduce((sum, item) => sum + item.startPoint.y, 0) / cluster.length;
-    const avgEndX = cluster.reduce((sum, item) => sum + item.endPoint.x, 0) / cluster.length;
-    const avgEndY = cluster.reduce((sum, item) => sum + item.endPoint.y, 0) / cluster.length;
-
-    // Create control points for bundling
-    const bundleStart = { x: avgStartX, y: avgStartY };
-    const bundleEnd = { x: avgEndX, y: avgEndY };
-    
-    // Add intermediate control points for smooth bundling
-    const midX = (bundleStart.x + bundleEnd.x) / 2;
-    const midY = (bundleStart.y + bundleEnd.y) / 2;
-    
-    // Apply bundling strength to control points
-    const bundleOffset = this.settings.bundleStrength * 50;
-    const perpendicular = this.calculatePerpendicular(bundleStart, bundleEnd);
-    
-    return [
-      bundleStart,
-      {
-        x: midX + perpendicular.x * bundleOffset,
-        y: midY + perpendicular.y * bundleOffset
-      },
-      bundleEnd
-    ];
-  }
-
-  private calculateDirection(start: { x: number, y: number }, end: { x: number, y: number }): number {
-    const dx = end.x - start.x;
-    const dy = end.y - start.y;
-    return Math.atan2(dy, dx) * 180 / Math.PI;
-  }
-
-  private calculateDistance(point1: { x: number, y: number }, point2: { x: number, y: number }): number {
-    const dx = point2.x - point1.x;
-    const dy = point2.y - point1.y;
-    return Math.sqrt(dx * dx + dy * dy);
-  }
-
-  private calculatePerpendicular(start: { x: number, y: number }, end: { x: number, y: number }): { x: number, y: number } {
-    const dx = end.x - start.x;
-    const dy = end.y - start.y;
-    const length = Math.sqrt(dx * dx + dy * dy);
-    
-    if (length === 0) return { x: 0, y: 1 };
-    
-    return {
-      x: -dy / length,
-      y: dx / length
-    };
   }
 
   public getBundleStats() {
