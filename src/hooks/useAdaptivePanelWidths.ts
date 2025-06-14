@@ -2,12 +2,13 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useSmartPanelSizing } from './useSmartPanelSizing';
 
-// Simplified panel breakpoints with much smaller minimum
+// Updated panel breakpoints with proper constraints
 export const PANEL_BREAKPOINTS = {
-  MIN: 32, // True minimum for icon-only mode
-  DEFAULT_LEFT: 140,
-  DEFAULT_RIGHT: 320,
-  MAX: 500
+  MIN: 60, // Minimum for small layout (icon + text)
+  SWITCH_THRESHOLD: 70, // Switch to medium layout at this width
+  MAX: 100, // Maximum for medium layout to keep it compact
+  DEFAULT_LEFT: 85,
+  DEFAULT_RIGHT: 320
 } as const;
 
 export type PanelLayout = 'small' | 'medium';
@@ -20,17 +21,17 @@ interface PanelWidthSettings {
 }
 
 const PANEL_WIDTH_STORAGE_KEY = 'langcanvas_panel_widths';
-const PANEL_WIDTH_VERSION = '3.0';
+const PANEL_WIDTH_VERSION = '3.1';
 
 export const useAdaptivePanelWidths = () => {
   const { measurements, getContentBasedLayout } = useSmartPanelSizing();
   
   const getInitialLeftWidth = useCallback(() => {
     if (typeof window !== 'undefined') {
-      return Math.max(measurements.minWidthForText, Math.min(PANEL_BREAKPOINTS.MAX, window.innerWidth * 0.15));
+      return Math.max(PANEL_BREAKPOINTS.MIN, Math.min(PANEL_BREAKPOINTS.MAX, window.innerWidth * 0.15));
     }
-    return measurements.recommendedWidth;
-  }, [measurements]);
+    return PANEL_BREAKPOINTS.DEFAULT_LEFT;
+  }, []);
 
   const [leftPanelWidth, setLeftPanelWidth] = useState<number>(() => getInitialLeftWidth());
   const [rightPanelWidth, setRightPanelWidth] = useState<number>(PANEL_BREAKPOINTS.DEFAULT_RIGHT);
@@ -43,7 +44,7 @@ export const useAdaptivePanelWidths = () => {
         const data: PanelWidthSettings = JSON.parse(stored);
         if (data.version === PANEL_WIDTH_VERSION) {
           const constrainedLeft = Math.max(PANEL_BREAKPOINTS.MIN, Math.min(PANEL_BREAKPOINTS.MAX, data.leftPanelWidth));
-          const constrainedRight = Math.max(PANEL_BREAKPOINTS.MIN, Math.min(PANEL_BREAKPOINTS.MAX, data.rightPanelWidth));
+          const constrainedRight = Math.max(PANEL_BREAKPOINTS.MIN, Math.min(500, data.rightPanelWidth));
           setLeftPanelWidth(constrainedLeft);
           setRightPanelWidth(constrainedRight);
           return;
@@ -79,7 +80,7 @@ export const useAdaptivePanelWidths = () => {
   const getInitialPercentage = useCallback((pixelWidth: number, isVisible: boolean) => {
     if (!isVisible) return 0;
     const referenceWidth = 1400;
-    return Math.max(3, Math.min(35, (pixelWidth / referenceWidth) * 100)); // Reduced minimum to 3%
+    return Math.max(4, Math.min(35, (pixelWidth / referenceWidth) * 100));
   }, []);
 
   const convertPercentageToPixels = useCallback((percentage: number) => {
@@ -89,6 +90,7 @@ export const useAdaptivePanelWidths = () => {
 
   const handleLeftPanelResize = useCallback((percentage: number) => {
     const pixelWidth = convertPercentageToPixels(percentage);
+    // Enforce strict width constraints for left panel
     const constrainedWidth = Math.max(PANEL_BREAKPOINTS.MIN, Math.min(PANEL_BREAKPOINTS.MAX, pixelWidth));
     setLeftPanelWidth(constrainedWidth);
     saveWidthsToStorage(constrainedWidth, rightPanelWidth);
@@ -96,7 +98,7 @@ export const useAdaptivePanelWidths = () => {
 
   const handleRightPanelResize = useCallback((percentage: number) => {
     const pixelWidth = convertPercentageToPixels(percentage);
-    const constrainedWidth = Math.max(PANEL_BREAKPOINTS.MIN, Math.min(PANEL_BREAKPOINTS.MAX, pixelWidth));
+    const constrainedWidth = Math.max(PANEL_BREAKPOINTS.MIN, Math.min(500, pixelWidth));
     setRightPanelWidth(constrainedWidth);
     saveWidthsToStorage(leftPanelWidth, constrainedWidth);
   }, [leftPanelWidth, saveWidthsToStorage, convertPercentageToPixels]);
