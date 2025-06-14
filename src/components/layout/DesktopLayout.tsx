@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import DesktopSidebar from './DesktopSidebar';
 import DesktopPropertiesPanel from './DesktopPropertiesPanel';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
@@ -85,7 +85,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   }, []);
 
   // Calculate panel sizes for ResizablePanelGroup with proper defaults
-  const totalAvailableWidth = Math.max(window.innerWidth, 1200); // Minimum width to avoid division issues
+  const totalAvailableWidth = Math.max(window.innerWidth || 1200, 1200); // Ensure minimum width
   const actualLeftWidth = isLeftPanelVisible ? leftPanelWidth : 0;
   const actualRightWidth = isRightPanelVisible ? rightPanelWidth : 0;
   

@@ -1,3 +1,4 @@
+
 import React, { useRef, useCallback } from 'react';
 import Canvas from '../components/Canvas';
 import MainApplicationLayout from '../components/layout/MainApplicationLayout';
@@ -34,6 +35,8 @@ const Index: React.FC = () => {
     selectEdge,
     clearSelection,
     validatePriorityConflicts,
+    selectedNode,
+    selectedEdge,
   } = useIndexState();
 
   const {
@@ -120,9 +123,9 @@ const Index: React.FC = () => {
   } = useIndexMobileHandlers(canvasRef, pendingCreation, clearPendingCreation, handleAddEdge);
 
   const {
-    handleNewProjectChangeTracked: handleNewProject,
-    handleImportChangeTracked: handleImport,
-    handleExportChangeTracked: handleExport,
+    handleNewProjectChangeTracked,
+    handleImportChangeTracked,
+    handleExportChangeTracked,
   } = useIndexChangeTrackedHandlers(handleNewProject, handleImport, handleExport);
 
   return (
@@ -150,9 +153,9 @@ const Index: React.FC = () => {
       closePanels={closePanels}
       setShowValidationPanel={setShowValidationPanel}
       switchToPropertiesPanel={switchToPropertiesPanel}
-      onNewProject={handleNewProject}
-      onImport={handleImport}
-      onExport={handleExport}
+      onNewProject={handleNewProjectChangeTracked}
+      onImport={handleImportChangeTracked}
+      onExport={handleExportChangeTracked}
       onDeleteNode={handleDeleteNode}
       onDeleteEdge={handleDeleteEdge}
       onUpdateNodeProperties={handleUpdateNodeProperties}

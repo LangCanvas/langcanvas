@@ -6,36 +6,108 @@ import { useWorkflowSerializer } from './useWorkflowSerializer';
 import { useValidation } from './useValidation';
 
 export const useIndexState = () => {
-  const nodeState = useEnhancedNodes();
-  const edgeState = useEnhancedEdges();
+  const {
+    nodes,
+    selectedNode,
+    selectedNodeId,
+    addNode,
+    updateNodePosition,
+    updateNodeProperties,
+    deleteNode,
+    setNodes,
+    selectNode,
+    clearSelection,
+  } = useEnhancedNodes();
+
+  const {
+    edges,
+    selectedEdge,
+    selectedEdgeId,
+    addEdge,
+    updateEdgeProperties,
+    deleteEdge,
+    deleteEdgesForNode,
+    setEdges,
+    selectEdge,
+  } = useEnhancedEdges();
   
-  const nodeCreation = useNodeCreation({ 
-    onAddNode: nodeState.addNode 
+  const {
+    pendingCreation,
+    clearPendingCreation,
+    dragMode,
+    isSelecting,
+    selectedCount,
+  } = useNodeCreation({ 
+    onAddNode: addNode 
   });
 
-  const workflowSerializer = useWorkflowSerializer({
-    nodes: nodeState.nodes,
-    edges: edgeState.edges,
-    addNode: nodeState.addNode,
-    addEdge: edgeState.addEdge,
-    updateNodeProperties: nodeState.updateNodeProperties,
-    updateEdgeProperties: edgeState.updateEdgeProperties,
-    deleteNode: nodeState.deleteNode,
-    deleteEdge: edgeState.deleteEdge,
-    selectNode: nodeState.selectNode,
-    selectEdge: edgeState.selectEdge
+  const {
+    handleNewProjectWithAnalytics: handleNewProject,
+    handleImportWithAnalytics: handleImport,
+    handleExportWithAnalytics: handleExport,
+  } = useWorkflowSerializer({
+    nodes,
+    edges,
+    addNode,
+    addEdge,
+    updateNodeProperties,
+    updateEdgeProperties,
+    deleteNode,
+    deleteEdge,
+    selectNode,
+    selectEdge
   });
 
-  const validation = useValidation({ 
-    nodes: nodeState.nodes, 
-    edges: edgeState.edges 
+  const {
+    validationResult,
+    validatePriorityConflicts,
+    isWorkflowValid,
+    handleValidateWorkflow,
+  } = useValidation({ 
+    nodes, 
+    edges 
   });
 
   return {
-    nodeState,
-    edgeState,
-    nodeCreation,
-    workflowSerializer,
-    validation
+    // Node state
+    nodes,
+    selectedNode,
+    selectedNodeId,
+    addNode,
+    updateNodePosition,
+    updateNodeProperties,
+    deleteNode,
+    setNodes,
+    selectNode,
+    clearSelection,
+    
+    // Edge state
+    edges,
+    selectedEdge,
+    selectedEdgeId,
+    addEdge,
+    updateEdgeProperties,
+    deleteEdge,
+    deleteEdgesForNode,
+    setEdges,
+    selectEdge,
+    
+    // Node creation state
+    pendingCreation,
+    clearPendingCreation,
+    dragMode,
+    isSelecting,
+    selectedCount,
+    
+    // Workflow operations
+    handleNewProject,
+    handleImport,
+    handleExport,
+    isWorkflowValid,
+    handleValidateWorkflow,
+    
+    // Validation
+    validationResult,
+    validatePriorityConflicts,
   };
 };
