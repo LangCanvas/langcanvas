@@ -35,6 +35,13 @@ export const nodeTemplates: NodeTemplate[] = [
         }
       },
       config: {
+        timeout: 30,
+        retry: {
+          enabled: true,
+          max_attempts: 3,
+          delay: 5
+        },
+        concurrency: 'sequential',
         metadata: {
           notes: 'Performs HTTP requests with configurable method, headers, and data',
           tags: []
@@ -61,6 +68,13 @@ export const nodeTemplates: NodeTemplate[] = [
         }
       },
       config: {
+        timeout: 30,
+        retry: {
+          enabled: true,
+          max_attempts: 3,
+          delay: 5
+        },
+        concurrency: 'sequential',
         metadata: {
           notes: 'Applies transformation rules to input data',
           tags: []
@@ -77,6 +91,13 @@ export const nodeTemplates: NodeTemplate[] = [
     nodeType: 'conditional',
     config: {
       config: {
+        timeout: 30,
+        retry: {
+          enabled: true,
+          max_attempts: 3,
+          delay: 5
+        },
+        concurrency: 'sequential',
         conditional: {
           evaluationMode: 'first-match'
         },
@@ -96,6 +117,12 @@ export const nodeTemplates: NodeTemplate[] = [
     nodeType: 'parallel',
     config: {
       config: {
+        timeout: 30,
+        retry: {
+          enabled: true,
+          max_attempts: 3,
+          delay: 5
+        },
         concurrency: 'parallel',
         metadata: {
           notes: 'Executes multiple workflow branches simultaneously',
@@ -127,6 +154,13 @@ export const nodeTemplates: NodeTemplate[] = [
         }
       },
       config: {
+        timeout: 30,
+        retry: {
+          enabled: true,
+          max_attempts: 3,
+          delay: 5
+        },
+        concurrency: 'sequential',
         metadata: {
           notes: 'Sends email notifications with configurable recipients and content',
           tags: []
