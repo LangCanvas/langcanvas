@@ -7,15 +7,13 @@ import { useIndexWorkflowHandlers } from '../hooks/useIndexWorkflowHandlers';
 import { useIndexPanelHandlers } from '../hooks/useIndexPanelHandlers';
 import { useIndexState } from '../hooks/useIndexState';
 import { useChangeTracking } from '../hooks/useChangeTracking';
+import { useIndexSelectionState } from '../hooks/useIndexSelectionState';
+import { useIndexChangeTrackedHandlers } from '../hooks/useIndexChangeTrackedHandlers';
+import { useIndexEventListeners } from '../hooks/useIndexEventListeners';
 import { EnhancedEdge } from '../types/edgeTypes';
 import { NodeType } from '../types/nodeTypes';
 
 const Index = () => {
-  const [selectionState, setSelectionState] = React.useState({
-    isSelecting: false,
-    selectedCount: 0
-  });
-
   const {
     nodeState,
     edgeState,
@@ -24,8 +22,12 @@ const Index = () => {
     validation
   } = useIndexState();
 
-  const { hasUnsavedChanges, markAsChanged, markAsSaved } = useChangeTracking();
+  const changeTracking = useChangeTracking();
+  const { hasUnsavedChanges } = changeTracking;
 
+  const { selectionState, handleCanvasSelectionChange } = useIndexSelectionState();
+
+  // Original action/handler hooks
   const workflowActions = useWorkflowActions({
     nodes: nodeState.nodes,
     exportWorkflowAsString: workflowSerializer.exportWorkflowAsString,
@@ -47,71 +49,29 @@ const Index = () => {
     updateEdgeProperties: edgeState.updateEdgeProperties,
   });
 
-  // Enhanced handlers that track changes
-  const handleAddNodeWithTracking = (type: NodeType, x: number, y: number) => {
-    const result = nodeCreation.createNode(type, x, y);
-    if (result) {
-      markAsChanged();
-    }
-    return result;
-  };
-
-  const handleDeleteNodeWithTracking = (id: string) => {
-    indexHandlers.handleDeleteNode(id);
-    markAsChanged();
-  };
-
-  const handleDeleteEdgeWithTracking = (id: string) => {
-    edgeState.deleteEdge(id);
-    markAsChanged();
-  };
-
-  const handleUpdateNodePropertiesWithTracking = (id: string, updates: any) => {
-    indexHandlers.handleUpdateNodeProperties(id, updates);
-    markAsChanged();
-  };
-
-  const handleUpdateEdgePropertiesWithTracking = (id: string, updates: any) => {
-    indexHandlers.handleUpdateEdgeProperties(id, updates);
-    markAsChanged();
-  };
-
-  const handleAddEdgeWithTracking = (sourceNode: any, targetNode: any) => {
-    const result = indexHandlers.handleAddEdge(sourceNode, targetNode);
-    if (result.success) {
-      markAsChanged();
-    }
-    return result;
-  };
-
-  const handleMoveNodeWithTracking = (id: string, x: number, y: number) => {
-    nodeState.updateNodePosition(id, x, y);
-    markAsChanged();
-  };
-
-  // Enhanced workflow handlers that track save state
-  const handleExportWithTracking = () => {
-    workflowActions.handleExport();
-    markAsSaved();
-  };
-
-  const handleNewProjectWithTracking = () => {
-    workflowActions.handleNewProject();
-    markAsSaved();
-  };
-
-  const handleImportWithTracking = () => {
-    workflowActions.handleImport();
-    markAsSaved();
-  };
-
-  const workflowHandlers = useIndexWorkflowHandlers({
-    handleNewProject: handleNewProjectWithTracking,
-    handleImport: handleImportWithTracking,
-    handleExport: handleExportWithTracking,
+  // New hook for change-tracked handlers
+  const trackedHandlers = useIndexChangeTrackedHandlers({
+    nodeCreation,
+    nodeState,
+    edgeState,
+    indexHandlers,
+    workflowActions,
+    changeTracking,
   });
 
-  const panelHandlers = useIndexPanelHandlers(nodeCreation.clearPendingCreation);
+  // Enhanced workflow handlers (using some tracked handlers)
+  const workflowHandlers = useIndexWorkflowHandlers({
+    handleNewProject: trackedHandlers.handleNewProjectWithTracking,
+    handleImport: trackedHandlers.handleImportWithTracking,
+    handleExport: trackedHandlers.handleExportWithTracking,
+  });
+  
+  // Setup event listeners using the new hook
+  useIndexEventListeners({
+    nodeCreation,
+    indexHandlers,
+    panelHandlers,
+  });
 
   console.log("📍 Index component rendering - DEBUG STATE:");
   console.log("📍 Panel handlers state:", {
@@ -164,13 +124,6 @@ const Index = () => {
     }
   };
 
-  const handleCanvasSelectionChange = (state: { isSelecting: boolean; selectedNodeCount: number; selectedEdgeCount: number; }) => {
-    setSelectionState({
-      isSelecting: state.isSelecting,
-      selectedCount: state.selectedNodeCount + state.selectedEdgeCount,
-    });
-  };
-
   return (
     <div style={{ backgroundColor: '#fef3c7' }} className="min-h-screen">
       <div className="absolute top-0 left-0 bg-orange-500 text-white px-3 py-1 text-xs z-50 rounded-br">
@@ -204,24 +157,24 @@ const Index = () => {
         onNewProject={workflowHandlers.handleNewProjectWithAnalytics}
         onImport={workflowHandlers.handleImportWithAnalytics}
         onExport={workflowHandlers.handleExportWithAnalytics}
-        onDeleteNode={handleDeleteNodeWithTracking}
-        onDeleteEdge={handleDeleteEdgeWithTracking}
-        onUpdateNodeProperties={handleUpdateNodePropertiesWithTracking}
-        onUpdateEdgeProperties={handleUpdateEdgeWithCondition}
+        onDeleteNode={trackedHandlers.handleDeleteNodeWithTracking}
+        onDeleteEdge={trackedHandlers.handleDeleteEdgeWithTracking}
+        onUpdateNodeProperties={trackedHandlers.handleUpdateNodePropertiesWithTracking}
+        onUpdateEdgeProperties={trackedHandlers.handleUpdateEdgeWithCondition} // Use the specific one for conditions
         validatePriorityConflicts={edgeState.validatePriorityConflicts}
       >
         <Canvas
           nodes={nodeState.nodes}
           edges={edgeState.edges}
           selectedNodeId={nodeState.selectedNodeId}
-          selectedEdgeId={edgeState.selectedEdgeId}
-          onAddNode={handleAddNodeWithTracking}
-          onSelectNode={indexHandlers.handleSelectNode}
-          onSelectEdge={indexHandlers.handleSelectEdge}
-          onMoveNode={handleMoveNodeWithTracking}
-          onDeleteNode={handleDeleteNodeWithTracking}
-          onDeleteEdge={handleDeleteEdgeWithTracking}
-          onAddEdge={handleAddEdgeWithTracking}
+          selectedEdgeId={nodeState.selectedEdgeId}
+          onAddNode={trackedHandlers.handleAddNodeWithTracking}
+          onSelectNode={indexHandlers.handleSelectNode} // Base selection handlers are fine for Canvas
+          onSelectEdge={indexHandlers.handleSelectEdge} // Base selection handlers are fine for Canvas
+          onMoveNode={trackedHandlers.handleMoveNodeWithTracking}
+          onDeleteNode={trackedHandlers.handleDeleteNodeWithTracking}
+          onDeleteEdge={trackedHandlers.handleDeleteEdgeWithTracking}
+          onAddEdge={trackedHandlers.handleAddEdgeWithTracking}
           canCreateEdge={edgeState.canCreateEdge}
           getNodeValidationClass={validation.getNodeErrorClass}
           getEdgeValidationClass={validation.getEdgeErrorClass}
