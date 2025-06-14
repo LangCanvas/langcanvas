@@ -22,7 +22,7 @@ const MediumLayoutNodeItem: React.FC<MediumLayoutNodeItemProps> = ({
       <div
         role="button"
         tabIndex={0}
-        className={`w-full h-auto p-3 ${getEnhancedNodeColors(node.type)} border-2 border-input bg-background rounded-md transition-all duration-200 flex flex-col items-start space-y-2 shadow-sm hover:shadow-md hover:bg-accent hover:text-accent-foreground active:scale-[0.98] group-hover:shadow-lg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2`}
+        className={`w-full h-auto p-3 ${getEnhancedNodeColors(node.type)} border-2 border-input bg-background rounded-md transition-all duration-200 shadow-sm hover:shadow-md hover:bg-accent hover:text-accent-foreground active:scale-[0.98] group-hover:shadow-lg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2`}
         draggable
         onDragStart={onDragStart}
         onClick={onClick}
@@ -33,17 +33,17 @@ const MediumLayoutNodeItem: React.FC<MediumLayoutNodeItemProps> = ({
           }
         }}
       >
-        <div className="flex items-start justify-start space-x-2 w-full">
-          <span className="text-lg flex-shrink-0">
+        <div className="grid grid-cols-[24px_1fr] gap-2 items-start w-full">
+          <span className="text-lg flex justify-center">
             {node.icon}
           </span>
-          <span className="font-semibold text-sm w-full">
+          <span className="font-semibold text-sm">
             {node.label}
           </span>
         </div>
         
         {showDescription && (
-          <p className="text-xs leading-relaxed opacity-80 group-hover:opacity-100 transition-opacity w-full">
+          <p className="text-xs leading-relaxed opacity-80 group-hover:opacity-100 transition-opacity w-full mt-2">
             {node.description}
           </p>
         )}
