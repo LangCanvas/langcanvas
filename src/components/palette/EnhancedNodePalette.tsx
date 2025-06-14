@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { PanelLeftClose } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -93,25 +92,27 @@ const EnhancedNodePalette: React.FC<EnhancedNodePaletteProps> = ({
     setSelectedCategory(null);
   };
 
-  // Layout configuration based on panel size
+  // Layout configuration based on panel size - updated to be content-aware
   const layoutConfig = useMemo(() => {
     switch (panelLayout) {
       case 'ultra-compact':
         return {
           showSearch: false,
-          showCategories: false,
+          showCategories: true, // Show categories but compact
           showDescriptions: false,
           showNodeCount: false,
           compactItems: true,
+          compactCategories: true,
           maxVisibleNodes: 8
         };
       case 'compact':
         return {
           showSearch: true,
-          showCategories: false,
+          showCategories: true,
           showDescriptions: false,
           showNodeCount: false,
           compactItems: true,
+          compactCategories: false,
           maxVisibleNodes: 12
         };
       case 'standard':
@@ -121,6 +122,7 @@ const EnhancedNodePalette: React.FC<EnhancedNodePaletteProps> = ({
           showDescriptions: false,
           showNodeCount: true,
           compactItems: false,
+          compactCategories: false,
           maxVisibleNodes: null
         };
       case 'wide':
@@ -130,6 +132,7 @@ const EnhancedNodePalette: React.FC<EnhancedNodePaletteProps> = ({
           showDescriptions: true,
           showNodeCount: true,
           compactItems: false,
+          compactCategories: false,
           maxVisibleNodes: null
         };
       default:
@@ -139,6 +142,7 @@ const EnhancedNodePalette: React.FC<EnhancedNodePaletteProps> = ({
           showDescriptions: true,
           showNodeCount: true,
           compactItems: false,
+          compactCategories: false,
           maxVisibleNodes: null
         };
     }
@@ -180,6 +184,7 @@ const EnhancedNodePalette: React.FC<EnhancedNodePaletteProps> = ({
           <NodeCategorySelector
             selectedCategory={selectedCategory}
             onCategorySelect={setSelectedCategory}
+            compact={layoutConfig.compactCategories}
           />
         )}
 

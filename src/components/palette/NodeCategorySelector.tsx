@@ -6,11 +6,13 @@ import { nodeCategories } from '../../utils/nodeCategories';
 interface NodeCategorySelectorProps {
   selectedCategory: string | null;
   onCategorySelect: (categoryId: string | null) => void;
+  compact?: boolean;
 }
 
 const NodeCategorySelector: React.FC<NodeCategorySelectorProps> = ({
   selectedCategory,
-  onCategorySelect
+  onCategorySelect,
+  compact = false
 }) => {
   return (
     <div className="space-y-2">
@@ -24,9 +26,10 @@ const NodeCategorySelector: React.FC<NodeCategorySelectorProps> = ({
           size="sm"
           onClick={() => onCategorySelect(null)}
           className="justify-start text-xs h-8"
+          title="Show all node types"
         >
           <span className="mr-2">📋</span>
-          All Nodes
+          {!compact && "All Nodes"}
         </Button>
         
         {nodeCategories.map((category) => (
@@ -36,10 +39,10 @@ const NodeCategorySelector: React.FC<NodeCategorySelectorProps> = ({
             size="sm"
             onClick={() => onCategorySelect(category.id)}
             className="justify-start text-xs h-8"
-            title={category.description}
+            title={compact ? category.label : category.description}
           >
             <span className="mr-2">{category.icon}</span>
-            {category.label}
+            {!compact && category.label}
           </Button>
         ))}
       </div>

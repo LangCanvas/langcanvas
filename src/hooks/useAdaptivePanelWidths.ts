@@ -1,5 +1,6 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { useSmartPanelSizing } from './useSmartPanelSizing';
 
 export const PANEL_BREAKPOINTS = {
   MIN: 200,
@@ -21,25 +22,41 @@ const PANEL_WIDTH_STORAGE_KEY = 'langcanvas_panel_widths';
 const PANEL_WIDTH_VERSION = '2.0';
 
 export const useAdaptivePanelWidths = () => {
-  const [leftPanelWidth, setLeftPanelWidth] = useState<number>(PANEL_BREAKPOINTS.DEFAULT_LEFT);
+  const { measurements, getContentBasedLayout } = useSmartPanelSizing();
+  
+  // Use smart defaults
+  const getInitialLeftWidth = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      return Math.max(measurements.minWidthForText, Math.min(PANEL_BREAKPOINTS.MAX, window.innerWidth * 0.2));
+    }
+    return measurements.recommendedWidth;
+  }, [measurements]);
+
+  const [leftPanelWidth, setLeftPanelWidth] = useState<number>(() => getInitialLeftWidth());
   const [rightPanelWidth, setRightPanelWidth] = useState<number>(PANEL_BREAKPOINTS.DEFAULT_RIGHT);
   const debounceRef = useRef<NodeJS.Timeout>();
 
-  // Load panel widths from storage on mount
+  // Update left panel width when measurements change
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(PANEL_WIDTH_STORAGE_KEY);
-      if (stored) {
+    const stored = localStorage.getItem(PANEL_WIDTH_STORAGE_KEY);
+    if (stored) {
+      try {
         const data: PanelWidthSettings = JSON.parse(stored);
         if (data.version === PANEL_WIDTH_VERSION) {
-          setLeftPanelWidth(Math.max(PANEL_BREAKPOINTS.MIN, Math.min(PANEL_BREAKPOINTS.MAX, data.leftPanelWidth)));
-          setRightPanelWidth(Math.max(PANEL_BREAKPOINTS.MIN, Math.min(PANEL_BREAKPOINTS.MAX, data.rightPanelWidth)));
+          const constrainedLeft = Math.max(measurements.minWidthForText, Math.min(PANEL_BREAKPOINTS.MAX, data.leftPanelWidth));
+          const constrainedRight = Math.max(PANEL_BREAKPOINTS.MIN, Math.min(PANEL_BREAKPOINTS.MAX, data.rightPanelWidth));
+          setLeftPanelWidth(constrainedLeft);
+          setRightPanelWidth(constrainedRight);
+          return;
         }
+      } catch (error) {
+        console.warn('Failed to load panel widths from storage:', error);
       }
-    } catch (error) {
-      console.warn('Failed to load panel widths from storage:', error);
     }
-  }, []);
+    
+    // No stored settings, use smart default
+    setLeftPanelWidth(getInitialLeftWidth());
+  }, [measurements.minWidthForText, getInitialLeftWidth]);
 
   // Save panel widths to storage (debounced)
   const saveWidthsToStorage = useCallback((leftWidth: number, rightWidth: number) => {
@@ -78,10 +95,10 @@ export const useAdaptivePanelWidths = () => {
 
   const handleLeftPanelResize = useCallback((percentage: number) => {
     const pixelWidth = convertPercentageToPixels(percentage);
-    const constrainedWidth = Math.max(PANEL_BREAKPOINTS.MIN, Math.min(PANEL_BREAKPOINTS.MAX, pixelWidth));
+    const constrainedWidth = Math.max(measurements.minWidthForText, Math.min(PANEL_BREAKPOINTS.MAX, pixelWidth));
     setLeftPanelWidth(constrainedWidth);
     saveWidthsToStorage(constrainedWidth, rightPanelWidth);
-  }, [rightPanelWidth, saveWidthsToStorage, convertPercentageToPixels]);
+  }, [rightPanelWidth, saveWidthsToStorage, convertPercentageToPixels, measurements.minWidthForText]);
 
   const handleRightPanelResize = useCallback((percentage: number) => {
     const pixelWidth = convertPercentageToPixels(percentage);
@@ -91,11 +108,8 @@ export const useAdaptivePanelWidths = () => {
   }, [leftPanelWidth, saveWidthsToStorage, convertPercentageToPixels]);
 
   const getLeftPanelLayout = useCallback((): PanelLayout => {
-    if (leftPanelWidth <= 180) return 'ultra-compact';
-    if (leftPanelWidth <= 250) return 'compact';
-    if (leftPanelWidth <= 350) return 'standard';
-    return 'wide';
-  }, [leftPanelWidth]);
+    return getContentBasedLayout(leftPanelWidth);
+  }, [leftPanelWidth, getContentBasedLayout]);
 
   const getRightPanelLayout = useCallback((): PanelLayout => {
     if (rightPanelWidth <= 180) return 'ultra-compact';
@@ -112,5 +126,6 @@ export const useAdaptivePanelWidths = () => {
     handleLeftPanelResize,
     handleRightPanelResize,
     getInitialPercentage,
+    measurements, // Expose measurements for debugging
   };
 };
