@@ -7,7 +7,8 @@ const ToolbarBrand: React.FC = () => {
       <img 
         src="/icon.png" 
         alt="LangCanvas" 
-        className="w-8 h-8 sm:w-10 sm:h-10"
+        className="w-10 h-8 sm:w-12 sm:h-10"
+        style={{ transform: 'scaleX(1.2)' }}
       />
     </div>
   );
