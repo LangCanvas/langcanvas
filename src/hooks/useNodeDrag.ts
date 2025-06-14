@@ -1,59 +1,28 @@
-import { useState, useRef, useEffect } from 'react';
+
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { EnhancedNode } from '../types/nodeTypes';
-import { usePointerEvents } from './usePointerEvents';
-import { DragState, PointerDragEvent } from '../types/nodeProps';
+import { PointerDragEvent } from '../types/nodeProps';
+
+const DRAG_THRESHOLD = 5; // pixels
 
 export const useNodeDrag = (
   node: EnhancedNode,
   onMove: (id: string, x: number, y: number) => void
 ) => {
-  const [dragState, setDragState] = useState<DragState>({
-    isDragging: false,
-    dragOffset: { x: 0, y: 0 }
-  });
   const nodeRef = useRef<HTMLDivElement>(null);
-  const { getPointerEvent, addPointerEventListeners } = usePointerEvents();
+  const isDraggingRef = useRef(false);
+  const dragStateRef = useRef<{
+    startX: number;
+    startY: number;
+    dragOffset: { x: number; y: number };
+  } | null>(null);
 
-  const startDrag = (e: PointerDragEvent) => {
-    if (e.defaultPrevented) {
-      console.log("useNodeDrag: Event defaultPrevented, not starting single drag for node:", node.id);
-      return;
-    }
-    console.log("useNodeDrag: Attempting to start single drag for node:", node.id);
+  const [isVisualDragging, setVisualDragging] = useState(false);
 
-    const pointerEvent = getPointerEvent(e);
-    pointerEvent.preventDefault();
-    
-    const rect = nodeRef.current?.getBoundingClientRect();
-    const canvas = document.getElementById('canvas');
-    const canvasRect = canvas?.getBoundingClientRect();
-    const scrollContainer = document.querySelector('[data-radix-scroll-area-viewport]');
-    
-    if (rect && canvasRect && scrollContainer) {
-      const scrollLeft = scrollContainer.scrollLeft || 0;
-      const scrollTop = scrollContainer.scrollTop || 0;
-      
-      const canvasX = pointerEvent.clientX - canvasRect.left + scrollLeft;
-      const canvasY = pointerEvent.clientY - canvasRect.top + scrollTop;
-      
-      console.log(`useNodeDrag: Starting single drag for ${node.id} at canvasX: ${canvasX}, canvasY: ${canvasY}. Node pos: ${node.x}, ${node.y}`);
-      setDragState({
-        isDragging: true,
-        dragOffset: {
-          x: canvasX - node.x,
-          y: canvasY - node.y
-        }
-      });
-    } else {
-      console.warn("useNodeDrag: Could not get rects for drag calculation for node:", node.id);
-    }
-  };
+  const handlePointerMove = useCallback((e: PointerEvent) => {
+    if (!dragStateRef.current) return;
 
-  useEffect(() => {
-    if (!dragState.isDragging) return;
-    console.log(`useNodeDrag: useEffect - Single drag active for ${node.id}`);
-
-    const handlePointerMove = (pointerEvent: any) => {
+    if (isDraggingRef.current) {
       const canvas = document.getElementById('canvas');
       const canvasRect = canvas?.getBoundingClientRect();
       const scrollContainer = document.querySelector('[data-radix-scroll-area-viewport]');
@@ -62,34 +31,87 @@ export const useNodeDrag = (
         const scrollLeft = scrollContainer.scrollLeft || 0;
         const scrollTop = scrollContainer.scrollTop || 0;
         
-        const canvasX = pointerEvent.clientX - canvasRect.left + scrollLeft;
-        const canvasY = pointerEvent.clientY - canvasRect.top + scrollTop;
+        const canvasX = e.clientX - canvasRect.left + scrollLeft;
+        const canvasY = e.clientY - canvasRect.top + scrollTop;
         
         const newX = Math.max(0, Math.min(
-          canvasX - dragState.dragOffset.x,
+          canvasX - dragStateRef.current.dragOffset.x,
           3000 - (nodeRef.current?.offsetWidth || 120)
         ));
         const newY = Math.max(0, Math.min(
-          canvasY - dragState.dragOffset.y,
+          canvasY - dragStateRef.current.dragOffset.y,
           3000 - (nodeRef.current?.offsetHeight || 60)
         ));
         
         onMove(node.id, newX, newY);
       }
-    };
+    } else {
+      const dx = e.clientX - dragStateRef.current.startX;
+      const dy = e.clientY - dragStateRef.current.startY;
+      if (Math.sqrt(dx * dx + dy * dy) > DRAG_THRESHOLD) {
+        isDraggingRef.current = true;
+        setVisualDragging(true);
 
-    const handlePointerEnd = () => {
-      console.log(`useNodeDrag: Ending single drag for ${node.id}`);
-      setDragState(prev => ({ ...prev, isDragging: false }));
-    };
+        const canvas = document.getElementById('canvas');
+        const canvasRect = canvas?.getBoundingClientRect();
+        const scrollContainer = document.querySelector('[data-radix-scroll-area-viewport]');
+        if (canvasRect && scrollContainer) {
+            const scrollLeft = scrollContainer.scrollLeft || 0;
+            const scrollTop = scrollContainer.scrollTop || 0;
+            const canvasX = e.clientX - canvasRect.left + scrollLeft;
+            const canvasY = e.clientY - canvasRect.top + scrollTop;
+            
+            dragStateRef.current.dragOffset = {
+                x: canvasX - node.x,
+                y: canvasY - node.y
+            };
+            console.log(`useNodeDrag: Starting single drag for ${node.id}`);
+        }
+      }
+    }
+  }, [node.id, node.x, node.y, onMove]);
+  
+  const handlePointerUp = useCallback(() => {
+    document.removeEventListener('pointermove', handlePointerMove);
+    document.removeEventListener('pointerup', handlePointerUp);
+    
+    if (isDraggingRef.current) {
+        console.log(`useNodeDrag: Ending single drag for ${node.id}`);
+        isDraggingRef.current = false;
+        setVisualDragging(false);
+    }
+    dragStateRef.current = null;
+  }, [handlePointerMove]);
 
-    const cleanup = addPointerEventListeners(document.body, handlePointerMove, handlePointerEnd);
-    return cleanup;
-  }, [dragState.isDragging, dragState.dragOffset, node.id, onMove, addPointerEventListeners, nodeRef]);
+  const startDrag = useCallback((e: PointerDragEvent) => {
+    if (e.defaultPrevented) {
+      console.log("useNodeDrag: Event defaultPrevented, not starting single drag for node:", node.id);
+      return;
+    }
+    console.log("useNodeDrag: Preparing to drag node:", node.id);
+    
+    e.stopPropagation();
+
+    dragStateRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      dragOffset: { x: 0, y: 0 }
+    };
+    
+    document.addEventListener('pointermove', handlePointerMove);
+    document.addEventListener('pointerup', handlePointerUp);
+  }, [handlePointerMove, handlePointerUp]);
+
+  useEffect(() => {
+    return () => {
+      document.removeEventListener('pointermove', handlePointerMove);
+      document.removeEventListener('pointerup', handlePointerUp);
+    };
+  }, [handlePointerMove, handlePointerUp]);
 
   return {
     nodeRef,
-    isDragging: dragState.isDragging,
+    isDragging: isVisualDragging,
     startDrag
   };
 };

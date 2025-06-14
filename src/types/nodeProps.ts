@@ -9,7 +9,7 @@ export interface BaseNodeProps {
   onSelect: (id: string, event?: React.MouseEvent) => void;
   onDoubleClick?: () => void;
   onMove: (id: string, x: number, y: number) => void;
-  onDragStart?: (event: React.MouseEvent) => void;
+  onDragStart?: (event: React.PointerEvent) => void;
   onStartConnection: (sourceNode: EnhancedNode, startX: number, startY: number) => void;
   validationClass?: string;
   validationTooltip?: string;

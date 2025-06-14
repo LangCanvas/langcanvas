@@ -53,7 +53,7 @@ export const useCanvasNodeEvents = ({
     }));
   }, []);
 
-  const handleNodeDragStart = useCallback((nodeId: string, event: React.MouseEvent) => {
+  const handleNodeDragStart = useCallback((nodeId: string, event: React.PointerEvent) => {
     // This function is called when a mousedown occurs on a node that might initiate a drag.
     // It should decide if it's a multi-drag scenario.
     // The `selectedNodeIds` here should be "fresh" due to hook dependencies.
