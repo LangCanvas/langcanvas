@@ -8,27 +8,18 @@ interface DesktopSidebarProps {
   isExpanded?: boolean;
   panelWidth?: number;
   panelLayout?: PanelLayout;
-  onToggle?: () => void;
 }
 
 const DesktopSidebar: React.FC<DesktopSidebarProps> = ({ 
   isVisible = true, 
   isExpanded = true,
   panelWidth = 256,
-  panelLayout = 'medium', // Changed from 'standard' to 'medium'
-  onToggle
+  panelLayout = 'medium'
 }) => {
   // If not visible at all, don't render anything
   if (!isVisible) {
     return null;
   }
-
-  const handleToggle = () => {
-    console.log('Toggle sidebar requested');
-    if (onToggle) {
-      onToggle();
-    }
-  };
 
   // Always show expanded panel with enhanced palette (no collapsed state)
   return (
@@ -38,7 +29,6 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
           const event = new CustomEvent('setPendingCreation', { detail: type });
           window.dispatchEvent(event);
         }}
-        onToggle={handleToggle}
         isExpanded={isExpanded}
         panelWidth={panelWidth}
         panelLayout={panelLayout}

@@ -13,16 +13,6 @@ export const PANEL_BREAKPOINTS = {
 
 export type PanelLayout = 'small' | 'medium';
 
-interface PanelWidthSettings {
-  leftPanelWidth: number;
-  rightPanelWidth: number;
-  version: string;
-  timestamp: number;
-}
-
-const PANEL_WIDTH_STORAGE_KEY = 'langcanvas_panel_widths';
-const PANEL_WIDTH_VERSION = '3.2'; // Updated version for new constraints
-
 export const useAdaptivePanelWidths = () => {
   const { measurements, getContentBasedLayout } = useSmartPanelSizing();
   
@@ -35,47 +25,6 @@ export const useAdaptivePanelWidths = () => {
 
   const [leftPanelWidth, setLeftPanelWidth] = useState<number>(() => getInitialLeftWidth());
   const [rightPanelWidth, setRightPanelWidth] = useState<number>(PANEL_BREAKPOINTS.DEFAULT_RIGHT);
-  const debounceRef = useRef<NodeJS.Timeout>();
-
-  useEffect(() => {
-    const stored = localStorage.getItem(PANEL_WIDTH_STORAGE_KEY);
-    if (stored) {
-      try {
-        const data: PanelWidthSettings = JSON.parse(stored);
-        if (data.version === PANEL_WIDTH_VERSION) {
-          const constrainedLeft = Math.max(PANEL_BREAKPOINTS.MIN, Math.min(PANEL_BREAKPOINTS.MAX, data.leftPanelWidth));
-          const constrainedRight = Math.max(PANEL_BREAKPOINTS.MIN, Math.min(500, data.rightPanelWidth));
-          setLeftPanelWidth(constrainedLeft);
-          setRightPanelWidth(constrainedRight);
-          return;
-        }
-      } catch (error) {
-        console.warn('Failed to load panel widths from storage:', error);
-      }
-    }
-    
-    setLeftPanelWidth(getInitialLeftWidth());
-  }, [getInitialLeftWidth]);
-
-  const saveWidthsToStorage = useCallback((leftWidth: number, rightWidth: number) => {
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-    }
-
-    debounceRef.current = setTimeout(() => {
-      try {
-        const data: PanelWidthSettings = {
-          leftPanelWidth: leftWidth,
-          rightPanelWidth: rightWidth,
-          version: PANEL_WIDTH_VERSION,
-          timestamp: Date.now()
-        };
-        localStorage.setItem(PANEL_WIDTH_STORAGE_KEY, JSON.stringify(data));
-      } catch (error) {
-        console.warn('Failed to save panel widths to storage:', error);
-      }
-    }, 300);
-  }, []);
 
   const getInitialPercentage = useCallback((pixelWidth: number, isVisible: boolean) => {
     if (!isVisible) return 0;
@@ -109,15 +58,13 @@ export const useAdaptivePanelWidths = () => {
     // Enforce strict width constraints for left panel
     const constrainedWidth = Math.max(PANEL_BREAKPOINTS.MIN, Math.min(PANEL_BREAKPOINTS.MAX, pixelWidth));
     setLeftPanelWidth(constrainedWidth);
-    saveWidthsToStorage(constrainedWidth, rightPanelWidth);
-  }, [rightPanelWidth, saveWidthsToStorage, convertPercentageToPixels, getMaxPercentageForLeftPanel]);
+  }, [convertPercentageToPixels, getMaxPercentageForLeftPanel]);
 
   const handleRightPanelResize = useCallback((percentage: number) => {
     const pixelWidth = convertPercentageToPixels(percentage);
     const constrainedWidth = Math.max(PANEL_BREAKPOINTS.MIN, Math.min(500, pixelWidth));
     setRightPanelWidth(constrainedWidth);
-    saveWidthsToStorage(leftPanelWidth, constrainedWidth);
-  }, [leftPanelWidth, saveWidthsToStorage, convertPercentageToPixels]);
+  }, [convertPercentageToPixels]);
 
   const getLeftPanelLayout = useCallback((): PanelLayout => {
     return getContentBasedLayout(leftPanelWidth);
@@ -137,7 +84,7 @@ export const useAdaptivePanelWidths = () => {
     handleRightPanelResize,
     getInitialPercentage,
     getMaxPercentageForLeftPanel,
-    getMinPercentageForLeftPanel, // Export the new function
+    getMinPercentageForLeftPanel,
     measurements,
   };
 };

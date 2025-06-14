@@ -1,6 +1,5 @@
 
 import React, { useState, useMemo } from 'react';
-import { PanelLeftClose } from 'lucide-react';
 import { NodeType } from '../../types/nodeTypes';
 import { getAllNodes, getNodesByCategory, searchNodes, NodeDefinition } from '../../utils/nodeCategories';
 import { useEnhancedAnalytics } from '../../hooks/useEnhancedAnalytics';
@@ -13,7 +12,6 @@ import { getLayoutConfig } from './PaletteLayoutConfig';
 
 interface EnhancedNodePaletteProps {
   onNodeTypeSelect?: (type: NodeType) => void;
-  onToggle?: () => void;
   isExpanded?: boolean;
   panelWidth?: number;
   panelLayout?: PanelLayout;
@@ -21,7 +19,6 @@ interface EnhancedNodePaletteProps {
 
 const EnhancedNodePalette: React.FC<EnhancedNodePaletteProps> = ({ 
   onNodeTypeSelect, 
-  onToggle, 
   isExpanded = true,
   panelWidth = 140,
   panelLayout = 'medium'
@@ -107,15 +104,6 @@ const EnhancedNodePalette: React.FC<EnhancedNodePaletteProps> = ({
         <h2 className={`font-medium text-gray-700 ${panelLayout === 'small' ? 'text-xs' : 'text-sm'}`}>
           {panelLayout === 'small' ? '' : 'Node Palette'}
         </h2>
-        {onToggle && panelLayout !== 'small' && (
-          <button
-            onClick={onToggle}
-            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
-            title="Collapse Node Palette"
-          >
-            <PanelLeftClose className="w-4 h-4 text-gray-700" />
-          </button>
-        )}
       </div>
 
       <div className="space-y-4 flex-1 overflow-hidden flex flex-col">

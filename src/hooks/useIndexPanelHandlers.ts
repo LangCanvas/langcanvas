@@ -2,12 +2,16 @@
 import { useState, useEffect } from 'react';
 import { useEnhancedAnalytics } from './useEnhancedAnalytics';
 import { savePanelSettingsToStorage, loadPanelSettingsFromStorage } from '../utils/panelStorage';
+import { useAdaptivePanelWidths } from './useAdaptivePanelWidths';
 
 export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
   // Mobile states (existing)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activePanel, setActivePanel] = useState<'palette' | 'properties' | 'settings' | null>(null);
   const [showValidationPanel, setShowValidationPanel] = useState(false);
+  
+  // Get actual panel widths from the adaptive panel widths hook
+  const { leftPanelWidth, rightPanelWidth } = useAdaptivePanelWidths();
   
   // Load panel settings from localStorage
   const storedSettings = loadPanelSettingsFromStorage();
@@ -18,17 +22,17 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
   
   const analytics = useEnhancedAnalytics();
 
-  // Save panel settings to localStorage whenever they change
+  // Save panel settings to localStorage whenever they change, including actual widths
   useEffect(() => {
     savePanelSettingsToStorage({
       isLeftPanelVisible,
       isLeftPanelExpanded: true, // Always expanded when visible
       isRightPanelVisible,
       isRightPanelExpanded: true, // Always expanded when visible
-      leftPanelWidth: storedSettings.leftPanelWidth,
-      rightPanelWidth: storedSettings.rightPanelWidth
+      leftPanelWidth, // Use actual width from adaptive panel widths
+      rightPanelWidth // Use actual width from adaptive panel widths
     });
-  }, [isLeftPanelVisible, isRightPanelVisible, storedSettings.leftPanelWidth, storedSettings.rightPanelWidth]);
+  }, [isLeftPanelVisible, isRightPanelVisible, leftPanelWidth, rightPanelWidth]);
 
   const handleMobileMenuToggle = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);

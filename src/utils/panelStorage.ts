@@ -1,13 +1,14 @@
+
 const PANEL_STORAGE_KEY = 'langcanvas_panel_settings';
-const PANEL_VERSION = '1.1'; // Updated version to include widths
+const PANEL_VERSION = '2.0'; // Updated version to consolidate width storage
 
 export interface StoredPanelSettings {
   isLeftPanelVisible: boolean;
   isLeftPanelExpanded: boolean;
   isRightPanelVisible: boolean;
   isRightPanelExpanded: boolean;
-  leftPanelWidth?: number;
-  rightPanelWidth?: number;
+  leftPanelWidth: number;
+  rightPanelWidth: number;
   version: string;
   timestamp: number;
 }
@@ -17,7 +18,7 @@ const DEFAULT_PANEL_SETTINGS: Omit<StoredPanelSettings, 'version' | 'timestamp'>
   isLeftPanelExpanded: true,
   isRightPanelVisible: true,
   isRightPanelExpanded: true,
-  leftPanelWidth: 256,
+  leftPanelWidth: 95,
   rightPanelWidth: 320
 };
 
@@ -45,23 +46,19 @@ export const loadPanelSettingsFromStorage = (): Omit<StoredPanelSettings, 'versi
 
     const panelData: StoredPanelSettings = JSON.parse(stored);
     
-    // Handle version migration
-    if (panelData.version === '1.0') {
-      // Migrate from old version - add default widths
-      console.log('Migrating panel settings from v1.0 to v1.1');
-      return {
-        isLeftPanelVisible: panelData.isLeftPanelVisible,
-        isLeftPanelExpanded: panelData.isLeftPanelExpanded,
-        isRightPanelVisible: panelData.isRightPanelVisible,
-        isRightPanelExpanded: panelData.isRightPanelExpanded,
-        leftPanelWidth: 256,
-        rightPanelWidth: 320
-      };
-    }
-    
+    // Handle version migration from older versions
     if (panelData.version !== PANEL_VERSION) {
-      console.warn('Panel settings version mismatch, using defaults');
-      return DEFAULT_PANEL_SETTINGS;
+      console.log(`Migrating panel settings from ${panelData.version || 'unknown'} to ${PANEL_VERSION}`);
+      // Clear old storage systems
+      localStorage.removeItem('langcanvas_panel_widths');
+      return {
+        isLeftPanelVisible: panelData.isLeftPanelVisible ?? true,
+        isLeftPanelExpanded: panelData.isLeftPanelExpanded ?? true,
+        isRightPanelVisible: panelData.isRightPanelVisible ?? true,
+        isRightPanelExpanded: panelData.isRightPanelExpanded ?? true,
+        leftPanelWidth: panelData.leftPanelWidth || 95,
+        rightPanelWidth: panelData.rightPanelWidth || 320
+      };
     }
 
     console.log('📂 Panel settings loaded from localStorage');
@@ -70,8 +67,8 @@ export const loadPanelSettingsFromStorage = (): Omit<StoredPanelSettings, 'versi
       isLeftPanelExpanded: panelData.isLeftPanelExpanded,
       isRightPanelVisible: panelData.isRightPanelVisible,
       isRightPanelExpanded: panelData.isRightPanelExpanded,
-      leftPanelWidth: panelData.leftPanelWidth || 256,
-      rightPanelWidth: panelData.rightPanelWidth || 320
+      leftPanelWidth: panelData.leftPanelWidth,
+      rightPanelWidth: panelData.rightPanelWidth
     };
   } catch (error) {
     console.warn('Failed to load panel settings from localStorage:', error);
@@ -82,6 +79,7 @@ export const loadPanelSettingsFromStorage = (): Omit<StoredPanelSettings, 'versi
 export const clearPanelSettingsFromStorage = (): void => {
   try {
     localStorage.removeItem(PANEL_STORAGE_KEY);
+    localStorage.removeItem('langcanvas_panel_widths'); // Clean up old storage
     console.log('🗑️ Panel settings cleared from localStorage');
   } catch (error) {
     console.warn('Failed to clear panel settings from localStorage:', error);
