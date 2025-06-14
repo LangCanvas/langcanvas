@@ -1,7 +1,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { EnhancedNode } from '../types/nodeTypes';
-import { isNodeInRectangle, getNodesBoundingBox } from '../utils/canvasCoordinates';
+import { isNodeInRectangle } from '../utils/canvasCoordinates';
 
 export interface SelectionRectangle {
   startX: number;
@@ -17,30 +17,11 @@ export const useMultiSelection = (canvasRef: React.RefObject<HTMLDivElement>) =>
   const [selectionRect, setSelectionRect] = useState<SelectionRectangle | null>(null);
   const lastSelectedNodeRef = useRef<string | null>(null);
 
+  // Node selection functions
   const selectSingleNode = useCallback((nodeId: string | null) => {
     setSelectedNodeIds(nodeId ? [nodeId] : []);
     setSelectedEdgeIds([]);
     lastSelectedNodeRef.current = nodeId;
-  }, []);
-
-  const selectSingleEdge = useCallback((edgeId: string | null) => {
-    setSelectedEdgeIds(edgeId ? [edgeId] : []);
-    setSelectedNodeIds([]);
-  }, []);
-
-  const clearSelection = useCallback(() => {
-    setSelectedNodeIds([]);
-    setSelectedEdgeIds([]);
-    lastSelectedNodeRef.current = null;
-  }, []);
-
-  const clearNodeMultiSelection = useCallback(() => {
-    setSelectedNodeIds([]);
-    lastSelectedNodeRef.current = null;
-  }, []);
-
-  const clearEdgeMultiSelection = useCallback(() => {
-    setSelectedEdgeIds([]);
   }, []);
 
   const toggleNodeSelection = useCallback((nodeId: string, isCtrlOrShiftPressed: boolean, nodes: EnhancedNode[] = []) => {
@@ -66,6 +47,12 @@ export const useMultiSelection = (canvasRef: React.RefObject<HTMLDivElement>) =>
     }
   }, []);
 
+  // Edge selection functions
+  const selectSingleEdge = useCallback((edgeId: string | null) => {
+    setSelectedEdgeIds(edgeId ? [edgeId] : []);
+    setSelectedNodeIds([]);
+  }, []);
+
   const toggleEdgeSelection = useCallback((edgeId: string, isCtrlOrShiftPressed: boolean) => {
     if (isCtrlOrShiftPressed) {
       setSelectedEdgeIds(prev => {
@@ -81,6 +68,19 @@ export const useMultiSelection = (canvasRef: React.RefObject<HTMLDivElement>) =>
     }
   }, []);
 
+  // Clear selection functions
+  const clearSelection = useCallback(() => {
+    setSelectedNodeIds([]);
+    setSelectedEdgeIds([]);
+    lastSelectedNodeRef.current = null;
+  }, []);
+
+  const clearNodeMultiSelection = useCallback(() => {
+    setSelectedNodeIds([]);
+    lastSelectedNodeRef.current = null;
+  }, []);
+
+  // Rectangle selection functions
   const updateNodesSelectionInRealTime = useCallback((nodes: EnhancedNode[], rect: SelectionRectangle) => {
     const rectLeft = Math.min(rect.startX, rect.endX);
     const rectRight = Math.max(rect.startX, rect.endX);
@@ -115,9 +115,7 @@ export const useMultiSelection = (canvasRef: React.RefObject<HTMLDivElement>) =>
   }, []);
 
   const updateRectangleSelection = useCallback((x: number, y: number, nodes: EnhancedNode[]) => {
-    if (!selectionRect) {
-      return;
-    }
+    if (!selectionRect) return;
     
     const newRect = { 
       startX: selectionRect.startX, 
@@ -143,6 +141,7 @@ export const useMultiSelection = (canvasRef: React.RefObject<HTMLDivElement>) =>
     lastSelectedNodeRef.current = null;
   }, []);
 
+  // Keyboard escape handler
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && isSelecting) {
@@ -158,17 +157,25 @@ export const useMultiSelection = (canvasRef: React.RefObject<HTMLDivElement>) =>
   }, [isSelecting, cancelRectangleSelection]);
 
   return {
+    // State
     selectedNodeIds,
     selectedEdgeIds,
     isSelecting,
     selectionRect,
+    
+    // Node selection
     selectSingleNode,
-    selectSingleEdge,
     toggleNodeSelection,
+    
+    // Edge selection
+    selectSingleEdge,
     toggleEdgeSelection,
+    
+    // Clear selections
     clearSelection,
     clearNodeMultiSelection,
-    clearEdgeMultiSelection,
+    
+    // Rectangle selection
     startRectangleSelection,
     updateRectangleSelection,
     endRectangleSelection,

@@ -24,53 +24,32 @@ export const useCanvasNodeEvents = ({
     
     event?.stopPropagation(); 
     
-    console.log('🎯 Node select called:', { nodeId, isCtrlOrShiftPressed, currentSelectedIds: selectedNodeIds });
-    
     if (isCtrlOrShiftPressed) {
       toggleNodeSelection(nodeId, true, nodes);
       selectNodeSafely(nodeId, true);
     } else {
-      // Simple click (no modifier)
       if (selectedNodeIds.includes(nodeId)) {
-        // If clicking an already selected node, just set it as primary for drag.
-        // Do not change the multi-selection.
         selectNodeSafely(nodeId, true);
-        console.log('🎯 Node re-selected (no modifiers), selectedNodeIds preserved.');
       } else {
-        // Clicking a new node makes it the only selection.
         selectNodeSafely(nodeId, false);
-        console.log('🎯 New node selected (no modifiers), selection reset.');
       }
     }
   }, [toggleNodeSelection, selectNodeSafely, nodes, selectedNodeIds]);
 
   const handleNodeDoubleClick = useCallback((nodeId: string) => {
-    // Dispatch custom event to open right panel
     window.dispatchEvent(new CustomEvent('openPropertiesPanel', { 
       detail: { nodeId, type: 'node' } 
     }));
   }, []);
 
   const handleNodeDragStart = useCallback((nodeId: string, event: React.PointerEvent) => {
-    console.log('🚩 Node drag start requested:', { nodeId, eventX: event.clientX, eventY: event.clientY, selectedNodeIds });
-
-    // Check if this node or multiple nodes are selected
-    // Note: selection state should be current by now since handleNodeSelect was called first
     const currentlySelected = selectedNodeIds.includes(nodeId);
     const hasMultipleSelected = selectedNodeIds.length > 1;
     
     if (currentlySelected || hasMultipleSelected) {
-      console.log('✅ Initiating multi-drag for selected node(s):', selectedNodeIds);
-      // Prevent single-node drag system from activating
       event.preventDefault();
       event.stopPropagation();
-      
-      // Start multi-drag
       startMultiDrag(nodeId, event.clientX, event.clientY);
-    } else {
-      // Let single-node drag handle this (unselected node)
-      console.log('🤔 Letting single-node drag take over for unselected node:', nodeId);
-      // Don't prevent default - let useNodeDrag handle it
     }
   }, [selectedNodeIds, startMultiDrag]);
 
