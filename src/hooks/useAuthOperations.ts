@@ -28,10 +28,17 @@ export const useAuthOperations = (
         const authErr = error as any;
         setAuthError(authErr);
         
-        if (authErr.type === 'domain_unauthorized' && retryCount < 2) {
+        // Handle specific error types
+        if (authErr.type === 'user_cancelled' && authErr.details?.includes('opt_out_or_no_session')) {
+          debugLogger.addLog('One Tap unavailable - user should use alternative sign-in button');
+          // Don't increment retry count for this specific error
+        } else if (authErr.type === 'domain_unauthorized' && retryCount < 2) {
           debugLogger.addLog('Enabling fallback mode for domain authorization issues...');
           GoogleAuthService.enableFallbackMode();
           await initializeAuth();
+          setRetryCount(prev => prev + 1);
+        } else {
+          setRetryCount(prev => prev + 1);
         }
       } else {
         const errorMessage = error instanceof Error ? error.message : 'Sign-in failed';
@@ -40,9 +47,9 @@ export const useAuthOperations = (
           message: errorMessage,
           details: `Domain: ${window.location.hostname}, Attempt: ${retryCount + 1}`
         });
+        setRetryCount(prev => prev + 1);
       }
       
-      setRetryCount(prev => prev + 1);
       debugLogger.addLog(`Sign-in failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       throw error;
     }

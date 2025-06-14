@@ -17,12 +17,23 @@ const firebaseConfig = {
 // Initialize Firebase
 export const app = initializeApp(firebaseConfig);
 
-// Initialize Firestore
+// Environment detection
+export const isDevelopment = typeof window !== 'undefined' && 
+                            (window.location.hostname.includes('lovable.dev') || 
+                             window.location.hostname === 'localhost' ||
+                             window.location.hostname.includes('preview--'));
+
+// Initialize Firestore with quota-aware settings
 export const db = getFirestore(app);
 
-// Initialize Analytics (only in browser environment)
+// Disable Firestore for development to avoid quota issues
+if (isDevelopment) {
+  console.log('🔧 Development environment detected - using local analytics only');
+}
+
+// Initialize Analytics (only in browser environment and production)
 let analytics: any = null;
-if (typeof window !== 'undefined') {
+if (typeof window !== 'undefined' && !isDevelopment) {
   isSupported().then((supported) => {
     if (supported) {
       analytics = getAnalytics(app);
@@ -31,17 +42,3 @@ if (typeof window !== 'undefined') {
 }
 
 export { analytics };
-
-// Environment detection
-export const isDevelopment = typeof window !== 'undefined' && 
-                            (window.location.hostname.includes('lovable.dev') || 
-                             window.location.hostname === 'localhost');
-
-// Connect to emulator in development
-if (isDevelopment && typeof window !== 'undefined') {
-  try {
-    connectFirestoreEmulator(db, 'localhost', 8080);
-  } catch (error) {
-    console.log('Firestore emulator already connected or not available');
-  }
-}

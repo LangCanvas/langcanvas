@@ -29,6 +29,13 @@ export class GoogleAuthOperations {
               reject(domainError);
             } else if (reason?.includes('suppressed_by_user') || reason?.includes('browser_not_supported')) {
               reject(AuthErrorHandler.createAuthError('popup_blocked', 'Sign-in popup was blocked by browser settings'));
+            } else if (reason === 'opt_out_or_no_session') {
+              // Handle the specific opt_out_or_no_session error
+              reject(AuthErrorHandler.createAuthError(
+                'user_cancelled', 
+                'Google One Tap is not available. Please use the alternative sign-in button below.',
+                'User has opted out of One Tap or has no active Google session'
+              ));
             } else {
               reject(AuthErrorHandler.createAuthError('unknown', `Sign-in could not be displayed: ${reason}`));
             }

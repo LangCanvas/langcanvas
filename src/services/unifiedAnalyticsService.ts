@@ -17,6 +17,9 @@ export class UnifiedAnalyticsService {
   private static instance: UnifiedAnalyticsService;
   private isOnline: boolean = navigator.onLine;
   private pendingEvents: UnifiedAnalyticsEvent[] = [];
+  private quotaExhausted: boolean = false;
+  private lastQuotaError: number = 0;
+  private retryDelay: number = 60000; // Start with 1 minute delay
 
   constructor() {
     this.setupOnlineListeners();
@@ -49,35 +52,59 @@ export class UnifiedAnalyticsService {
     }
   }
 
+  private isQuotaError(error: any): boolean {
+    return error?.code === 'resource-exhausted' || 
+           error?.message?.includes('Quota exceeded') ||
+           error?.message?.includes('resource-exhausted');
+  }
+
+  private handleQuotaError(): void {
+    this.quotaExhausted = true;
+    this.lastQuotaError = Date.now();
+    // Exponential backoff: double the delay each time, max 1 hour
+    this.retryDelay = Math.min(this.retryDelay * 2, 3600000);
+    console.warn(`🔥 Firestore quota exhausted. Will retry in ${this.retryDelay / 1000} seconds`);
+  }
+
+  private canRetryFirestore(): boolean {
+    if (!this.quotaExhausted) return true;
+    
+    const timeSinceError = Date.now() - this.lastQuotaError;
+    if (timeSinceError > this.retryDelay) {
+      this.quotaExhausted = false;
+      return true;
+    }
+    return false;
+  }
+
   async storeEvent(event: UnifiedAnalyticsEvent): Promise<void> {
     try {
+      // Always store locally first
       await this.storeEventLocally(event);
 
-      if (this.isOnline) {
-        await this.storeEventRemotely(event);
+      // Only try Firestore if online and quota is not exhausted
+      if (this.isOnline && this.canRetryFirestore()) {
+        try {
+          await this.storeEventRemotely(event);
+        } catch (error) {
+          if (this.isQuotaError(error)) {
+            this.handleQuotaError();
+          } else {
+            console.warn('Failed to store event remotely:', error);
+          }
+          // Add to pending events for later sync
+          this.pendingEvents.push(event);
+        }
       } else {
         this.pendingEvents.push(event);
       }
     } catch (error) {
       console.warn('Failed to store analytics event:', error);
-      await this.storeEventLocally(event);
     }
   }
 
   async getAggregatedStats(): Promise<AggregatedStats> {
-    try {
-      if (this.isOnline) {
-        const recentEvents = await firestoreAnalytics.getRecentEvents(1000);
-        if (recentEvents.length > 0) {
-          return AnalyticsComputation.computeStatsFromEvents(
-            recentEvents.map(this.convertFirestoreToLocal)
-          );
-        }
-      }
-    } catch (error) {
-      console.warn('Failed to get remote analytics data, falling back to local:', error);
-    }
-
+    // Always use local storage to avoid quota issues
     return await analyticsStorage.getAggregatedStats();
   }
 
@@ -125,7 +152,7 @@ export class UnifiedAnalyticsService {
   }
 
   private async syncPendingEvents(): Promise<void> {
-    if (this.pendingEvents.length === 0) return;
+    if (this.pendingEvents.length === 0 || !this.canRetryFirestore()) return;
 
     const eventsToSync = [...this.pendingEvents];
     this.pendingEvents = [];
@@ -134,8 +161,11 @@ export class UnifiedAnalyticsService {
       for (const event of eventsToSync) {
         await this.storeEventRemotely(event);
       }
-      console.log(`Synced ${eventsToSync.length} pending analytics events`);
+      console.log(`✅ Synced ${eventsToSync.length} pending analytics events`);
     } catch (error) {
+      if (this.isQuotaError(error)) {
+        this.handleQuotaError();
+      }
       console.warn('Failed to sync pending events, re-queuing:', error);
       this.pendingEvents.unshift(...eventsToSync);
     }
