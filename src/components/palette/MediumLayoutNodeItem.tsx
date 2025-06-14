@@ -33,7 +33,7 @@ const MediumLayoutNodeItem: React.FC<MediumLayoutNodeItemProps> = ({
           }
         }}
       >
-        <div className="grid grid-cols-[24px_1fr] gap-2 items-start w-full">
+        <div className="grid grid-cols-[24px_1fr] gap-2 items-center w-full">
           <span className="text-lg flex justify-center">
             {node.icon}
           </span>
