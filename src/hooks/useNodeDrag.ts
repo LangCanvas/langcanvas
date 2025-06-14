@@ -20,86 +20,106 @@ export const useNodeDrag = (
 
   const [isVisualDragging, setVisualDragging] = useState(false);
 
-  const handlePointerMove = useCallback((e: PointerEvent) => {
-    if (!dragStateRef.current) {
-      console.log(`useNodeDrag(${node.id}): No drag state in move handler`);
-      return;
-    }
+  // Use refs for stable references
+  const nodeDataRef = useRef(node);
+  const onMoveRef = useRef(onMove);
+  const isSelectedRef = useRef(isSelected);
 
-    if (isDraggingRef.current) {
-      const canvas = document.getElementById('canvas');
-      const canvasRect = canvas?.getBoundingClientRect();
-      const scrollContainer = document.querySelector('[data-radix-scroll-area-viewport]');
-      
-      if (canvasRect && scrollContainer) {
-        const scrollLeft = scrollContainer.scrollLeft || 0;
-        const scrollTop = scrollContainer.scrollTop || 0;
-        
-        const canvasX = e.clientX - canvasRect.left + scrollLeft;
-        const canvasY = e.clientY - canvasRect.top + scrollTop;
-        
-        const newX = Math.max(0, Math.min(
-          canvasX - dragStateRef.current.dragOffset.x,
-          3000 - (nodeRef.current?.offsetWidth || 120)
-        ));
-        const newY = Math.max(0, Math.min(
-          canvasY - dragStateRef.current.dragOffset.y,
-          3000 - (nodeRef.current?.offsetHeight || 60)
-        ));
-        
-        console.log(`useNodeDrag(${node.id}): Moving to ${newX}, ${newY}`);
-        onMove(node.id, newX, newY);
+  // Update refs when props change
+  nodeDataRef.current = node;
+  onMoveRef.current = onMove;
+  isSelectedRef.current = isSelected;
+
+  // Stable event handlers using refs
+  const handlePointerMoveRef = useRef<(e: PointerEvent) => void>();
+  const handlePointerUpRef = useRef<() => void>();
+
+  if (!handlePointerMoveRef.current) {
+    handlePointerMoveRef.current = (e: PointerEvent) => {
+      if (!dragStateRef.current) {
+        console.log(`useNodeDrag(${nodeDataRef.current.id}): No drag state in move handler`);
+        return;
       }
-    } else {
-      const dx = e.clientX - dragStateRef.current.startX;
-      const dy = e.clientY - dragStateRef.current.startY;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-      
-      if (distance > DRAG_THRESHOLD) {
-        console.log(`useNodeDrag(${node.id}): Threshold exceeded (${distance}px), starting drag`);
-        isDraggingRef.current = true;
-        setVisualDragging(true);
 
+      if (isDraggingRef.current) {
         const canvas = document.getElementById('canvas');
         const canvasRect = canvas?.getBoundingClientRect();
         const scrollContainer = document.querySelector('[data-radix-scroll-area-viewport]');
+        
         if (canvasRect && scrollContainer) {
           const scrollLeft = scrollContainer.scrollLeft || 0;
           const scrollTop = scrollContainer.scrollTop || 0;
+          
           const canvasX = e.clientX - canvasRect.left + scrollLeft;
           const canvasY = e.clientY - canvasRect.top + scrollTop;
           
-          dragStateRef.current.dragOffset = {
-            x: canvasX - node.x,
-            y: canvasY - node.y
-          };
-          console.log(`useNodeDrag(${node.id}): Set drag offset:`, dragStateRef.current.dragOffset);
+          const newX = Math.max(0, Math.min(
+            canvasX - dragStateRef.current.dragOffset.x,
+            3000 - (nodeRef.current?.offsetWidth || 120)
+          ));
+          const newY = Math.max(0, Math.min(
+            canvasY - dragStateRef.current.dragOffset.y,
+            3000 - (nodeRef.current?.offsetHeight || 60)
+          ));
+          
+          console.log(`useNodeDrag(${nodeDataRef.current.id}): Moving to ${newX}, ${newY}`);
+          onMoveRef.current(nodeDataRef.current.id, newX, newY);
+        }
+      } else {
+        const dx = e.clientX - dragStateRef.current.startX;
+        const dy = e.clientY - dragStateRef.current.startY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance > DRAG_THRESHOLD) {
+          console.log(`useNodeDrag(${nodeDataRef.current.id}): Threshold exceeded (${distance}px), starting drag`);
+          isDraggingRef.current = true;
+          setVisualDragging(true);
+
+          const canvas = document.getElementById('canvas');
+          const canvasRect = canvas?.getBoundingClientRect();
+          const scrollContainer = document.querySelector('[data-radix-scroll-area-viewport]');
+          if (canvasRect && scrollContainer) {
+            const scrollLeft = scrollContainer.scrollLeft || 0;
+            const scrollTop = scrollContainer.scrollTop || 0;
+            const canvasX = e.clientX - canvasRect.left + scrollLeft;
+            const canvasY = e.clientY - canvasRect.top + scrollTop;
+            
+            dragStateRef.current.dragOffset = {
+              x: canvasX - nodeDataRef.current.x,
+              y: canvasY - nodeDataRef.current.y
+            };
+            console.log(`useNodeDrag(${nodeDataRef.current.id}): Set drag offset:`, dragStateRef.current.dragOffset);
+          }
         }
       }
-    }
-  }, [node.id, node.x, node.y, onMove]);
+    };
+  }
   
-  const handlePointerUp = useCallback(() => {
-    console.log(`useNodeDrag(${node.id}): Pointer up - cleaning up listeners`);
-    
-    document.removeEventListener('pointermove', handlePointerMove);
-    document.removeEventListener('pointerup', handlePointerUp);
-    
-    if (isDraggingRef.current) {
-      console.log(`useNodeDrag(${node.id}): Ending single drag`);
-      isDraggingRef.current = false;
-      setVisualDragging(false);
-    }
-    dragStateRef.current = null;
-  }, [handlePointerMove, node.id]);
+  if (!handlePointerUpRef.current) {
+    handlePointerUpRef.current = () => {
+      console.log(`useNodeDrag(${nodeDataRef.current.id}): Pointer up - cleaning up listeners`);
+      
+      if (handlePointerMoveRef.current && handlePointerUpRef.current) {
+        document.removeEventListener('pointermove', handlePointerMoveRef.current);
+        document.removeEventListener('pointerup', handlePointerUpRef.current);
+      }
+      
+      if (isDraggingRef.current) {
+        console.log(`useNodeDrag(${nodeDataRef.current.id}): Ending single drag`);
+        isDraggingRef.current = false;
+        setVisualDragging(false);
+      }
+      dragStateRef.current = null;
+    };
+  }
 
   const startDrag = useCallback((e: PointerDragEvent) => {
     if (e.defaultPrevented) {
-      console.log(`useNodeDrag(${node.id}): Event defaultPrevented, not starting drag`);
+      console.log(`useNodeDrag(${nodeDataRef.current.id}): Event defaultPrevented, not starting drag`);
       return;
     }
     
-    console.log(`useNodeDrag(${node.id}): Starting single-node drag (isSelected: ${isSelected})`);
+    console.log(`useNodeDrag(${nodeDataRef.current.id}): Starting single-node drag (isSelected: ${isSelectedRef.current})`);
     
     e.stopPropagation();
 
@@ -109,19 +129,26 @@ export const useNodeDrag = (
       dragOffset: { x: 0, y: 0 }
     };
     
-    console.log(`useNodeDrag(${node.id}): Adding event listeners for single drag`);
-    document.addEventListener('pointermove', handlePointerMove);
-    document.addEventListener('pointerup', handlePointerUp);
-  }, [handlePointerMove, handlePointerUp, isSelected, node.id]);
+    console.log(`useNodeDrag(${nodeDataRef.current.id}): Adding event listeners for single drag`);
+    if (handlePointerMoveRef.current && handlePointerUpRef.current) {
+      document.addEventListener('pointermove', handlePointerMoveRef.current);
+      document.addEventListener('pointerup', handlePointerUpRef.current);
+    }
+  }, []); // No dependencies to prevent re-creation
 
-  // Cleanup effect
+  // Cleanup effect with no dependencies to prevent premature cleanup
   useEffect(() => {
     return () => {
-      console.log(`useNodeDrag(${node.id}): Cleanup - removing event listeners`);
-      document.removeEventListener('pointermove', handlePointerMove);
-      document.removeEventListener('pointerup', handlePointerUp);
+      // Only cleanup if we're not actively dragging
+      if (!isDraggingRef.current) {
+        console.log(`useNodeDrag(${nodeDataRef.current.id}): Component cleanup - removing event listeners`);
+        if (handlePointerMoveRef.current && handlePointerUpRef.current) {
+          document.removeEventListener('pointermove', handlePointerMoveRef.current);
+          document.removeEventListener('pointerup', handlePointerUpRef.current);
+        }
+      }
     };
-  }, [handlePointerMove, handlePointerUp, node.id]);
+  }, []); // No dependencies to prevent cleanup during drag
 
   return {
     nodeRef,
