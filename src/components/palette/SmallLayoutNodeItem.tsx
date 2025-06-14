@@ -30,7 +30,7 @@ const SmallLayoutNodeItem: React.FC<SmallLayoutNodeItemProps> = ({
               onClick={onClick}
             >
               <span className="text-xs absolute left-2">{node.icon}</span>
-              <span className="text-xs font-medium w-full text-center">{node.label}</span>
+              <span className="text-xs font-medium w-full text-center pl-6">{node.label}</span>
             </Button>
           </TooltipTrigger>
           <TooltipContent side="right" className="text-xs">
