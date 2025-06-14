@@ -1,5 +1,4 @@
-
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { NodeType } from '../../types/nodeTypes';
 import { getAllNodes, getNodesByCategory, searchNodes, NodeDefinition } from '../../utils/nodeCategories';
 import { useEnhancedAnalytics } from '../../hooks/useEnhancedAnalytics';
@@ -26,6 +25,12 @@ const EnhancedNodePalette: React.FC<EnhancedNodePaletteProps> = ({
   const analytics = useEnhancedAnalytics();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  // Reset to "All Nodes" when switching between medium and small layouts
+  useEffect(() => {
+    setSelectedCategory(null);
+    setSearchQuery('');
+  }, [panelLayout]);
 
   const filteredNodes = useMemo((): NodeDefinition[] => {
     if (searchQuery.trim()) {
