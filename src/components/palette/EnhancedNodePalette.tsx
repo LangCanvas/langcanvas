@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { NodeType } from '../../types/nodeTypes';
 import { getAllNodes, getNodesByCategory, searchNodes, NodeDefinition } from '../../utils/nodeCategories';
@@ -105,7 +106,7 @@ const EnhancedNodePalette: React.FC<EnhancedNodePaletteProps> = ({
 
   return (
     <div className={`${paddingClass} h-full flex flex-col`}>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-center mb-4">
         <h2 className={`font-medium text-gray-700 ${panelLayout === 'small' ? 'text-xs' : 'text-sm'}`}>
           {panelLayout === 'small' ? 'Nodes' : 'Node Palette'}
         </h2>
