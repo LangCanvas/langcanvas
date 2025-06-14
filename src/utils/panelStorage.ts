@@ -1,6 +1,6 @@
 
 const PANEL_STORAGE_KEY = 'langcanvas_panel_settings';
-const PANEL_VERSION = '2.1'; // Updated version to force reset of visibility settings
+const PANEL_VERSION = '2.2'; // Updated version to force reset of right panel visibility
 
 export interface StoredPanelSettings {
   isLeftPanelVisible: boolean;
@@ -16,7 +16,7 @@ export interface StoredPanelSettings {
 const DEFAULT_PANEL_SETTINGS: Omit<StoredPanelSettings, 'version' | 'timestamp'> = {
   isLeftPanelVisible: true, // Always visible by default
   isLeftPanelExpanded: true,
-  isRightPanelVisible: true,
+  isRightPanelVisible: true, // Ensure right panel is visible by default
   isRightPanelExpanded: true,
   leftPanelWidth: 95,
   rightPanelWidth: 320
@@ -24,16 +24,17 @@ const DEFAULT_PANEL_SETTINGS: Omit<StoredPanelSettings, 'version' | 'timestamp'>
 
 export const savePanelSettingsToStorage = (settings: Omit<StoredPanelSettings, 'version' | 'timestamp'>): void => {
   try {
-    // Force left panel to always be visible
+    // Force left panel to always be visible, ensure right panel defaults to visible
     const panelData: StoredPanelSettings = {
       ...settings,
       isLeftPanelVisible: true, // Override any false values
+      isRightPanelVisible: settings.isRightPanelVisible ?? true, // Default to true if undefined
       version: PANEL_VERSION,
       timestamp: Date.now()
     };
     
     localStorage.setItem(PANEL_STORAGE_KEY, JSON.stringify(panelData));
-    console.log('💾 Panel settings saved to localStorage (left panel forced visible)');
+    console.log('💾 Panel settings saved to localStorage (left panel forced visible, right panel defaulted)');
   } catch (error) {
     console.warn('Failed to save panel settings to localStorage:', error);
   }
@@ -49,7 +50,7 @@ export const loadPanelSettingsFromStorage = (): Omit<StoredPanelSettings, 'versi
 
     const panelData: StoredPanelSettings = JSON.parse(stored);
     
-    // Handle version migration - force reset for version 2.1
+    // Handle version migration - force reset for version 2.2
     if (panelData.version !== PANEL_VERSION) {
       console.log(`🔄 Migrating panel settings from ${panelData.version || 'unknown'} to ${PANEL_VERSION} - resetting visibility`);
       // Clear old storage systems
@@ -62,7 +63,7 @@ export const loadPanelSettingsFromStorage = (): Omit<StoredPanelSettings, 'versi
     return {
       isLeftPanelVisible: true, // Always force to true, regardless of stored value
       isLeftPanelExpanded: panelData.isLeftPanelExpanded ?? true,
-      isRightPanelVisible: panelData.isRightPanelVisible ?? true,
+      isRightPanelVisible: panelData.isRightPanelVisible ?? true, // Force default to true
       isRightPanelExpanded: panelData.isRightPanelExpanded ?? true,
       leftPanelWidth: panelData.leftPanelWidth || 95,
       rightPanelWidth: panelData.rightPanelWidth || 320

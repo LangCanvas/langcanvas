@@ -16,9 +16,12 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
   // Load panel settings from localStorage
   const storedSettings = loadPanelSettingsFromStorage();
   
-  // Desktop panel states - left panel is ALWAYS visible, only right panel can be toggled
+  // Desktop panel states - left panel is ALWAYS visible, right panel defaults to visible
   const [isLeftPanelVisible] = useState(true); // Always true, no setter needed
-  const [isRightPanelVisible, setIsRightPanelVisible] = useState(storedSettings.isRightPanelVisible);
+  const [isRightPanelVisible, setIsRightPanelVisible] = useState(() => {
+    // Safeguard: ensure right panel defaults to visible
+    return storedSettings.isRightPanelVisible !== false;
+  });
   
   const analytics = useEnhancedAnalytics();
 
@@ -100,7 +103,7 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
     handlePanelToggle,
     closePanels,
     
-    // Desktop panel states - left panel always visible
+    // Desktop panel states - left panel always visible, right panel toggleable
     isLeftPanelVisible: true, // Always true
     isRightPanelVisible,
     // Panels are always expanded when visible
