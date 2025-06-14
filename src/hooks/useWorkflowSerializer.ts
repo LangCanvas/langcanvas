@@ -1,17 +1,16 @@
-
 import { useCallback } from 'react';
 import { EnhancedNode } from '../types/nodeTypes';
-import { Edge } from './useEdges';
+import { EnhancedEdge } from '../types/edgeTypes';
 import { exportToJSON, importFromJSON, validateWorkflowJSON, WorkflowJSON } from '../utils/workflowSerializer';
 import { clearWorkflowFromStorage } from '../utils/workflowStorage';
 
 interface UseWorkflowSerializerProps {
   nodes: EnhancedNode[];
-  edges: Edge[];
+  edges: EnhancedEdge[];
   addNode: (type: EnhancedNode['type'], x: number, y: number) => EnhancedNode | null;
-  addEdge: (sourceNode: EnhancedNode, targetNode: EnhancedNode) => { success: boolean; error?: string };
+  addEdge: (sourceNode: EnhancedNode, targetNode: EnhancedNode) => { success: boolean; error?: string; edge?: EnhancedEdge };
   updateNodeProperties: (nodeId: string, updates: Partial<EnhancedNode>) => void;
-  updateEdgeProperties: (edgeId: string, updates: Partial<Edge>) => void;
+  updateEdgeProperties: (edgeId: string, updates: Partial<EnhancedEdge>) => void;
   deleteNode: (nodeId: string) => void;
   deleteEdge: (edgeId: string) => void;
   selectNode: (nodeId: string | null) => void;
@@ -87,7 +86,7 @@ export const useWorkflowSerializer = ({
               // Find the edge between condition and target
               const edge = edges.find(e => e.source === conditionNode.id && e.target === targetNode.id);
               if (edge) {
-                const edgeUpdates: Partial<Edge> = {};
+                const edgeUpdates: Partial<EnhancedEdge> = {};
                 if (condition.expression) edgeUpdates.label = condition.expression;
                 
                 if (Object.keys(edgeUpdates).length > 0) {

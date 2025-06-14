@@ -1,11 +1,10 @@
-
 import React from 'react';
-import { Edge } from '../hooks/useEdges';
+import { EnhancedEdge } from '../types/edgeTypes';
 import { EnhancedNode } from '../types/nodeTypes';
-import { getConnectionPoints, calculateOrthogonalPath } from '../utils/edgeCalculations';
+import { calculateOrthogonalPath } from '../utils/edgeCalculations';
 
 interface EdgeRendererProps {
-  edges: Edge[];
+  edges: EnhancedEdge[];
   nodes: EnhancedNode[];
   selectedEdgeId: string | null;
   onSelectEdge: (edgeId: string | null) => void;
@@ -84,7 +83,6 @@ const EdgeRenderer: React.FC<EdgeRendererProps> = ({
         
         if (!sourceNode || !targetNode) return null;
         
-        // Calculate orthogonal path
         const waypoints = calculateOrthogonalPath(sourceNode, targetNode);
         const pathString = waypoints.map((point, index) => 
           `${point.x},${point.y}`
@@ -114,7 +112,6 @@ const EdgeRenderer: React.FC<EdgeRendererProps> = ({
         
         return (
           <g key={edge.id}>
-            {/* Invisible thick polyline for easier clicking */}
             <polyline
               points={pathString}
               fill="none"
@@ -124,7 +121,6 @@ const EdgeRenderer: React.FC<EdgeRendererProps> = ({
               style={{ pointerEvents: 'auto', cursor: 'pointer' }}
               onClick={(e) => handleEdgeClick(e, edge.id)}
             />
-            {/* Visible polyline */}
             <polyline
               points={pathString}
               fill="none"

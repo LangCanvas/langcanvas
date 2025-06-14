@@ -1,11 +1,12 @@
+
 import { useState, useCallback, useEffect } from 'react';
 import { EnhancedNode } from '../types/nodeTypes';
-import { Edge } from './useEdges';
+import { EnhancedEdge } from '../types/edgeTypes'; // Updated import from ../types/edgeTypes
 import { validateGraph, ValidationResult, ValidationIssue } from '../utils/graphValidation';
 
 interface UseValidationProps {
   nodes: EnhancedNode[];
-  edges: Edge[];
+  edges: EnhancedEdge[]; // Changed Edge[] to EnhancedEdge[]
 }
 
 // Re-export ValidationResult so other components can use it
@@ -27,7 +28,7 @@ export const useValidation = ({ nodes, edges }: UseValidationProps) => {
   const runValidation = useCallback(() => {
     console.log('🔍 Running validation on', nodes.length, 'nodes and', edges.length, 'edges');
     
-    const result = validateGraph(nodes, edges);
+    const result = validateGraph(nodes, edges); // Assuming validateGraph accepts EnhancedEdge[]
     setValidationResult(result);
 
     // Build highlight sets and issue maps
