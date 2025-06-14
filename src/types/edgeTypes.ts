@@ -19,10 +19,14 @@ export interface ConditionalEdgeMetadata {
   evaluationMode: EvaluationMode;
 }
 
+export type ConnectionHandle = 'left' | 'right';
+
 export interface EnhancedEdge {
   id: string;
   source: string;
   target: string;
+  sourceHandle?: ConnectionHandle;
+  targetHandle?: ConnectionHandle;
   label?: string;
   value?: string;
   waypoints?: { x: number, y: number }[];

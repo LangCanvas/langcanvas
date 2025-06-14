@@ -37,6 +37,8 @@ export const useEdgeOperations = ({
       id,
       source: sourceNode.id,
       target: targetNode.id,
+      sourceHandle: 'right',
+      targetHandle: 'left',
     };
 
     if (sourceNode.type === 'conditional') {

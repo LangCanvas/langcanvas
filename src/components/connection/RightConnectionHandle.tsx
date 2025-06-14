@@ -1,21 +1,28 @@
-import React, { useState, useRef } from 'react';
-import { EnhancedNode } from '../types/nodeTypes';
-import { usePointerEvents } from '../hooks/usePointerEvents';
 
-interface ConnectionHandleProps {
+import React, { useState, useRef } from 'react';
+import { EnhancedNode } from '../../types/nodeTypes';
+import { usePointerEvents } from '../../hooks/usePointerEvents';
+
+interface RightConnectionHandleProps {
   node: EnhancedNode;
   canCreateEdge: boolean;
   onStartConnection: (sourceNode: EnhancedNode, startX: number, startY: number) => void;
+  isVisible?: boolean;
 }
 
-const ConnectionHandle: React.FC<ConnectionHandleProps> = ({ node, canCreateEdge, onStartConnection }) => {
-  console.warn('ConnectionHandle is deprecated. Use RightConnectionHandle instead.');
-  
+const RightConnectionHandle: React.FC<RightConnectionHandleProps> = ({ 
+  node, 
+  canCreateEdge, 
+  onStartConnection,
+  isVisible = true 
+}) => {
   const [isHovered, setIsHovered] = useState(false);
   const handleRef = useRef<HTMLDivElement>(null);
   const { getPointerEvent } = usePointerEvents();
 
-  const getNodeEdgePosition = (node: EnhancedNode) => {
+  if (!isVisible || node.type === 'end') return null;
+
+  const getRightConnectionPosition = (node: EnhancedNode) => {
     const nodeWidth = node.type === 'conditional' ? 80 : 120;
     const nodeHeight = node.type === 'conditional' ? 80 : 60;
     
@@ -32,20 +39,18 @@ const ConnectionHandle: React.FC<ConnectionHandleProps> = ({ node, canCreateEdge
     pointerEvent.preventDefault();
     pointerEvent.stopPropagation();
     
-    const edgePosition = getNodeEdgePosition(node);
-    console.log(`🔗 Starting connection from ${node.label} at canvas coords (${edgePosition.x}, ${edgePosition.y})`);
+    const edgePosition = getRightConnectionPosition(node);
+    console.log(`🔗 Starting connection from ${node.label} right handle at canvas coords (${edgePosition.x}, ${edgePosition.y})`);
     onStartConnection(node, edgePosition.x, edgePosition.y);
   };
 
-  if (node.type === 'end') return null;
-
   const handleStyle = node.type === 'conditional' ? {
     position: 'absolute' as const,
-    right: '-40px',
+    right: '-12px',
     top: '50%',
     transform: 'translateY(-50%)',
-    width: '22px',
-    height: '22px',
+    width: '18px',
+    height: '18px',
     borderRadius: '50%',
     backgroundColor: canCreateEdge ? (isHovered ? '#3b82f6' : '#10b981') : '#d1d5db',
     border: '3px solid white',
@@ -82,8 +87,10 @@ const ConnectionHandle: React.FC<ConnectionHandleProps> = ({ node, canCreateEdge
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       title={canCreateEdge ? "Drag to connect" : "Cannot create more connections"}
+      data-handle="right"
+      data-node-id={node.id}
     />
   );
 };
 
-export default ConnectionHandle;
+export default RightConnectionHandle;

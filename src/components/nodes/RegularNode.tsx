@@ -4,7 +4,8 @@ import { BaseNodeProps } from '../../types/nodeProps';
 import { getRegularNodeStyle } from './NodeStyles';
 import { useNodeDrag } from '../../hooks/useNodeDrag';
 import BaseNode from './BaseNode';
-import ConnectionHandle from '../ConnectionHandle';
+import LeftConnectionHandle from '../connection/LeftConnectionHandle';
+import RightConnectionHandle from '../connection/RightConnectionHandle';
 
 const RegularNode: React.FC<BaseNodeProps> = (props) => {
   const { node, isSelected, canCreateEdge, onStartConnection } = props;
@@ -14,10 +15,15 @@ const RegularNode: React.FC<BaseNodeProps> = (props) => {
 
   return (
     <BaseNode {...props} nodeStyle={nodeStyle}>
-      <ConnectionHandle
+      <LeftConnectionHandle 
+        node={node}
+        isVisible={node.type !== 'start'}
+      />
+      <RightConnectionHandle
         node={node}
         canCreateEdge={canCreateEdge}
         onStartConnection={onStartConnection}
+        isVisible={node.type !== 'end'}
       />
     </BaseNode>
   );

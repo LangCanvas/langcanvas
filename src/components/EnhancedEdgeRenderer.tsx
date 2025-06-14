@@ -1,14 +1,16 @@
+
 import React from 'react';
 import { EnhancedEdge } from '../types/edgeTypes';
 import { EnhancedNode } from '../types/nodeTypes';
+import { getOrthogonalConnectionPoints } from '../utils/edgeCalculations';
 
 interface EnhancedEdgeRendererProps {
   edges: EnhancedEdge[];
   nodes: EnhancedNode[];
-  selectedEdgeId: string | null; // Primary selected edge
-  selectedEdgeIds: string[]; // All multi-selected edge IDs
-  onSelectSingleEdge: (edgeId: string | null) => void; // For single primary selection
-  onToggleEdgeSelection: (edgeId: string, isCtrlOrShiftPressed: boolean) => void; // For multi-selection toggle
+  selectedEdgeId: string | null;
+  selectedEdgeIds: string[];
+  onSelectSingleEdge: (edgeId: string | null) => void;
+  onToggleEdgeSelection: (edgeId: string, isCtrlOrShiftPressed: boolean) => void;
   onDoubleClick?: (edgeId: string) => void;
   getEdgeValidationClass?: (edgeId: string) => string;
   getEdgeTooltip?: (edgeId: string) => string;
@@ -30,13 +32,9 @@ const EnhancedEdgeRenderer: React.FC<EnhancedEdgeRendererProps> = ({
     return node ? { x: node.x, y: node.y } : { x: 0, y: 0 };
   };
 
-  const calculateLinePosition = (sourceX: number, sourceY: number, targetX: number, targetY: number) => {
-    const startX = sourceX + 60;
-    const startY = sourceY + 30;
-    const endX = targetX + 60;
-    const endY = targetY + 30;
-
-    return { startX, startY, endX, endY };
+  const calculateLinePosition = (sourceNode: EnhancedNode, targetNode: EnhancedNode) => {
+    const { start, end } = getOrthogonalConnectionPoints(sourceNode, targetNode);
+    return { startX: start.x, startY: start.y, endX: end.x, endY: end.y };
   };
 
   const getEdgeStyle = (edgeId: string) => {
@@ -45,13 +43,13 @@ const EnhancedEdgeRenderer: React.FC<EnhancedEdgeRendererProps> = ({
 
     if (isPrimarySelected) {
       return {
-        strokeColor: 'rgb(37, 99, 235)', // Darker blue for primary
+        strokeColor: 'rgb(37, 99, 235)',
         strokeWidth: '3.5',
         strokePattern: 'none'
       };
     } else if (isMultiSelected) {
       return {
-        strokeColor: 'rgb(59, 130, 246)', // Standard blue for multi-selected
+        strokeColor: 'rgb(59, 130, 246)',
         strokeWidth: '3',
         strokePattern: 'none' 
       };
@@ -115,9 +113,7 @@ const EnhancedEdgeRenderer: React.FC<EnhancedEdgeRendererProps> = ({
           return null;
         }
 
-        const { x: sourceX, y: sourceY } = getNodePosition(edge.source);
-        const { x: targetX, y: targetY } = getNodePosition(edge.target);
-        const { startX, startY, endX, endY } = calculateLinePosition(sourceX, sourceY, targetX, targetY);
+        const { startX, startY, endX, endY } = calculateLinePosition(sourceNode, targetNode);
         const { strokeColor, strokeWidth, strokePattern } = getEdgeStyle(edge.id);
         
         const isPrimarySelected = selectedEdgeId === edge.id;
@@ -142,34 +138,13 @@ const EnhancedEdgeRenderer: React.FC<EnhancedEdgeRendererProps> = ({
               stroke={strokeColor}
               strokeWidth={strokeWidth}
               strokeDasharray={strokePattern}
+              markerEnd={markerEndUrl}
               className={`pointer-events-auto cursor-pointer ${validationClass}`}
               onClick={(e) => handleEdgeClick(e, edge.id)}
               onDoubleClick={(e) => handleEdgeDoubleClick(e, edge.id)}
             >
               {tooltip && <title>{tooltip}</title>}
             </line>
-            {(isPrimarySelected || isMultiSelected) && (
-              <line // Hitbox / thicker invisible line for easier selection might not be needed with direct line click
-                x1={startX}
-                y1={startY}
-                x2={endX}
-                y2={endY}
-                stroke="rgba(59, 130, 246, 0.05)" // Very transparent
-                strokeWidth={(parseFloat(strokeWidth) + 6).toString()} // Wider hitbox
-                className="pointer-events-auto cursor-pointer"
-                 onClick={(e) => handleEdgeClick(e, edge.id)} // Ensure this also triggers the handler
-              />
-            )}
-            <line
-              x1={endX - 10} // This fixed position arrow might look odd if line is thick
-              y1={endY - 10} // This needs to be attached to the line end
-              x2={endX}
-              y2={endY}
-              stroke={strokeColor} // Ensure arrow color matches line
-              strokeWidth={strokeWidth} // This might make a tiny arrow, or use a fixed size?
-              markerEnd={markerEndUrl}
-              className="pointer-events-none"
-            />
             {edge.label && (
               <text
                 x={(startX + endX) / 2}

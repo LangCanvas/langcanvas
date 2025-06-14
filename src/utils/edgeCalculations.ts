@@ -16,6 +16,22 @@ export const getNodeCenter = (node: EnhancedNode) => {
   };
 };
 
+export const getLeftConnectionPoint = (node: EnhancedNode) => {
+  const { height } = getNodeDimensions(node.type);
+  return {
+    x: node.x,
+    y: node.y + height / 2
+  };
+};
+
+export const getRightConnectionPoint = (node: EnhancedNode) => {
+  const { width, height } = getNodeDimensions(node.type);
+  return {
+    x: node.x + width,
+    y: node.y + height / 2
+  };
+};
+
 export const getNodeEdgePoint = (node: EnhancedNode, targetX: number, targetY: number) => {
   const { width, height } = getNodeDimensions(node.type);
   const center = getNodeCenter(node);
@@ -62,25 +78,11 @@ export const getNodeEdgePoint = (node: EnhancedNode, targetX: number, targetY: n
 };
 
 export const getOrthogonalConnectionPoints = (sourceNode: EnhancedNode, targetNode: EnhancedNode) => {
-  const { width: sourceWidth, height: sourceHeight } = getNodeDimensions(sourceNode.type);
-  const { width: targetWidth, height: targetHeight } = getNodeDimensions(targetNode.type);
+  // Always use right handle for source and left handle for target
+  const start = getRightConnectionPoint(sourceNode);
+  const end = getLeftConnectionPoint(targetNode);
   
-  const sourceCenter = getNodeCenter(sourceNode);
-  const targetCenter = getNodeCenter(targetNode);
-  
-  // For orthogonal routing, prefer right edge for source and left edge for target
-  const sourceRight = {
-    x: sourceNode.x + sourceWidth,
-    y: sourceCenter.y
-  };
-  
-  // Fix: Ensure target connection point is exactly at the left edge of the target node
-  const targetLeft = {
-    x: targetNode.x, // This should be the exact left edge, not inside the node
-    y: targetCenter.y
-  };
-  
-  return { start: sourceRight, end: targetLeft };
+  return { start, end };
 };
 
 export const calculateOrthogonalPath = (sourceNode: EnhancedNode, targetNode: EnhancedNode): { x: number, y: number }[] => {
@@ -150,11 +152,9 @@ export const calculateOrthogonalPath = (sourceNode: EnhancedNode, targetNode: En
 };
 
 export const getConnectionPoints = (sourceNode: EnhancedNode, targetNode: EnhancedNode) => {
-  const sourceCenter = getNodeCenter(sourceNode);
-  const targetCenter = getNodeCenter(targetNode);
-  
-  const start = getNodeEdgePoint(sourceNode, targetCenter.x, targetCenter.y);
-  const end = getNodeEdgePoint(targetNode, sourceCenter.x, sourceCenter.y);
+  // For dual-handle system, always use right->left connections
+  const start = getRightConnectionPoint(sourceNode);
+  const end = getLeftConnectionPoint(targetNode);
   
   return { start, end };
 };
