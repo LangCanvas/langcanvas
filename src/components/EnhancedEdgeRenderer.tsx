@@ -2,8 +2,9 @@
 import React from 'react';
 import { EnhancedEdge } from '../types/edgeTypes';
 import { EnhancedNode } from '../types/nodeTypes';
-import { calculateEnhancedOrthogonalPath } from '../utils/enhancedEdgeCalculations';
 import GridDebugOverlay from './canvas/GridDebugOverlay';
+import EdgeMarkerDefinitions from './canvas/EdgeMarkerDefinitions';
+import IndividualEdgeRenderer from './canvas/IndividualEdgeRenderer';
 import { getEnhancedEdgeCalculator } from '../utils/enhancedEdgeCalculations';
 import { usePathfindingSettings } from '../hooks/usePathfindingSettings';
 import { usePathAnimations } from '../hooks/usePathAnimations';
@@ -54,7 +55,6 @@ const EnhancedEdgeRenderer: React.FC<EnhancedEdgeRendererProps> = ({
     } else if (onSelectSingleEdge) {
       onSelectSingleEdge(selectedEdgeId === edgeId ? null : edgeId);
     } else if (onSelectEdge) {
-      // Fallback to legacy prop
       onSelectEdge(selectedEdgeId === edgeId ? null : edgeId);
     }
     
@@ -74,10 +74,9 @@ const EnhancedEdgeRenderer: React.FC<EnhancedEdgeRendererProps> = ({
     if (!settings.animatePathChanges || !isAnimating(edgeId)) return 1;
     
     const progress = getAnimationProgress(edgeId);
-    return 0.3 + (0.7 * progress); // Fade from 30% to 100%
+    return 0.3 + (0.7 * progress);
   };
 
-  // Get unbundled edges to render individually
   const unbundledEdges = bundling.getUnbundledEdges();
 
   if (edges.length === 0 && !settings.enableDebugGrid) return null;
@@ -92,50 +91,8 @@ const EnhancedEdgeRenderer: React.FC<EnhancedEdgeRendererProps> = ({
         className="absolute inset-0 z-10" 
         style={{ width: '100%', height: '100%', pointerEvents: 'none' }}
       >
-        <defs>
-          <marker
-            id="arrowhead-enhanced"
-            markerWidth="10"
-            markerHeight="7"
-            refX="9"
-            refY="3.5"
-            orient="auto"
-          >
-            <polygon points="0 0, 10 3.5, 0 7" fill="#10b981" />
-          </marker>
-          <marker
-            id="arrowhead-enhanced-selected"
-            markerWidth="10"
-            markerHeight="7"
-            refX="9"
-            refY="3.5"
-            orient="auto"
-          >
-            <polygon points="0 0, 10 3.5, 0 7" fill="#3b82f6" />
-          </marker>
-          <marker
-            id="arrowhead-enhanced-error"
-            markerWidth="10"
-            markerHeight="7"
-            refX="9"
-            refY="3.5"
-            orient="auto"
-          >
-            <polygon points="0 0, 10 3.5, 0 7" fill="#dc2626" />
-          </marker>
-          <marker
-            id="arrowhead-enhanced-warning"
-            markerWidth="10"
-            markerHeight="7"
-            refX="9"
-            refY="3.5"
-            orient="auto"
-          >
-            <polygon points="0 0, 10 3.5, 0 7" fill="#d97706" />
-          </marker>
-        </defs>
+        <EdgeMarkerDefinitions />
         
-        {/* Debug grid overlay */}
         {settings.enableDebugGrid && (
           <GridDebugOverlay 
             grid={getEnhancedEdgeCalculator().getGridSystem()} 
@@ -144,7 +101,6 @@ const EnhancedEdgeRenderer: React.FC<EnhancedEdgeRendererProps> = ({
           />
         )}
         
-        {/* Render bundled edges */}
         {bundling.settings.enabled && bundling.bundles.length > 0 && (
           <BundledEdgeRenderer
             bundles={bundling.bundles}
@@ -155,81 +111,34 @@ const EnhancedEdgeRenderer: React.FC<EnhancedEdgeRendererProps> = ({
           />
         )}
         
-        {/* Render unbundled edges individually */}
         {unbundledEdges.map(edge => {
           const sourceNode = nodes.find(n => n.id === edge.source);
           const targetNode = nodes.find(n => n.id === edge.target);
           
           if (!sourceNode || !targetNode) return null;
           
-          try {
-            // Use enhanced A* pathfinding with quality settings
-            const waypoints = calculateEnhancedOrthogonalPath(sourceNode, targetNode);
-            const pathString = waypoints.map((point, index) => 
-              `${point.x},${point.y}`
-            ).join(' ');
-            
-            const isSelected = selectedEdgeId === edge.id;
-            const isMultiSelected = selectedEdgeIds.includes(edge.id);
-            const validationClass = getEdgeValidationClass?.(edge.id) || '';
-            const tooltip = getEdgeTooltip?.(edge.id) || '';
-            const animatedOpacity = getAnimatedOpacity(edge.id);
-            
-            let strokeColor = "#10b981"; // Enhanced green color
-            let strokeWidth = "2";
-            let markerEnd = "url(#arrowhead-enhanced)";
-            
-            if (isSelected || isMultiSelected) {
-              strokeColor = "#3b82f6";
-              strokeWidth = "3";
-              markerEnd = "url(#arrowhead-enhanced-selected)";
-            } else if (validationClass === 'validation-error') {
-              strokeColor = "#dc2626";
-              strokeWidth = "3";
-              markerEnd = "url(#arrowhead-enhanced-error)";
-            } else if (validationClass === 'validation-warning') {
-              strokeColor = "#d97706";
-              strokeWidth = "3";
-              markerEnd = "url(#arrowhead-enhanced-warning)";
-            }
-            
-            return (
-              <g key={edge.id}>
-                {/* Invisible hit area for clicking */}
-                <polyline
-                  points={pathString}
-                  fill="none"
-                  stroke="transparent"
-                  strokeWidth="12"
-                  strokeLinejoin="round"
-                  style={{ pointerEvents: 'auto', cursor: 'pointer' }}
-                  onClick={(e) => handleEdgeClick(e, edge.id)}
-                  onDoubleClick={(e) => handleEdgeDoubleClick(e, edge.id)}
-                />
-                {/* Visible edge with animation support */}
-                <polyline
-                  points={pathString}
-                  fill="none"
-                  stroke={strokeColor}
-                  strokeWidth={strokeWidth}
-                  strokeLinejoin="round"
-                  markerEnd={markerEnd}
-                  style={{ 
-                    pointerEvents: 'none',
-                    opacity: animatedOpacity,
-                    transition: settings.animatePathChanges ? 'opacity 0.3s ease-out' : 'none'
-                  }}
-                  className={`${settings.animatePathChanges ? 'transition-all duration-300' : 'transition-all duration-200'} ${(isSelected || isMultiSelected) ? '' : 'hover:brightness-125'}`}
-                />
-                {tooltip && (
-                  <title>{tooltip}</title>
-                )}
-              </g>
-            );
-          } catch (error) {
-            console.warn('Enhanced pathfinding failed for edge:', edge.id, error);
-            return null;
-          }
+          const isSelected = selectedEdgeId === edge.id;
+          const isMultiSelected = selectedEdgeIds.includes(edge.id);
+          const validationClass = getEdgeValidationClass?.(edge.id) || '';
+          const tooltip = getEdgeTooltip?.(edge.id) || '';
+          const animatedOpacity = getAnimatedOpacity(edge.id);
+          
+          return (
+            <IndividualEdgeRenderer
+              key={edge.id}
+              edge={edge}
+              sourceNode={sourceNode}
+              targetNode={targetNode}
+              isSelected={isSelected}
+              isMultiSelected={isMultiSelected}
+              validationClass={validationClass}
+              tooltip={tooltip}
+              animatedOpacity={animatedOpacity}
+              animatePathChanges={settings.animatePathChanges}
+              onEdgeClick={handleEdgeClick}
+              onEdgeDoubleClick={handleEdgeDoubleClick}
+            />
+          );
         })}
       </svg>
     </EdgeAnimationHandler>
