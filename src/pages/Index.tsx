@@ -8,6 +8,7 @@ import { useIndexPanelHandlers } from '../hooks/useIndexPanelHandlers';
 import { useIndexState } from '../hooks/useIndexState';
 import { useChangeTracking } from '../hooks/useChangeTracking';
 import { EnhancedEdge } from '../types/edgeTypes';
+import { NodeType } from '../types/nodeTypes';
 
 const Index = () => {
   const [selectionState, setSelectionState] = React.useState({
@@ -47,7 +48,7 @@ const Index = () => {
   });
 
   // Enhanced handlers that track changes
-  const handleAddNodeWithTracking = (type: any, x: number, y: number) => {
+  const handleAddNodeWithTracking = (type: NodeType, x: number, y: number) => {
     const result = nodeCreation.createNode(type, x, y);
     if (result) {
       markAsChanged();
@@ -163,6 +164,13 @@ const Index = () => {
     }
   };
 
+  const handleCanvasSelectionChange = (state: { isSelecting: boolean; selectedNodeCount: number; selectedEdgeCount: number; }) => {
+    setSelectionState({
+      isSelecting: state.isSelecting,
+      selectedCount: state.selectedNodeCount + state.selectedEdgeCount,
+    });
+  };
+
   return (
     <div style={{ backgroundColor: '#fef3c7' }} className="min-h-screen">
       <div className="absolute top-0 left-0 bg-orange-500 text-white px-3 py-1 text-xs z-50 rounded-br">
@@ -222,7 +230,7 @@ const Index = () => {
           pendingNodeType={nodeCreation.pendingNodeType}
           onClearPendingCreation={nodeCreation.clearPendingCreation}
           hasUnsavedChanges={hasUnsavedChanges}
-          onSelectionStateChange={setSelectionState}
+          onSelectionStateChange={handleCanvasSelectionChange}
         />
       </MainApplicationLayout>
     </div>
