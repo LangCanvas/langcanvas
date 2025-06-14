@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { EnhancedNode } from '../types/nodeTypes';
 
@@ -54,8 +53,9 @@ export const useMultiNodeDrag = (
 
         dragStateRef.current.initialPositions.forEach((initialPos, nodeId) => {
           const node = nodes.find(n => n.id === nodeId);
-          const nodeWidth = node ? (document.querySelector(`[data-node-id="${nodeId}"]`)?.offsetWidth || 120) : 120;
-          const nodeHeight = node ? (document.querySelector(`[data-node-id="${nodeId}"]`)?.offsetHeight || 60) : 60;
+          const nodeElement = document.querySelector(`[data-node-id="${nodeId}"]`) as HTMLElement;
+          const nodeWidth = node && nodeElement ? nodeElement.offsetWidth : 120;
+          const nodeHeight = node && nodeElement ? nodeElement.offsetHeight : 60;
 
           const constrainedX = Math.max(0, Math.min(initialPos.x + deltaX, 3000 - nodeWidth));
           const constrainedY = Math.max(0, Math.min(initialPos.y + deltaY, 3000 - nodeHeight));
