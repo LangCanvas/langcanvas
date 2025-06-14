@@ -20,7 +20,17 @@ const AdminDashboard = () => {
     handleCleanup
   } = useAdminDashboard();
 
-  // Early return if not authenticated or not admin
+  // Show loading state while auth is being checked
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
+
+  // If not authenticated or not admin, the hook will handle the redirect
+  // This is just a safety check - the component shouldn't render in this state
   if (!isAuthenticated || !isAdmin) {
     return null;
   }
@@ -30,25 +40,17 @@ const AdminDashboard = () => {
       <div className="max-w-7xl mx-auto">
         <AdminDashboardHeader user={user} onSignOut={signOut} />
 
-        {isLoading ? (
-          <div className="flex items-center justify-center h-64">
-            <div className="text-muted-foreground">Loading analytics...</div>
-          </div>
-        ) : (
-          <>
-            <AdminStatsSection stats={stats} />
+        <AdminStatsSection stats={stats} />
 
-            <DashboardActions
-              stats={stats}
-              isLoading={isLoading}
-              isMigrating={isMigrating}
-              onRefresh={loadAnalytics}
-              onMigrate={handleMigrateData}
-              onExport={handleExportData}
-              onCleanup={handleCleanup}
-            />
-          </>
-        )}
+        <DashboardActions
+          stats={stats}
+          isLoading={isLoading}
+          isMigrating={isMigrating}
+          onRefresh={loadAnalytics}
+          onMigrate={handleMigrateData}
+          onExport={handleExportData}
+          onCleanup={handleCleanup}
+        />
       </div>
     </div>
   );

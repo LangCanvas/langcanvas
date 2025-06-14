@@ -64,6 +64,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     secureAuth
   );
 
+  // Enhanced callback management with proper cleanup
+  const handleSetAuthSuccessCallback = (callback: (() => void) | null) => {
+    console.log('🔐 Auth Context - Setting callback:', !!callback);
+    
+    // Clear any existing callback first
+    if (authSuccessCallback && callback !== authSuccessCallback) {
+      console.log('🔐 Auth Context - Clearing existing callback');
+    }
+    
+    setAuthSuccessCallback(callback);
+  };
+
+  // Clear callback when user becomes authenticated to prevent multiple calls
+  useEffect(() => {
+    if (secureAuth.isAuthenticated && secureAuth.isAdmin && authSuccessCallback) {
+      console.log('🔐 Auth Context - User authenticated, clearing callback to prevent multiple calls');
+      setAuthSuccessCallback(null);
+    }
+  }, [secureAuth.isAuthenticated, secureAuth.isAdmin, authSuccessCallback]);
+
   return (
     <AuthContext.Provider value={{
       user: secureAuth.user,
@@ -82,7 +102,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       validateSession: secureAuth.validateSession,
       diagnosticInfo,
       domainConfig,
-      setAuthSuccessCallback,
+      setAuthSuccessCallback: handleSetAuthSuccessCallback,
     }}>
       {children}
     </AuthContext.Provider>

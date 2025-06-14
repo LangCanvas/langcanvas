@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { unifiedAnalytics } from '@/services/unifiedAnalyticsService';
 import { AggregatedStats } from '@/utils/analyticsStorage';
@@ -9,17 +9,44 @@ import { AggregatedStats } from '@/utils/analyticsStorage';
 export const useAdminDashboard = () => {
   const { user, isAdmin, isAuthenticated, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const [stats, setStats] = useState<AggregatedStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isMigrating, setIsMigrating] = useState(false);
+  const [redirectAttempted, setRedirectAttempted] = useState(false);
 
-  // Enhanced authentication check with detailed logging
+  // Enhanced authentication check with loop prevention
   useEffect(() => {
-    console.log('🏛️ AdminDashboard - Auth check:', { isAuthenticated, isAdmin, userEmail: user?.email });
+    console.log('🏛️ AdminDashboard - Auth check:', { 
+      isAuthenticated, 
+      isAdmin, 
+      userEmail: user?.email,
+      currentPath: location.pathname,
+      redirectAttempted
+    });
+    
+    // Only check auth after initial loading is complete
+    if (isLoading) {
+      console.log('🏛️ AdminDashboard - Still loading, skipping auth check');
+      return;
+    }
+    
+    // Prevent redirect loops
+    if (redirectAttempted) {
+      console.log('🏛️ AdminDashboard - Redirect already attempted, skipping');
+      return;
+    }
+    
+    // Only redirect if we're actually on the admin dashboard page
+    if (location.pathname !== '/admin') {
+      console.log('🏛️ AdminDashboard - Not on admin page, skipping redirect');
+      return;
+    }
     
     if (!isAuthenticated || !isAdmin) {
       console.log('🏛️ AdminDashboard - Access denied, redirecting to admin login');
+      setRedirectAttempted(true);
       toast({
         title: "Access Denied",
         description: "Please sign in as an admin to access the dashboard.",
@@ -31,7 +58,16 @@ export const useAdminDashboard = () => {
     
     console.log('🏛️ AdminDashboard - Access granted, loading analytics');
     loadAnalytics();
-  }, [isAuthenticated, isAdmin, navigate, toast, user]);
+  }, [isAuthenticated, isAdmin, isLoading, location.pathname, redirectAttempted, navigate, toast, user]);
+
+  // Set loading to false after a brief delay to ensure auth context is initialized
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   const loadAnalytics = async () => {
     try {

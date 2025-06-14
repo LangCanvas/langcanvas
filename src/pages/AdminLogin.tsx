@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
@@ -31,60 +32,61 @@ const AdminLogin = () => {
   const [showDebug, setShowDebug] = useState(false);
   const [isAlternativeSignIn, setIsAlternativeSignIn] = useState(false);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
+  const [hasNavigated, setHasNavigated] = useState(false);
 
-  // Create navigation callback with enhanced logging
-  const navigateToAdmin = useCallback(() => {
-    console.log('🔐 Navigation callback triggered - redirecting to admin dashboard');
-    console.log('🔐 Current auth state:', { isAuthenticated, isAdmin });
-    navigate('/admin');
-    toast({
-      title: "Welcome Back",
-      description: "Successfully signed in to admin dashboard.",
-    });
-  }, [navigate, toast, isAuthenticated, isAdmin]);
-
-  // Set up the navigation callback when component mounts
+  // Enhanced redirect effect with loop prevention
   useEffect(() => {
-    console.log('🔐 Setting up auth success callback in AdminLogin');
-    setAuthSuccessCallback(navigateToAdmin);
+    console.log('🔐 AdminLogin auth state changed:', { isAuthenticated, isAdmin, hasNavigated });
     
-    // Cleanup callback when component unmounts
-    return () => {
-      console.log('🔐 Cleaning up auth success callback');
-      setAuthSuccessCallback(null);
-    };
-  }, [setAuthSuccessCallback, navigateToAdmin]);
-
-  // Enhanced redirect effect with more aggressive detection
-  useEffect(() => {
-    console.log('🔐 AdminLogin auth state changed:', { isAuthenticated, isAdmin });
-    
-    if (isAuthenticated && isAdmin) {
+    if (isAuthenticated && isAdmin && !hasNavigated) {
       console.log('🔐 User is authenticated and admin - triggering immediate redirect');
-      // Immediate redirect without delay
+      setHasNavigated(true);
       navigate('/admin');
       toast({
         title: "Already Signed In",
         description: "You are already signed in to the admin dashboard.",
       });
     }
-  }, [isAuthenticated, isAdmin, navigate, toast]);
+  }, [isAuthenticated, isAdmin, navigate, toast, hasNavigated]);
+
+  // Create navigation callback with proper auth state validation
+  const navigateToAdmin = useCallback(() => {
+    console.log('🔐 Navigation callback triggered - checking auth state');
+    console.log('🔐 Current auth state:', { isAuthenticated, isAdmin, hasNavigated });
+    
+    // Only navigate if properly authenticated and haven't already navigated
+    if (isAuthenticated && isAdmin && !hasNavigated) {
+      console.log('🔐 Valid auth state confirmed - redirecting to admin dashboard');
+      setHasNavigated(true);
+      navigate('/admin');
+      toast({
+        title: "Welcome Back",
+        description: "Successfully signed in to admin dashboard.",
+      });
+    } else {
+      console.log('🔐 Navigation callback called but conditions not met');
+    }
+  }, [navigate, toast, isAuthenticated, isAdmin, hasNavigated]);
+
+  // Set up the navigation callback only when not authenticated
+  useEffect(() => {
+    if (!isAuthenticated && !hasNavigated) {
+      console.log('🔐 Setting up auth success callback in AdminLogin');
+      setAuthSuccessCallback(navigateToAdmin);
+      
+      return () => {
+        console.log('🔐 Cleaning up auth success callback');
+        setAuthSuccessCallback(null);
+      };
+    }
+  }, [setAuthSuccessCallback, navigateToAdmin, isAuthenticated, hasNavigated]);
 
   const handleSignIn = async () => {
     try {
       clearError();
+      setHasNavigated(false);
       console.log('🔐 Enhanced admin login attempt started');
       await signIn();
-      
-      // Enhanced fallback navigation with shorter timeout
-      setTimeout(() => {
-        console.log('🔐 Fallback check - Auth state:', { isAuthenticated, isAdmin });
-        if (isAuthenticated && isAdmin) {
-          console.log('🔐 Fallback navigation triggered');
-          navigateToAdmin();
-        }
-      }, 500);
-      
     } catch (error) {
       console.error('🔐 Enhanced admin login failed:', error);
       
@@ -102,18 +104,9 @@ const AdminLogin = () => {
     try {
       setIsAlternativeSignIn(true);
       clearError();
+      setHasNavigated(false);
       console.log('🔐 Alternative enhanced admin login attempt started');
       await signInWithButton();
-      
-      // Enhanced fallback navigation with shorter timeout
-      setTimeout(() => {
-        console.log('🔐 Alternative fallback check - Auth state:', { isAuthenticated, isAdmin });
-        if (isAuthenticated && isAdmin) {
-          console.log('🔐 Alternative fallback navigation triggered');
-          navigateToAdmin();
-        }
-      }, 500);
-      
     } catch (error) {
       console.error('🔐 Alternative enhanced admin login failed:', error);
       
@@ -131,6 +124,7 @@ const AdminLogin = () => {
 
   const handleClearCache = () => {
     clearCache();
+    setHasNavigated(false);
     toast({
       title: "Cache Cleared",
       description: "Authentication cache has been cleared. Please try signing in again.",
