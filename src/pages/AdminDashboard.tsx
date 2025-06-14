@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -13,21 +12,31 @@ import { AnalyticsCards } from '@/components/admin/AnalyticsCards';
 import { DashboardActions } from '@/components/admin/DashboardActions';
 
 const AdminDashboard = () => {
-  const { user, isAdmin, signOut } = useAuth();
+  const { user, isAdmin, isAuthenticated, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [stats, setStats] = useState<AggregatedStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isMigrating, setIsMigrating] = useState(false);
 
+  // Enhanced authentication check with detailed logging
   useEffect(() => {
-    if (!isAdmin) {
-      navigate('/');
+    console.log('🏛️ AdminDashboard - Auth check:', { isAuthenticated, isAdmin, userEmail: user?.email });
+    
+    if (!isAuthenticated || !isAdmin) {
+      console.log('🏛️ AdminDashboard - Access denied, redirecting to admin login');
+      toast({
+        title: "Access Denied",
+        description: "Please sign in as an admin to access the dashboard.",
+        variant: "destructive",
+      });
+      navigate('/admin-login', { replace: true });
       return;
     }
     
+    console.log('🏛️ AdminDashboard - Access granted, loading analytics');
     loadAnalytics();
-  }, [isAdmin, navigate]);
+  }, [isAuthenticated, isAdmin, navigate, toast, user]);
 
   const loadAnalytics = async () => {
     try {
@@ -136,7 +145,8 @@ const AdminDashboard = () => {
     });
   };
 
-  if (!isAdmin) {
+  // Early return if not authenticated or not admin
+  if (!isAuthenticated || !isAdmin) {
     return null;
   }
 
