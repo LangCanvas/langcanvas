@@ -1,4 +1,3 @@
-
 export type NodeType = 'start' | 'agent' | 'tool' | 'function' | 'conditional' | 'parallel' | 'end';
 
 export interface InputSchema {
@@ -36,6 +35,7 @@ export interface NodeConfig {
   concurrency: 'parallel' | 'sequential';
   metadata: NodeMetadata;
   conditional?: ConditionalNodeConfig;
+  loop?: import('./loopTypes').NodeLoopConfig;
 }
 
 export interface ConditionalExpression {
