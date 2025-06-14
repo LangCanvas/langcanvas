@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Switch } from '../ui/switch';
@@ -11,7 +10,7 @@ import { useAStarPathfinding } from '../../hooks/useAStarPathfinding';
 import { useEdgeBundling } from '../../hooks/useEdgeBundling';
 import { EnhancedNode } from '../../types/nodeTypes';
 import { EnhancedEdge } from '../../types/edgeTypes';
-import { Settings, Zap, Activity, Trash2, GitBranch } from 'lucide-react';
+import { Settings, Zap, Activity, Trash2, GitBranch, RotateCcw } from 'lucide-react';
 
 interface PathfindingSettingsPanelProps {
   nodes: EnhancedNode[];

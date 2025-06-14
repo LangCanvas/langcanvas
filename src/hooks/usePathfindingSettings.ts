@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from 'react';
 import { setPathfindingQuality } from '../utils/enhancedEdgeCalculations';
 
@@ -7,6 +6,11 @@ export interface PathfindingSettings {
   pathQuality: 'fast' | 'balanced' | 'smooth';
   cacheEnabled: boolean;
   animatePathChanges: boolean;
+  enableDataFlow: boolean;
+  animationSpeed: number;
+  enableVirtualization: boolean;
+  maxVisibleEdges: number;
+  lodThreshold: number;
   gridCellSize: number;
 }
 
@@ -15,6 +19,11 @@ const defaultSettings: PathfindingSettings = {
   pathQuality: 'balanced',
   cacheEnabled: true,
   animatePathChanges: true,
+  enableDataFlow: false,
+  animationSpeed: 1,
+  enableVirtualization: true,
+  maxVisibleEdges: 200,
+  lodThreshold: 100,
   gridCellSize: 20
 };
 

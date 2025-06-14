@@ -2,31 +2,45 @@
 import React, { useEffect, useRef } from 'react';
 import { EnhancedEdge } from '../../types/edgeTypes';
 import { EnhancedNode } from '../../types/nodeTypes';
+import { useEdgeAnimations } from '../../hooks/useEdgeAnimations';
+import DataFlowAnimations from './DataFlowAnimations';
 
 interface EdgeAnimationHandlerProps {
   edges: EnhancedEdge[];
   nodes: EnhancedNode[];
-  children: React.ReactNode;
+  children: (animationProps: {
+    getAnimationProgress: (edgeId: string, type?: 'create' | 'delete' | 'update' | 'flow' | 'hover') => number;
+    isAnimating: (edgeId: string, type?: 'create' | 'delete' | 'update' | 'flow' | 'hover') => boolean;
+    hoveredEdgeId: string | null;
+    setEdgeHover: (edgeId: string | null) => void;
+    startDataFlow: (edgeId: string, particleCount?: number) => void;
+    stopDataFlow: (edgeId: string) => void;
+    getDataFlowParticles: (edgeId: string) => any[];
+  }) => React.ReactNode;
   animatePathChanges?: boolean;
-}
-
-interface AnimationState {
-  edgeId: string;
-  oldPath: string;
-  newPath: string;
-  startTime: number;
-  duration: number;
+  enableDataFlow?: boolean;
 }
 
 const EdgeAnimationHandler: React.FC<EdgeAnimationHandlerProps> = ({
   edges,
   nodes,
   children,
-  animatePathChanges = true
+  animatePathChanges = true,
+  enableDataFlow = false
 }) => {
   const previousEdgesRef = useRef<EnhancedEdge[]>([]);
-  const animationsRef = useRef<Map<string, AnimationState>>(new Map());
-  const frameRef = useRef<number>();
+  
+  const {
+    getAnimationProgress,
+    isAnimating,
+    hoveredEdgeId,
+    setEdgeHover,
+    startDataFlow,
+    stopDataFlow,
+    getDataFlowParticles,
+    animateEdgeCreation,
+    animateEdgeDeletion
+  } = useEdgeAnimations(edges, animatePathChanges);
 
   useEffect(() => {
     if (!animatePathChanges) {
@@ -35,86 +49,61 @@ const EdgeAnimationHandler: React.FC<EdgeAnimationHandlerProps> = ({
     }
 
     const previousEdges = previousEdgesRef.current;
-    const newAnimations = new Map<string, AnimationState>();
+    const currentEdgeIds = new Set(edges.map(e => e.id));
+    const previousEdgeIds = new Set(previousEdges.map(e => e.id));
 
-    // Check for changed edges
-    edges.forEach(edge => {
-      const previousEdge = previousEdges.find(prev => prev.id === edge.id);
-      if (previousEdge && previousEdge.waypoints && edge.waypoints) {
-        const oldPath = previousEdge.waypoints.map(p => `${p.x},${p.y}`).join(' ');
-        const newPath = edge.waypoints.map(p => `${p.x},${p.y}`).join(' ');
-        
-        if (oldPath !== newPath) {
-          newAnimations.set(edge.id, {
-            edgeId: edge.id,
-            oldPath,
-            newPath,
-            startTime: performance.now(),
-            duration: 300 // 300ms animation
-          });
-        }
+    // Animate deleted edges
+    previousEdges.forEach(edge => {
+      if (!currentEdgeIds.has(edge.id)) {
+        animateEdgeDeletion(edge.id);
       }
     });
 
-    animationsRef.current = newAnimations;
     previousEdgesRef.current = edges;
+  }, [edges, animatePathChanges, animateEdgeDeletion]);
 
-    // Start animation loop if we have animations
-    if (newAnimations.size > 0) {
-      const animate = () => {
-        const now = performance.now();
-        const activeAnimations = new Map<string, AnimationState>();
-
-        animationsRef.current.forEach((animation, edgeId) => {
-          const elapsed = now - animation.startTime;
-          const progress = Math.min(elapsed / animation.duration, 1);
-
-          if (progress < 1) {
-            activeAnimations.set(edgeId, animation);
-          }
-        });
-
-        animationsRef.current = activeAnimations;
-
-        if (activeAnimations.size > 0) {
-          frameRef.current = requestAnimationFrame(animate);
-        }
-      };
-
-      frameRef.current = requestAnimationFrame(animate);
-    }
-
-    return () => {
-      if (frameRef.current) {
-        cancelAnimationFrame(frameRef.current);
-      }
-    };
-  }, [edges, animatePathChanges]);
-
-  const getAnimatedPath = (edgeId: string, defaultPath: string): string => {
-    const animation = animationsRef.current.get(edgeId);
-    if (!animation) return defaultPath;
-
-    const elapsed = performance.now() - animation.startTime;
-    const progress = Math.min(elapsed / animation.duration, 1);
-    
-    // Easing function for smooth animation
-    const eased = 1 - Math.pow(1 - progress, 3); // Cubic ease-out
-
-    if (eased >= 1) {
-      animationsRef.current.delete(edgeId);
-      return defaultPath;
-    }
-
-    // Simple interpolation between old and new paths
-    // In a real implementation, you'd want more sophisticated path morphing
-    return defaultPath;
-  };
-
-  // Provide animation context to children
   return (
     <div data-edge-animation-context="true">
-      {children}
+      {children({
+        getAnimationProgress,
+        isAnimating,
+        hoveredEdgeId,
+        setEdgeHover,
+        startDataFlow: enableDataFlow ? startDataFlow : () => {},
+        stopDataFlow: enableDataFlow ? stopDataFlow : () => {},
+        getDataFlowParticles: enableDataFlow ? getDataFlowParticles : () => []
+      })}
+      
+      {/* Render data flow particles if enabled */}
+      {enableDataFlow && (
+        <svg className="absolute inset-0 z-20 pointer-events-none">
+          {edges.map(edge => {
+            const particles = getDataFlowParticles(edge.id);
+            if (particles.length === 0) return null;
+            
+            // Calculate path points for this edge
+            const sourceNode = nodes.find(n => n.id === edge.source);
+            const targetNode = nodes.find(n => n.id === edge.target);
+            
+            if (!sourceNode || !targetNode) return null;
+            
+            const pathPoints = edge.waypoints || [
+              { x: sourceNode.x + sourceNode.width / 2, y: sourceNode.y + sourceNode.height / 2 },
+              { x: targetNode.x + targetNode.width / 2, y: targetNode.y + targetNode.height / 2 }
+            ];
+            
+            return (
+              <DataFlowAnimations
+                key={`flow-${edge.id}`}
+                particles={particles}
+                pathPoints={pathPoints}
+                color="#3b82f6"
+                size={3}
+              />
+            );
+          })}
+        </svg>
+      )}
     </div>
   );
 };
