@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BaseNodeProps } from '../../types/nodeProps';
 import { useNodeDrag } from '../../hooks/useNodeDrag';
@@ -21,7 +20,7 @@ const BaseNode: React.FC<BaseNodeComponentProps> = ({
   children,
   nodeStyle
 }) => {
-  const { nodeRef, isDragging, startDrag } = useNodeDrag(node, onMove);
+  const { nodeRef, isDragging, startDrag } = useNodeDrag(node, onMove, isSelected);
   const sanitizedLabel = sanitizeNodeLabel(node.label);
 
   const handlePointerDown = (e: React.PointerEvent) => {
@@ -33,7 +32,7 @@ const BaseNode: React.FC<BaseNodeComponentProps> = ({
       onDragStart(e);
     }
     
-    // startDrag expects a PointerEvent, which is what we have now.
+    // startDrag now has internal logic to ignore if the node is already selected.
     startDrag(e);
   };
 

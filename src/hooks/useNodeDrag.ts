@@ -7,7 +7,8 @@ const DRAG_THRESHOLD = 5; // pixels
 
 export const useNodeDrag = (
   node: EnhancedNode,
-  onMove: (id: string, x: number, y: number) => void
+  onMove: (id: string, x: number, y: number) => void,
+  isSelected: boolean
 ) => {
   const nodeRef = useRef<HTMLDivElement>(null);
   const isDraggingRef = useRef(false);
@@ -84,11 +85,17 @@ export const useNodeDrag = (
   }, [handlePointerMove]);
 
   const startDrag = useCallback((e: PointerDragEvent) => {
+    // New Guard: If the node is already selected, do nothing.
+    // The multi-drag handler is now responsible for all selected nodes.
+    if (isSelected) {
+      return;
+    }
+
     if (e.defaultPrevented) {
       console.log("useNodeDrag: Event defaultPrevented, not starting single drag for node:", node.id);
       return;
     }
-    console.log("useNodeDrag: Preparing to drag node:", node.id);
+    console.log("useNodeDrag: Preparing to drag UNSELECTED node:", node.id);
     
     e.stopPropagation();
 
@@ -100,7 +107,7 @@ export const useNodeDrag = (
     
     document.addEventListener('pointermove', handlePointerMove);
     document.addEventListener('pointerup', handlePointerUp);
-  }, [handlePointerMove, handlePointerUp]);
+  }, [handlePointerMove, handlePointerUp, isSelected, node.id]);
 
   useEffect(() => {
     return () => {
