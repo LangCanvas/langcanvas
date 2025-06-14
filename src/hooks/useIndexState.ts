@@ -4,6 +4,7 @@ import { useEnhancedEdges } from './useEnhancedEdges';
 import { useNodeCreation } from './useNodeCreation';
 import { useWorkflowSerializer } from './useWorkflowSerializer';
 import { useValidation } from './useValidation';
+import { useIndexWorkflowHandlers } from './useIndexWorkflowHandlers';
 
 export const useIndexState = () => {
   const enhancedNodes = useEnhancedNodes();
@@ -57,10 +58,49 @@ export const useIndexState = () => {
   });
 
   const {
-    handleNewProjectWithAnalytics: handleNewProject,
-    handleImportWithAnalytics: handleImport,
-    handleExportWithAnalytics: handleExport,
+    exportWorkflow,
+    exportWorkflowAsString,
+    importWorkflow,
+    validateWorkflow,
+    clearWorkflow,
   } = workflowSerializer;
+
+  const indexWorkflowHandlers = useIndexWorkflowHandlers({
+    handleNewProject: clearWorkflow,
+    handleImport: () => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.json';
+      input.onchange = (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const jsonString = event.target?.result as string;
+            importWorkflow(jsonString);
+          };
+          reader.readAsText(file);
+        }
+      };
+      input.click();
+    },
+    handleExport: () => {
+      const workflowJson = exportWorkflowAsString();
+      const blob = new Blob([workflowJson], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'langcanvas-workflow.json';
+      link.click();
+      URL.revokeObjectURL(url);
+    },
+  });
+
+  const {
+    handleNewProjectWithAnalytics,
+    handleImportWithAnalytics,
+    handleExportWithAnalytics,
+  } = indexWorkflowHandlers;
 
   const validation = useValidation({ 
     nodes, 
@@ -105,9 +145,9 @@ export const useIndexState = () => {
     selectedCount: 0, // placeholder
     
     // Workflow operations
-    handleNewProject,
-    handleImport,
-    handleExport,
+    handleNewProject: handleNewProjectWithAnalytics,
+    handleImport: handleImportWithAnalytics,
+    handleExport: handleExportWithAnalytics,
     isWorkflowValid,
     handleValidateWorkflow,
     

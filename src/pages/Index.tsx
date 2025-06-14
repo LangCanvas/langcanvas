@@ -87,7 +87,14 @@ const Index: React.FC = () => {
   }, [setLastLeftExpandedWidth, setLastRightExpandedWidth]);
 
   const changeTracking = useChangeTracking();
-  const workflowActions = useWorkflowActions();
+  const workflowActions = useWorkflowActions({
+    nodes,
+    exportWorkflowAsString: indexState.workflowActions.exportWorkflowAsString,
+    importWorkflow: indexState.workflowActions.importWorkflow,
+    validateWorkflow: indexState.workflowActions.validateWorkflow,
+    clearWorkflow: indexState.workflowActions.clearWorkflow,
+    validationResult
+  });
 
   const indexHandlers = useIndexHandlers({
     nodes,
