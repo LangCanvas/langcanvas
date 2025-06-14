@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useEnhancedAnalytics } from './useEnhancedAnalytics';
 import { savePanelSettingsToStorage, loadPanelSettingsFromStorage } from '../utils/panelStorage';
@@ -5,7 +6,7 @@ import { savePanelSettingsToStorage, loadPanelSettingsFromStorage } from '../uti
 export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
   // Mobile states (existing)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [activePanel, setActivePanel] = useState<'palette' | 'properties' | null>(null);
+  const [activePanel, setActivePanel] = useState<'palette' | 'properties' | 'settings' | null>(null);
   const [showValidationPanel, setShowValidationPanel] = useState(false);
   
   // Load panel settings from localStorage
@@ -38,7 +39,7 @@ export const useIndexPanelHandlers = (clearPendingCreation: () => void) => {
     });
   };
 
-  const handlePanelToggle = (panel: 'palette' | 'properties') => {
+  const handlePanelToggle = (panel: 'palette' | 'properties' | 'settings') => {
     const newActivePanel = activePanel === panel ? null : panel;
     setActivePanel(newActivePanel);
     

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Canvas from '../components/Canvas';
 import MainApplicationLayout from '../components/layout/MainApplicationLayout';
@@ -136,14 +135,14 @@ const Index = () => {
         onDeleteNode={trackedHandlers.handleDeleteNodeWithTracking}
         onDeleteEdge={trackedHandlers.handleDeleteEdgeWithTracking}
         onUpdateNodeProperties={trackedHandlers.handleUpdateNodePropertiesWithTracking}
-        onUpdateEdgeProperties={handleUpdateEdgeWithCondition} // Uses the corrected local version
+        onUpdateEdgeProperties={handleUpdateEdgeWithCondition}
         validatePriorityConflicts={edgeState.validatePriorityConflicts}
       >
         <Canvas
           nodes={nodeState.nodes}
           edges={edgeState.edges}
           selectedNodeId={nodeState.selectedNodeId}
-          selectedEdgeId={edgeState.selectedEdgeId} // Corrected prop
+          selectedEdgeId={edgeState.selectedEdgeId}
           onAddNode={trackedHandlers.handleAddNodeWithTracking}
           onSelectNode={indexHandlers.handleSelectNode} 
           onSelectEdge={indexHandlers.handleSelectEdge} 
@@ -167,4 +166,3 @@ const Index = () => {
 };
 
 export default Index;
-

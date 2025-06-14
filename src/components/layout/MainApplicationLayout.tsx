@@ -1,3 +1,4 @@
+
 import React from 'react';
 import Toolbar from './Toolbar';
 import DesktopSidebar from './DesktopSidebar';
@@ -14,7 +15,7 @@ import { useMobileDetection } from '../../hooks/useMobileDetection';
 interface MainApplicationLayoutProps {
   children: React.ReactNode;
   isMobileMenuOpen: boolean;
-  activePanel: 'palette' | 'properties' | 'validation';
+  activePanel: 'palette' | 'properties' | 'validation' | 'settings';
   showValidationPanel: boolean;
   isLeftPanelVisible: boolean;
   isLeftPanelExpanded: boolean;
@@ -28,7 +29,7 @@ interface MainApplicationLayoutProps {
   isSelecting?: boolean;
   selectedCount?: number;
   onMobileMenuToggle: () => void;
-  onPanelToggle: (panel: 'palette' | 'properties' | 'validation') => void;
+  onPanelToggle: (panel: 'palette' | 'properties' | 'validation' | 'settings') => void;
   onToggleLeftPanel: () => void;
   onToggleRightPanel: () => void;
   onExpandLeftPanel: () => void;

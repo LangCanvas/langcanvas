@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { PanelRightClose } from 'lucide-react';
 import EnhancedPropertiesPanel from '../EnhancedPropertiesPanel';
 import ValidationPanel from '../ValidationPanel';
+import PathfindingSettingsPanel from '../settings/PathfindingSettingsPanel';
 import CollapsedPropertiesPanel from './CollapsedPropertiesPanel';
 import { EnhancedNode } from '../../types/nodeTypes';
 import { EnhancedEdge } from '../../types/edgeTypes';
@@ -137,7 +138,7 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
         <div className="px-4 pt-2">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="properties" className="text-xs">
               Properties
             </TabsTrigger>
@@ -148,6 +149,9 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
                   {validationResult.issues.length}
                 </span>
               )}
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="text-xs">
+              Settings
             </TabsTrigger>
           </TabsList>
         </div>
@@ -171,6 +175,15 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
             <ValidationPanel 
               validationResult={validationResult}
               compact={false}
+            />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="settings" className="flex-1 mt-0">
+          <div className="p-4">
+            <PathfindingSettingsPanel 
+              nodes={allNodes}
+              className="border-0 shadow-none"
             />
           </div>
         </TabsContent>
