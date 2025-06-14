@@ -11,7 +11,11 @@ interface EnhancedEdgeRendererProps {
   edges: EnhancedEdge[];
   nodes: EnhancedNode[];
   selectedEdgeId: string | null;
-  onSelectEdge: (edgeId: string | null) => void;
+  selectedEdgeIds?: string[];
+  onSelectSingleEdge?: (edgeId: string | null) => void;
+  onToggleEdgeSelection?: (edgeId: string, isCtrlOrShiftPressed: boolean) => void;
+  onDoubleClick?: (edgeId: string) => void;
+  onSelectEdge?: (edgeId: string | null) => void;
   getEdgeValidationClass?: (edgeId: string) => string;
   getEdgeTooltip?: (edgeId: string) => string;
 }
@@ -20,6 +24,10 @@ const EnhancedEdgeRenderer: React.FC<EnhancedEdgeRendererProps> = ({
   edges, 
   nodes, 
   selectedEdgeId, 
+  selectedEdgeIds = [],
+  onSelectSingleEdge,
+  onToggleEdgeSelection,
+  onDoubleClick,
   onSelectEdge,
   getEdgeValidationClass,
   getEdgeTooltip
@@ -29,8 +37,28 @@ const EnhancedEdgeRenderer: React.FC<EnhancedEdgeRendererProps> = ({
   const handleEdgeClick = (e: React.MouseEvent, edgeId: string) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    const isCtrlOrShiftPressed = e.ctrlKey || e.shiftKey || e.metaKey;
+    
+    if (onToggleEdgeSelection && isCtrlOrShiftPressed) {
+      onToggleEdgeSelection(edgeId, true);
+    } else if (onSelectSingleEdge) {
+      onSelectSingleEdge(selectedEdgeId === edgeId ? null : edgeId);
+    } else if (onSelectEdge) {
+      // Fallback to legacy prop
+      onSelectEdge(selectedEdgeId === edgeId ? null : edgeId);
+    }
+    
     console.log(`🔗 Enhanced edge clicked: ${edgeId}`);
-    onSelectEdge(selectedEdgeId === edgeId ? null : edgeId);
+  };
+
+  const handleEdgeDoubleClick = (e: React.MouseEvent, edgeId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (onDoubleClick) {
+      onDoubleClick(edgeId);
+    }
   };
 
   if (edges.length === 0 && !settings.enableDebugGrid) return null;
@@ -106,6 +134,7 @@ const EnhancedEdgeRenderer: React.FC<EnhancedEdgeRendererProps> = ({
           ).join(' ');
           
           const isSelected = selectedEdgeId === edge.id;
+          const isMultiSelected = selectedEdgeIds.includes(edge.id);
           const validationClass = getEdgeValidationClass?.(edge.id) || '';
           const tooltip = getEdgeTooltip?.(edge.id) || '';
           
@@ -113,7 +142,7 @@ const EnhancedEdgeRenderer: React.FC<EnhancedEdgeRendererProps> = ({
           let strokeWidth = "2";
           let markerEnd = "url(#arrowhead-enhanced)";
           
-          if (isSelected) {
+          if (isSelected || isMultiSelected) {
             strokeColor = "#3b82f6";
             strokeWidth = "3";
             markerEnd = "url(#arrowhead-enhanced-selected)";
@@ -138,6 +167,7 @@ const EnhancedEdgeRenderer: React.FC<EnhancedEdgeRendererProps> = ({
                 strokeLinejoin="round"
                 style={{ pointerEvents: 'auto', cursor: 'pointer' }}
                 onClick={(e) => handleEdgeClick(e, edge.id)}
+                onDoubleClick={(e) => handleEdgeDoubleClick(e, edge.id)}
               />
               {/* Visible edge */}
               <polyline
@@ -148,7 +178,7 @@ const EnhancedEdgeRenderer: React.FC<EnhancedEdgeRendererProps> = ({
                 strokeLinejoin="round"
                 markerEnd={markerEnd}
                 style={{ pointerEvents: 'none' }}
-                className={`transition-all duration-200 ${isSelected ? '' : 'hover:brightness-125'}`}
+                className={`transition-all duration-200 ${(isSelected || isMultiSelected) ? '' : 'hover:brightness-125'}`}
               />
               {tooltip && (
                 <title>{tooltip}</title>
