@@ -39,7 +39,6 @@ const RightConnectionHandle: React.FC<RightConnectionHandleProps> = ({
     // Aggressively stop all event propagation to prevent node drag/selection
     pointerEvent.preventDefault();
     pointerEvent.stopPropagation();
-    pointerEvent.stopImmediatePropagation();
     
     const edgePosition = getRightConnectionPosition(node);
     onStartConnection(node, edgePosition.x, edgePosition.y);
@@ -49,7 +48,6 @@ const RightConnectionHandle: React.FC<RightConnectionHandleProps> = ({
   const handlePointerUp = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    e.stopImmediatePropagation();
   };
 
   const handlePointerMove = (e: React.MouseEvent | React.TouchEvent) => {
