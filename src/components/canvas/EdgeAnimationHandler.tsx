@@ -3,6 +3,7 @@ import React, { useEffect, useRef } from 'react';
 import { EnhancedEdge } from '../../types/edgeTypes';
 import { EnhancedNode } from '../../types/nodeTypes';
 import { useEdgeAnimations } from '../../hooks/useEdgeAnimations';
+import { getNodeDimensions, getNodeCenter } from '../../utils/edgeCalculations';
 import DataFlowAnimations from './DataFlowAnimations';
 
 interface EdgeAnimationHandlerProps {
@@ -87,10 +88,12 @@ const EdgeAnimationHandler: React.FC<EdgeAnimationHandlerProps> = ({
             
             if (!sourceNode || !targetNode) return null;
             
-            const pathPoints = edge.waypoints || [
-              { x: sourceNode.x + sourceNode.width / 2, y: sourceNode.y + sourceNode.height / 2 },
-              { x: targetNode.x + targetNode.width / 2, y: targetNode.y + targetNode.height / 2 }
-            ];
+            const sourceDimensions = getNodeDimensions(sourceNode.type);
+            const targetDimensions = getNodeDimensions(targetNode.type);
+            const sourceCenter = getNodeCenter(sourceNode);
+            const targetCenter = getNodeCenter(targetNode);
+            
+            const pathPoints = edge.waypoints || [sourceCenter, targetCenter];
             
             return (
               <DataFlowAnimations

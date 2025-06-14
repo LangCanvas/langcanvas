@@ -2,6 +2,7 @@
 import React, { useMemo } from 'react';
 import { EnhancedEdge } from '../../types/edgeTypes';
 import { EnhancedNode } from '../../types/nodeTypes';
+import { getNodeDimensions } from '../../utils/edgeCalculations';
 
 interface EdgeVirtualizationProps {
   edges: EnhancedEdge[];
@@ -88,10 +89,11 @@ const isNodeInViewport = (
   viewport: { minX: number; minY: number; maxX: number; maxY: number }
 ): boolean => {
   const buffer = 50; // Add buffer for smooth transitions
+  const dimensions = getNodeDimensions(node.type);
   return (
-    node.x + node.width >= viewport.minX - buffer &&
+    node.x + dimensions.width >= viewport.minX - buffer &&
     node.x <= viewport.maxX + buffer &&
-    node.y + node.height >= viewport.minY - buffer &&
+    node.y + dimensions.height >= viewport.minY - buffer &&
     node.y <= viewport.maxY + buffer
   );
 };
