@@ -14,7 +14,20 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const ToolbarMenu: React.FC = () => {
   const navigate = useNavigate();
-  const { isAdmin } = useAuth();
+  const { isAdmin, isAuthenticated, user } = useAuth();
+
+  // Add debug logging to understand the auth state
+  console.log('🔧 ToolbarMenu auth state:', { isAdmin, isAuthenticated, userEmail: user?.email });
+
+  const handleAdminDashboard = () => {
+    console.log('🔧 Admin Dashboard clicked - navigating to /admin');
+    navigate('/admin');
+  };
+
+  const handleAdminLogin = () => {
+    console.log('🔧 Admin Login clicked - navigating to /admin-login');
+    navigate('/admin-login');
+  };
 
   return (
     <DropdownMenu>
@@ -43,23 +56,19 @@ const ToolbarMenu: React.FC = () => {
         <DropdownMenuItem onClick={() => navigate('/privacy-dashboard')}>
           Privacy Dashboard
         </DropdownMenuItem>
-        {isAdmin && (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => navigate('/admin')}>
-              <Shield className="w-4 h-4 mr-2" />
-              Admin Dashboard
-            </DropdownMenuItem>
-          </>
-        )}
-        {!isAdmin && (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => navigate('/admin-login')}>
-              <Shield className="w-4 h-4 mr-2" />
-              Admin Login
-            </DropdownMenuItem>
-          </>
+        
+        <DropdownMenuSeparator />
+        
+        {isAuthenticated && isAdmin ? (
+          <DropdownMenuItem onClick={handleAdminDashboard}>
+            <Shield className="w-4 h-4 mr-2" />
+            Admin Dashboard
+          </DropdownMenuItem>
+        ) : (
+          <DropdownMenuItem onClick={handleAdminLogin}>
+            <Shield className="w-4 h-4 mr-2" />
+            Admin Login
+          </DropdownMenuItem>
         )}
       </DropdownMenuContent>
     </DropdownMenu>
