@@ -114,6 +114,13 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
 
   console.log('🖥️ DesktopLayout - Starting ResizablePanelGroup render');
 
+  // Log rendering decisions before JSX
+  console.log('🚨 DEBUG - DesktopLayout rendering DesktopPropertiesPanel with isVisible:', isRightPanelVisible);
+  console.log('🚨 DEBUG - DesktopLayout conditional for right panel:', {
+    condition: isRightPanelVisible,
+    willRender: isRightPanelVisible ? 'YES' : 'NO'
+  });
+
   return (
     <div className="flex-1 h-full">
       <ResizablePanelGroup direction="horizontal" className="h-full">
@@ -151,7 +158,6 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
               onResize={handleRightPanelResize}
               className="relative"
             >
-              {console.log('🚨 DEBUG - DesktopLayout rendering DesktopPropertiesPanel with isVisible:', isRightPanelVisible)}
               <DesktopPropertiesPanel
                 selectedNode={selectedNode}
                 selectedEdge={selectedEdge}
@@ -175,10 +181,6 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
             </ResizablePanel>
           </>
         )}
-        {console.log('🚨 DEBUG - DesktopLayout conditional for right panel:', {
-          condition: isRightPanelVisible,
-          willRender: isRightPanelVisible ? 'YES' : 'NO'
-        })}
       </ResizablePanelGroup>
     </div>
   );

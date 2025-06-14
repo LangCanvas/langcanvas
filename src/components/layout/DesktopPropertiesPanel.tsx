@@ -97,13 +97,13 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
 
   console.log('🎛️ DesktopPropertiesPanel - Rendering aside element');
   console.log('🚨 DEBUG - DesktopPropertiesPanel about to render aside element');
+  console.log('🚨 DEBUG - DesktopPropertiesPanel aside element rendered');
   
   return (
     <aside 
       data-panel="desktop-properties" 
       className="relative bg-background border-l border-border flex flex-col h-full flex-shrink-0"
     >
-      {console.log('🚨 DEBUG - DesktopPropertiesPanel aside element rendered')}
       <div className={`${isCompact ? 'p-2' : 'p-4'} border-b border-border flex items-center justify-between`}>
         <h2 className={`font-medium text-foreground ${isCompact ? 'text-xs' : 'text-sm'}`}>
           {isCompact ? 'Panel' : 'Properties Panel'}
