@@ -8,7 +8,7 @@ export const PANEL_BREAKPOINTS = {
   MAX: 500
 } as const;
 
-export type PanelLayout = 'compact' | 'standard' | 'wide';
+export type PanelLayout = 'ultra-compact' | 'compact' | 'standard' | 'wide';
 
 interface PanelWidthSettings {
   leftPanelWidth: number;
@@ -21,8 +21,8 @@ const PANEL_WIDTH_STORAGE_KEY = 'langcanvas_panel_widths';
 const PANEL_WIDTH_VERSION = '2.0';
 
 export const useAdaptivePanelWidths = () => {
-  const [leftPanelWidth, setLeftPanelWidth] = useState(PANEL_BREAKPOINTS.DEFAULT_LEFT);
-  const [rightPanelWidth, setRightPanelWidth] = useState(PANEL_BREAKPOINTS.DEFAULT_RIGHT);
+  const [leftPanelWidth, setLeftPanelWidth] = useState<number>(PANEL_BREAKPOINTS.DEFAULT_LEFT);
+  const [rightPanelWidth, setRightPanelWidth] = useState<number>(PANEL_BREAKPOINTS.DEFAULT_RIGHT);
   const debounceRef = useRef<NodeJS.Timeout>();
 
   // Load panel widths from storage on mount
@@ -91,12 +91,14 @@ export const useAdaptivePanelWidths = () => {
   }, [leftPanelWidth, saveWidthsToStorage, convertPercentageToPixels]);
 
   const getLeftPanelLayout = useCallback((): PanelLayout => {
+    if (leftPanelWidth <= 180) return 'ultra-compact';
     if (leftPanelWidth <= 250) return 'compact';
     if (leftPanelWidth <= 350) return 'standard';
     return 'wide';
   }, [leftPanelWidth]);
 
   const getRightPanelLayout = useCallback((): PanelLayout => {
+    if (rightPanelWidth <= 180) return 'ultra-compact';
     if (rightPanelWidth <= 250) return 'compact';
     if (rightPanelWidth <= 350) return 'standard';
     return 'wide';
