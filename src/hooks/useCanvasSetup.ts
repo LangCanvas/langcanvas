@@ -97,6 +97,7 @@ export const useCanvasSetup = ({
     multiSelection,
     multiNodeDrag,
     canvasHandlers,
-    nodeEvents
+    nodeEvents,
+    createNodeWithAnalytics
   };
 };

@@ -63,7 +63,8 @@ const Canvas: React.FC<CanvasProps> = ({
     multiSelection,
     multiNodeDrag,
     canvasHandlers,
-    nodeEvents
+    nodeEvents,
+    createNodeWithAnalytics
   } = useCanvasSetup({
     nodes,
     edges,
@@ -81,7 +82,7 @@ const Canvas: React.FC<CanvasProps> = ({
   return (
     <div className="h-full w-full relative" style={{ paddingBottom: '32px' }}>
       <ScrollArea ref={scrollAreaRef} className="w-full h-full">
-        <DragDropHandler onAddNode={canvasHandlers.createNodeWithAnalytics}>
+        <DragDropHandler onAddNode={createNodeWithAnalytics}>
           <div
             ref={canvasRef}
             id="canvas"
