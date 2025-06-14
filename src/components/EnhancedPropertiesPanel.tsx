@@ -1,12 +1,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { EnhancedNode } from '../types/nodeTypes';
 import { EnhancedEdge } from '../types/edgeTypes';
 import { validateNodeConfiguration } from '../utils/nodeDefaults';
 import ValidationErrorsDisplay from './properties/ValidationErrorsDisplay';
 import BasicPropertiesForm from './properties/BasicPropertiesForm';
-import InputSchemaEditor from './properties/InputSchemaEditor';
+import TypeSpecificForms from './properties/TypeSpecificForms';
+import NodeDocumentation from './properties/NodeDocumentation';
+import EnhancedSchemaEditor from './properties/EnhancedSchemaEditor';
 import AdvancedConfigurationForm from './properties/AdvancedConfigurationForm';
 import NodeDeleteButton from './properties/NodeDeleteButton';
 import EdgePropertiesForm from './properties/EdgePropertiesForm';
@@ -35,7 +38,6 @@ const EnhancedPropertiesPanel: React.FC<EnhancedPropertiesPanelProps> = ({
   onDeleteEdge,
   validatePriorityConflicts
 }) => {
-  const [showAdvanced, setShowAdvanced] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
   useEffect(() => {
@@ -50,10 +52,6 @@ const EnhancedPropertiesPanel: React.FC<EnhancedPropertiesPanelProps> = ({
       setValidationErrors([]);
     }
   }, [selectedNode]);
-
-  useEffect(() => {
-    setShowAdvanced(false);
-  }, [selectedNode?.id, selectedEdge?.id]);
 
   if (selectedEdge) {
     console.log(`🔗 Rendering edge properties for edge: ${selectedEdge.id}`);
@@ -130,34 +128,60 @@ const EnhancedPropertiesPanel: React.FC<EnhancedPropertiesPanelProps> = ({
       onDeleteNode(selectedNode.id);
     };
 
-    const toggleAdvanced = () => {
-      setShowAdvanced(!showAdvanced);
-    };
-
     return (
       <ScrollArea className="flex-1">
-        <div className="p-4 space-y-6">
+        <div className="p-4">
           <ValidationErrorsDisplay errors={validationErrors} />
           
-          <BasicPropertiesForm 
-            selectedNode={selectedNode}
-            onUpdateNode={updateNode}
-            onUpdateFunction={updateFunction}
-          />
-
-          <InputSchemaEditor 
-            selectedNode={selectedNode}
-            onUpdateFunction={updateFunction}
-          />
-
-          <AdvancedConfigurationForm 
-            selectedNode={selectedNode}
-            showAdvanced={showAdvanced}
-            onToggleAdvanced={toggleAdvanced}
-            onUpdateConfig={updateConfig}
-          />
-
-          <NodeDeleteButton onDeleteNode={handleDeleteNode} />
+          <Tabs defaultValue="properties" className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="properties">Properties</TabsTrigger>
+              <TabsTrigger value="schema">Schema</TabsTrigger>
+              <TabsTrigger value="docs">Docs</TabsTrigger>
+              <TabsTrigger value="advanced">Advanced</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="properties" className="space-y-6 mt-4">
+              <BasicPropertiesForm 
+                selectedNode={selectedNode}
+                onUpdateNode={updateNode}
+                onUpdateFunction={updateFunction}
+              />
+              
+              <TypeSpecificForms
+                selectedNode={selectedNode}
+                onUpdateNode={updateNode}
+                onUpdateFunction={updateFunction}
+                onUpdateConfig={updateConfig}
+              />
+            </TabsContent>
+            
+            <TabsContent value="schema" className="mt-4">
+              <EnhancedSchemaEditor 
+                selectedNode={selectedNode}
+                onUpdateFunction={updateFunction}
+              />
+            </TabsContent>
+            
+            <TabsContent value="docs" className="mt-4">
+              <NodeDocumentation
+                selectedNode={selectedNode}
+                onUpdateNode={updateNode}
+                onUpdateConfig={updateConfig}
+              />
+            </TabsContent>
+            
+            <TabsContent value="advanced" className="space-y-6 mt-4">
+              <AdvancedConfigurationForm 
+                selectedNode={selectedNode}
+                showAdvanced={true}
+                onToggleAdvanced={() => {}}
+                onUpdateConfig={updateConfig}
+              />
+              
+              <NodeDeleteButton onDeleteNode={handleDeleteNode} />
+            </TabsContent>
+          </Tabs>
         </div>
       </ScrollArea>
     );
