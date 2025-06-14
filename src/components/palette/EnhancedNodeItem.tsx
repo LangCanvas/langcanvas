@@ -1,6 +1,6 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { NodeDefinition } from '../../utils/nodeCategories';
 import { NodeType } from '../../types/nodeTypes';
 import { PanelLayout } from '../../hooks/useAdaptivePanelWidths';
@@ -18,9 +18,9 @@ const EnhancedNodeItem: React.FC<EnhancedNodeItemProps> = ({
   node,
   onDragStart,
   onClick,
-  showDescription = true,
+  showDescription = false,
   compact = false,
-  panelLayout = 'standard'
+  panelLayout = 'medium'
 }) => {
   const createDragImage = (nodeType: NodeType, label: string): HTMLElement => {
     const dragImage = document.createElement('div');
@@ -35,7 +35,6 @@ const EnhancedNodeItem: React.FC<EnhancedNodeItemProps> = ({
     dragImage.style.zIndex = '1000';
     dragImage.textContent = label;
 
-    // Apply enhanced node-specific styling
     if (nodeType === 'conditional') {
       dragImage.style.width = '80px';
       dragImage.style.height = '80px';
@@ -127,7 +126,6 @@ const EnhancedNodeItem: React.FC<EnhancedNodeItemProps> = ({
     onClick(e, node.type);
   };
 
-  // Enhanced color mapping for better visual consistency
   const getEnhancedNodeColors = (nodeType: NodeType) => {
     switch (nodeType) {
       case 'start':
@@ -149,8 +147,8 @@ const EnhancedNodeItem: React.FC<EnhancedNodeItemProps> = ({
     }
   };
 
-  // Ultra-compact layout for very narrow panels
-  if (panelLayout === 'ultra-compact') {
+  // Small layout: icon-only, very compact
+  if (panelLayout === 'small') {
     return (
       <div className="group">
         <Button
@@ -167,69 +165,25 @@ const EnhancedNodeItem: React.FC<EnhancedNodeItemProps> = ({
     );
   }
 
-  // Compact layout
-  if (compact || panelLayout === 'compact') {
-    return (
-      <div className="group">
-        <Button
-          variant="outline"
-          className={`w-full h-8 ${getEnhancedNodeColors(node.type)} border-2 transition-all duration-200 text-xs shadow-sm hover:shadow-md active:scale-95`}
-          draggable
-          onDragStart={handleDragStart}
-          onClick={handleClick}
-          title={node.description}
-        >
-          <span className="mr-1.5 text-sm">{node.icon}</span>
-          <span className="font-medium truncate">{node.label}</span>
-        </Button>
-      </div>
-    );
-  }
-
-  // Standard and wide layouts
-  const showTags = panelLayout === 'wide' && node.tags.length > 0;
-  const maxTags = panelLayout === 'wide' ? 5 : 3;
-
+  // Medium layout: full functionality with text
   return (
     <div className="group relative">
       <Button
         variant="outline"
-        className={`w-full h-auto p-4 ${getEnhancedNodeColors(node.type)} border-2 transition-all duration-200 flex flex-col items-start space-y-3 shadow-sm hover:shadow-md active:scale-[0.98] group-hover:shadow-lg`}
+        className={`w-full h-auto p-3 ${getEnhancedNodeColors(node.type)} border-2 transition-all duration-200 flex flex-col items-start space-y-2 shadow-sm hover:shadow-md active:scale-[0.98] group-hover:shadow-lg`}
         draggable
         onDragStart={handleDragStart}
         onClick={handleClick}
       >
-        <div className="flex items-center justify-between w-full">
-          <div className="flex items-center space-x-3">
-            <span className={panelLayout === 'wide' ? 'text-xl' : 'text-lg'}>{node.icon}</span>
-            <span className="font-semibold text-sm">{node.label}</span>
-          </div>
-          {showTags && (
-            <Badge variant="secondary" className="text-xs px-2 py-0.5 h-5 bg-white/50">
-              {node.tags.length}
-            </Badge>
-          )}
+        <div className="flex items-center space-x-2 w-full">
+          <span className="text-lg">{node.icon}</span>
+          <span className="font-semibold text-sm">{node.label}</span>
         </div>
         
         {showDescription && (
           <p className="text-xs text-left leading-relaxed opacity-80 group-hover:opacity-100 transition-opacity">
             {node.description}
           </p>
-        )}
-        
-        {showTags && showDescription && (
-          <div className="flex flex-wrap gap-1.5 w-full">
-            {node.tags.slice(0, maxTags).map((tag) => (
-              <Badge key={tag} variant="secondary" className="text-xs px-2 py-0.5 h-5 bg-white/70">
-                {tag}
-              </Badge>
-            ))}
-            {node.tags.length > maxTags && (
-              <Badge variant="secondary" className="text-xs px-2 py-0.5 h-5 bg-white/70">
-                +{node.tags.length - maxTags}
-              </Badge>
-            )}
-          </div>
         )}
       </Button>
     </div>

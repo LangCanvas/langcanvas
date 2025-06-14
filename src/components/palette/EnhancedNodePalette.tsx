@@ -23,8 +23,8 @@ const EnhancedNodePalette: React.FC<EnhancedNodePaletteProps> = ({
   onNodeTypeSelect, 
   onToggle, 
   isExpanded = true,
-  panelWidth = 256,
-  panelLayout = 'standard'
+  panelWidth = 140,
+  panelLayout = 'medium'
 }) => {
   const analytics = useEnhancedAnalytics();
   const [searchQuery, setSearchQuery] = useState('');
@@ -99,15 +99,15 @@ const EnhancedNodePalette: React.FC<EnhancedNodePaletteProps> = ({
     ? filteredNodes.slice(0, layoutConfig.maxVisibleNodes)
     : filteredNodes;
 
-  const paddingClass = panelLayout === 'icon-only' ? 'p-1' : panelLayout === 'ultra-compact' ? 'p-2' : panelLayout === 'compact' ? 'p-3' : 'p-4';
+  const paddingClass = panelLayout === 'small' ? 'p-1' : 'p-3';
 
   return (
     <div className={`${paddingClass} h-full flex flex-col`}>
       <div className="flex items-center justify-between mb-4">
-        <h2 className={`font-medium text-gray-700 ${panelLayout === 'icon-only' || panelLayout === 'ultra-compact' ? 'text-xs' : 'text-sm'}`}>
-          {panelLayout === 'icon-only' ? '' : panelLayout === 'ultra-compact' ? 'Nodes' : 'Node Palette'}
+        <h2 className={`font-medium text-gray-700 ${panelLayout === 'small' ? 'text-xs' : 'text-sm'}`}>
+          {panelLayout === 'small' ? '' : 'Node Palette'}
         </h2>
-        {onToggle && panelLayout !== 'ultra-compact' && panelLayout !== 'icon-only' && (
+        {onToggle && panelLayout !== 'small' && (
           <button
             onClick={onToggle}
             className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
@@ -123,7 +123,7 @@ const EnhancedNodePalette: React.FC<EnhancedNodePaletteProps> = ({
           <NodePaletteSearch
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
-            placeholder={panelLayout === 'compact' ? 'Search...' : 'Search nodes...'}
+            placeholder="Search nodes..."
           />
         )}
 
@@ -131,8 +131,6 @@ const EnhancedNodePalette: React.FC<EnhancedNodePaletteProps> = ({
           <NodeCategorySelector
             selectedCategory={selectedCategory}
             onCategorySelect={setSelectedCategory}
-            compact={layoutConfig.compactCategories}
-            iconOnly={layoutConfig.iconOnlyCategories}
           />
         )}
 

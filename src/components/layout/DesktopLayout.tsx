@@ -63,7 +63,6 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     getInitialPercentage
   } = useAdaptivePanelWidths();
 
-  // Calculate initial panel sizes as percentages
   const leftPanelPercentage = getInitialPercentage(leftPanelWidth, isLeftPanelVisible);
   const rightPanelPercentage = getInitialPercentage(rightPanelWidth, isRightPanelVisible);
   const canvasPercentage = Math.max(30, 100 - leftPanelPercentage - rightPanelPercentage);
@@ -71,19 +70,18 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   return (
     <div className="flex-1 h-full">
       <ResizablePanelGroup direction="horizontal" className="h-full">
-        {/* Left Panel */}
         {isLeftPanelVisible && (
           <>
             <ResizablePanel
               defaultSize={leftPanelPercentage}
-              minSize={5} // Reduced from 15 to allow smaller panels
+              minSize={3} // Reduced to allow very small panels
               maxSize={35}
               onResize={handleLeftPanelResize}
               className="relative"
             >
               <DesktopSidebar
                 isVisible={isLeftPanelVisible}
-                isExpanded={true} // Always expanded when visible
+                isExpanded={true}
                 onToggle={onToggleLeftPanel}
                 panelWidth={leftPanelWidth}
                 panelLayout={leftPanelLayout}
@@ -93,18 +91,16 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
           </>
         )}
 
-        {/* Main Canvas Area */}
         <ResizablePanel defaultSize={canvasPercentage} minSize={30} className="relative overflow-hidden">
           {children}
         </ResizablePanel>
 
-        {/* Right Panel */}
         {isRightPanelVisible && (
           <>
             <ResizableHandle withHandle />
             <ResizablePanel
               defaultSize={rightPanelPercentage}
-              minSize={5} // Reduced from 15 to allow smaller panels
+              minSize={3} // Reduced to allow very small panels
               maxSize={35}
               onResize={handleRightPanelResize}
               className="relative"
@@ -117,7 +113,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
                 validationResult={validationResult}
                 showValidationPanel={showValidationPanel}
                 isVisible={isRightPanelVisible}
-                isExpanded={true} // Always expanded when visible
+                isExpanded={true}
                 onUpdateNode={onUpdateNodeProperties}
                 onUpdateEdge={onUpdateEdgeProperties}
                 onDeleteNode={onDeleteNode}

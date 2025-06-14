@@ -26,14 +26,10 @@ const PaletteFooter: React.FC<PaletteFooterProps> = ({
         </div>
       )}
 
-      {panelLayout !== 'icon-only' && (
+      {panelLayout !== 'small' && (
         <div className="mt-4 text-xs text-gray-500">
-          {panelLayout !== 'ultra-compact' && (
-            <>
-              <p className="hidden lg:block">Drag nodes to the canvas to create them</p>
-              <p className="lg:hidden">Tap a node type, then tap on the canvas to place it</p>
-            </>
-          )}
+          <p className="hidden lg:block">Drag nodes to the canvas to create them</p>
+          <p className="lg:hidden">Tap a node type, then tap on the canvas to place it</p>
           {layoutConfig.showNodeCount && filteredNodesCount > 0 && (
             <p className="mt-1">
               {filteredNodesCount} node{filteredNodesCount !== 1 ? 's' : ''} available

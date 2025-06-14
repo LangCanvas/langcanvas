@@ -10,7 +10,7 @@ export interface ResizablePanelState {
   currentWidth: number;
 }
 
-export type PanelBreakpoint = 'icon-only' | 'ultra-compact' | 'compact' | 'standard' | 'wide';
+export type PanelBreakpoint = 'small' | 'medium';
 
 export interface PanelLayoutConfig {
   showSearch: boolean;
