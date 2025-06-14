@@ -3,6 +3,7 @@ import { useCallback, useEffect } from 'react';
 import { EnhancedNode } from '../types/nodeTypes';
 import { EnhancedEdge } from '../types/edgeTypes';
 import { useValidation } from './useValidation';
+import { useEdgeValidation } from './useEdgeValidation';
 import { toast } from 'sonner';
 
 interface UseRealTimeValidationProps {
@@ -17,112 +18,37 @@ export const useRealTimeValidation = ({
   enableRealTimeValidation = true 
 }: UseRealTimeValidationProps) => {
   const validation = useValidation({ nodes, edges });
+  const { validateConnection } = useEdgeValidation();
 
   const validateConnectionAttempt = useCallback((
     sourceNode: EnhancedNode, 
     targetNode: EnhancedNode
   ): { isValid: boolean; errorMessage?: string; warningMessage?: string } => {
-    // Self-connection check
-    if (sourceNode.id === targetNode.id) {
+    console.log(`🔍 Real-time validation: ${sourceNode.label} -> ${targetNode.label}`);
+
+    // Use the new LangGraph-compatible validation
+    const validationResult = validateConnection(sourceNode, targetNode, edges);
+    
+    if (!validationResult.valid) {
+      console.log(`❌ Connection rejected: ${validationResult.error}`);
       return { 
         isValid: false, 
-        errorMessage: "Cannot connect a node to itself" 
+        errorMessage: validationResult.error 
       };
     }
 
-    // End node outgoing connection check
-    if (sourceNode.type === 'end') {
+    // Check for warnings on valid loop connections
+    if (validationResult.isLoop) {
+      console.log(`🔄 Loop connection detected: ${validationResult.loopType}`);
       return { 
-        isValid: false, 
-        errorMessage: "End nodes cannot have outgoing connections" 
+        isValid: true,
+        warningMessage: `Creating ${validationResult.loopType} loop - ensure proper termination conditions`
       };
     }
 
-    // Start node incoming connection check
-    if (targetNode.type === 'start') {
-      return { 
-        isValid: false, 
-        errorMessage: "Start nodes cannot have incoming connections" 
-      };
-    }
-
-    // Duplicate connection check
-    const existingConnection = edges.find(edge => 
-      edge.source === sourceNode.id && edge.target === targetNode.id
-    );
-    if (existingConnection) {
-      return { 
-        isValid: false, 
-        errorMessage: "This connection already exists" 
-      };
-    }
-
-    // Cycle detection
-    const wouldCreateCycle = checkForCycle(sourceNode.id, targetNode.id, edges);
-    if (wouldCreateCycle) {
-      return { 
-        isValid: false, 
-        errorMessage: "This connection would create a cycle, which is not allowed" 
-      };
-    }
-
-    // Tool node multiple outputs check
-    if (sourceNode.type === 'tool') {
-      const existingOutputs = edges.filter(edge => edge.source === sourceNode.id);
-      if (existingOutputs.length > 0) {
-        return { 
-          isValid: false, 
-          errorMessage: "Tool nodes can only have one output connection" 
-        };
-      }
-    }
-
-    // Conditional node connection limit check
-    if (sourceNode.type === 'conditional') {
-      const existingOutputs = edges.filter(edge => edge.source === sourceNode.id);
-      if (existingOutputs.length >= 8) {
-        return { 
-          isValid: false, 
-          errorMessage: "Conditional nodes cannot have more than 8 output connections" 
-        };
-      }
-    }
-
+    console.log(`✅ Connection validated successfully`);
     return { isValid: true };
-  }, [edges]);
-
-  const checkForCycle = useCallback((sourceId: string, targetId: string, currentEdges: EnhancedEdge[]): boolean => {
-    const visited = new Set<string>();
-    const recursionStack = new Set<string>();
-
-    const dfs = (nodeId: string): boolean => {
-      if (recursionStack.has(nodeId)) return true;
-      if (visited.has(nodeId)) return false;
-
-      visited.add(nodeId);
-      recursionStack.add(nodeId);
-
-      // Simulate the new edge
-      const edgesToCheck = [...currentEdges];
-      if (nodeId === sourceId) {
-        edgesToCheck.push({ 
-          id: 'temp', 
-          source: sourceId, 
-          target: targetId 
-        } as EnhancedEdge);
-      }
-
-      const outgoingEdges = edgesToCheck.filter(edge => edge.source === nodeId);
-      for (const edge of outgoingEdges) {
-        if (dfs(edge.target)) return true;
-      }
-
-      recursionStack.delete(nodeId);
-      return false;
-    };
-
-    return dfs(targetId);
-  }, []);
+  }, [edges, validateConnection]);
 
   const showValidationToast = useCallback((
     type: 'error' | 'warning' | 'success',
@@ -146,7 +72,6 @@ export const useRealTimeValidation = ({
   return {
     ...validation,
     validateConnectionAttempt,
-    showValidationToast,
-    checkForCycle
+    showValidationToast
   };
 };
