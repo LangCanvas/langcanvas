@@ -1,3 +1,4 @@
+
 import { useEffect, useCallback } from 'react';
 import { EnhancedNode, NodeType } from '../types/nodeTypes';
 import { useEnhancedAnalytics } from './useEnhancedAnalytics';
@@ -44,11 +45,13 @@ export const useCanvasHandlers = ({
     analytics.trackFeatureUsage('selections_cleared');
   }, [onSelectNode, onSelectEdge, clearSelection, analytics]);
 
-  const selectNodeSafely = useCallback((nodeId: string | null) => {
-    console.log(`🎯 Selecting node safely (primary): ${nodeId}`);
+  const selectNodeSafely = useCallback((nodeId: string | null, preserveMultiSelection = false) => {
+    console.log(`🎯 Selecting node safely (primary): ${nodeId}, preserveMulti: ${preserveMultiSelection}`);
     onSelectEdge(null);   // Clear primary selected edge
     onSelectNode(nodeId); // Set primary selected node
-    selectSingleNode(nodeId); // Update multi-selection state to this single node
+    if (!preserveMultiSelection) {
+      selectSingleNode(nodeId); // This resets multi-selection unless preserved
+    }
   }, [onSelectNode, onSelectEdge, selectSingleNode]);
 
   const selectEdgeSafely = useCallback((edgeId: string | null) => {
