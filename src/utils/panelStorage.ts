@@ -1,4 +1,3 @@
-
 const PANEL_STORAGE_KEY = 'langcanvas_panel_settings';
 const PANEL_VERSION = '1.1'; // Updated version to include widths
 
@@ -70,7 +69,7 @@ export const loadPanelSettingsFromStorage = (): Omit<StoredPanelSettings, 'versi
       isLeftPanelVisible: panelData.isLeftPanelVisible,
       isLeftPanelExpanded: panelData.isLeftPanelExpanded,
       isRightPanelVisible: panelData.isRightPanelVisible,
-      isRightPanelExpanded: panelData.isRightPanExpanded,
+      isRightPanelExpanded: panelData.isRightPanelExpanded,
       leftPanelWidth: panelData.leftPanelWidth || 256,
       rightPanelWidth: panelData.rightPanelWidth || 320
     };
