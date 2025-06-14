@@ -21,7 +21,7 @@ const MediumLayoutNodeItem: React.FC<MediumLayoutNodeItemProps> = ({
     <div className="group relative">
       <Button
         variant="outline"
-        className={`w-full h-auto p-3 ${getEnhancedNodeColors(node.type)} border-2 transition-all duration-200 flex flex-col items-start space-y-2 shadow-sm hover:shadow-md active:scale-[0.98] group-hover:shadow-lg`}
+        className={`w-full h-auto p-3 ${getEnhancedNodeColors(node.type)} border-2 transition-all duration-200 flex flex-col items-start space-y-2 shadow-sm hover:shadow-md active:scale-[0.98] group-hover:shadow-lg !justify-start`}
         draggable
         onDragStart={onDragStart}
         onClick={onClick}
