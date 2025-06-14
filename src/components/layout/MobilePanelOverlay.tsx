@@ -4,12 +4,13 @@ import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import NodePalette from '../NodePalette';
 import EnhancedPropertiesPanel from '../EnhancedPropertiesPanel';
+import PathfindingSettingsPanel from '../settings/PathfindingSettingsPanel';
 import { ValidationResult } from '../../hooks/useValidation';
 import { EnhancedNode } from '../../types/nodeTypes';
 import { EnhancedEdge } from '../../types/edgeTypes';
 
 interface MobilePanelOverlayProps {
-  activePanel: 'palette' | 'properties' | 'validation' | null;
+  activePanel: 'palette' | 'properties' | 'validation' | 'settings' | null;
   showValidationPanel: boolean;
   selectedNode: EnhancedNode | null;
   selectedEdge: EnhancedEdge | null;
@@ -37,9 +38,36 @@ const MobilePanelOverlay: React.FC<MobilePanelOverlayProps> = ({
 }) => {
   if (!activePanel) return null;
 
-  const handlePanelToggle = (panel: 'palette' | 'properties') => {
+  const handlePanelToggle = (panel: 'palette' | 'properties' | 'settings') => {
     // This is simplified for mobile - no validation panel toggle in overlay
     onClose();
+  };
+
+  const getPanelTitle = () => {
+    switch (activePanel) {
+      case 'palette': return 'Node Palette';
+      case 'properties': return 'Properties';
+      case 'settings': return 'Settings';
+      default: return 'Panel';
+    }
+  };
+
+  const getToggleButtonText = () => {
+    switch (activePanel) {
+      case 'palette': return 'Properties';
+      case 'properties': return 'Settings';
+      case 'settings': return 'Palette';
+      default: return 'Toggle';
+    }
+  };
+
+  const getNextPanel = (): 'palette' | 'properties' | 'settings' => {
+    switch (activePanel) {
+      case 'palette': return 'properties';
+      case 'properties': return 'settings';
+      case 'settings': return 'palette';
+      default: return 'palette';
+    }
   };
 
   return (
@@ -55,17 +83,17 @@ const MobilePanelOverlay: React.FC<MobilePanelOverlayProps> = ({
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-800">
-              {activePanel === 'palette' ? 'Node Palette' : 'Properties'}
+              {getPanelTitle()}
             </h2>
             <div className="flex space-x-2">
               <Button 
                 variant="ghost" 
                 size="sm"
-                onClick={() => handlePanelToggle(activePanel === 'palette' ? 'properties' : 'palette')}
+                onClick={() => handlePanelToggle(getNextPanel())}
                 className="touch-manipulation"
                 style={{ minHeight: '44px' }}
               >
-                {activePanel === 'palette' ? 'Properties' : 'Palette'}
+                {getToggleButtonText()}
               </Button>
               <Button 
                 variant="ghost" 
@@ -99,6 +127,14 @@ const MobilePanelOverlay: React.FC<MobilePanelOverlayProps> = ({
               onDeleteEdge={onDeleteEdge}
               validatePriorityConflicts={validatePriorityConflicts}
             />
+          )}
+          {activePanel === 'settings' && (
+            <div className="p-4">
+              <PathfindingSettingsPanel 
+                nodes={[]}
+                className="border-0 shadow-none"
+              />
+            </div>
           )}
         </div>
       </div>

@@ -1,13 +1,13 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Menu, File } from 'lucide-react';
+import { Menu, File, Settings } from 'lucide-react';
 import { ValidationResult } from '../../hooks/useValidation';
 
 interface MobileBottomNavProps {
-  activePanel: 'palette' | 'properties' | 'validation';
+  activePanel: 'palette' | 'properties' | 'validation' | 'settings';
   validationResult: ValidationResult;
-  onPanelToggle: (panel: 'palette' | 'properties' | 'validation') => void;
+  onPanelToggle: (panel: 'palette' | 'properties' | 'validation' | 'settings') => void;
   setShowValidationPanel: (show: boolean) => void;
 }
 
@@ -39,6 +39,16 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         >
           <File className="w-4 h-4" />
           <span className="text-xs">Properties</span>
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="sm"
+          onClick={() => onPanelToggle('settings')}
+          className="flex flex-col items-center space-y-1 touch-manipulation"
+          style={{ minHeight: '44px', minWidth: '44px' }}
+        >
+          <Settings className="w-4 h-4" />
+          <span className="text-xs">Settings</span>
         </Button>
       </div>
     </div>
