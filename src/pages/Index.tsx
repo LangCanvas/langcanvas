@@ -159,6 +159,8 @@ const Index: React.FC = () => {
     selectedEdge: selectedEdge?.id || 'none'
   });
 
+  console.log('📄 Index.tsx - Rendering Canvas component');
+
   return (
     <MainApplicationLayout
       isMobileMenuOpen={isMobileMenuOpen}
@@ -193,7 +195,6 @@ const Index: React.FC = () => {
       onUpdateEdgeProperties={handleUpdateEdgeProperties}
       validatePriorityConflicts={validatePriorityConflicts}
     >
-      {console.log('📄 Index.tsx - Rendering Canvas component')}
       <Canvas
         nodes={nodes}
         edges={edges}

@@ -101,9 +101,10 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     minLeftPanelPercentage
   });
 
+  console.log('🖥️ DesktopLayout - Starting ResizablePanelGroup render');
+
   return (
     <div className="flex-1 h-full">
-      {console.log('🖥️ DesktopLayout - Starting ResizablePanelGroup render')}
       <ResizablePanelGroup direction="horizontal" className="h-full">
         {isLeftPanelVisible && (
           <>
@@ -142,13 +143,16 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
               onResize={handleRightPanelResize}
               className="relative"
             >
-              {console.log('🖥️ DesktopLayout - About to render DesktopPropertiesPanel with props:', {
-                selectedNode: selectedNode?.id || 'none',
-                selectedEdge: selectedEdge?.id || 'none',
-                isVisible: isRightPanelVisible,
-                panelWidth: rightPanelWidth,
-                panelLayout: rightPanelLayout
-              })}
+              {(() => {
+                console.log('🖥️ DesktopLayout - About to render DesktopPropertiesPanel with props:', {
+                  selectedNode: selectedNode?.id || 'none',
+                  selectedEdge: selectedEdge?.id || 'none',
+                  isVisible: isRightPanelVisible,
+                  panelWidth: rightPanelWidth,
+                  panelLayout: rightPanelLayout
+                });
+                return null;
+              })()}
               <DesktopPropertiesPanel
                 selectedNode={selectedNode}
                 selectedEdge={selectedEdge}
@@ -173,7 +177,10 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
           </>
         )}
       </ResizablePanelGroup>
-      {console.log('🖥️ DesktopLayout - Render completed')}
+      {(() => {
+        console.log('🖥️ DesktopLayout - Render completed');
+        return null;
+      })()}
     </div>
   );
 };

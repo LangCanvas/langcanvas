@@ -114,14 +114,14 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
       timestamp: new Date().toISOString()
     });
   });
+
+  console.log('🎛️ DesktopPropertiesPanel - Rendering aside element');
   
   return (
     <aside 
       data-panel="desktop-properties" 
       className="relative bg-background border-l border-border flex flex-col h-full flex-shrink-0"
     >
-      {console.log('🎛️ DesktopPropertiesPanel - Rendering aside element')}
-      
       <div className={`${isCompact ? 'p-2' : 'p-4'} border-b border-border flex items-center justify-between`}>
         <h2 className={`font-medium text-foreground ${isCompact ? 'text-xs' : 'text-sm'}`}>
           {isCompact ? 'Panel' : 'Properties Panel'}
@@ -160,7 +160,10 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
         </div>
         
         <TabsContent value="properties" className="flex-1 mt-0">
-          {console.log('🎛️ DesktopPropertiesPanel - Rendering properties tab content')}
+          {(() => {
+            console.log('🎛️ DesktopPropertiesPanel - Rendering properties tab content');
+            return null;
+          })()}
           <EnhancedPropertiesPanel 
             selectedNode={selectedNode}
             selectedEdge={selectedEdge}
@@ -175,7 +178,10 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
         </TabsContent>
         
         <TabsContent value="validation" className="flex-1 mt-0">
-          {console.log('🎛️ DesktopPropertiesPanel - Rendering validation tab content')}
+          {(() => {
+            console.log('🎛️ DesktopPropertiesPanel - Rendering validation tab content');
+            return null;
+          })()}
           <div className={isCompact ? 'p-2' : 'p-4'}>
             <ValidationPanel 
               validationResult={validationResult}
@@ -185,7 +191,10 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
         </TabsContent>
 
         <TabsContent value="settings" className="flex-1 mt-0">
-          {console.log('🎛️ DesktopPropertiesPanel - Rendering settings tab content')}
+          {(() => {
+            console.log('🎛️ DesktopPropertiesPanel - Rendering settings tab content');
+            return null;
+          })()}
           <div className={isCompact ? 'p-2' : 'p-4'}>
             <PathfindingSettingsPanel 
               nodes={allNodes}
@@ -196,7 +205,10 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
         </TabsContent>
       </Tabs>
       
-      {console.log('🎛️ DesktopPropertiesPanel - Render completed successfully')}
+      {(() => {
+        console.log('🎛️ DesktopPropertiesPanel - Render completed successfully');
+        return null;
+      })()}
     </aside>
   );
 };
