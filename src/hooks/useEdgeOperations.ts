@@ -1,14 +1,19 @@
-
 import { useCallback } from 'react';
 import { EnhancedNode } from '../types/nodeTypes';
 import { EnhancedEdge, EdgeCondition, EvaluationMode } from '../types/edgeTypes';
+import { useLoopManagement } from './useLoopManagement';
 
 interface UseEdgeOperationsProps {
   edges: EnhancedEdge[];
   setEdges: React.Dispatch<React.SetStateAction<EnhancedEdge[]>>;
   selectedEdgeId: string | null;
   setSelectedEdgeId: React.Dispatch<React.SetStateAction<string | null>>;
-  validateConnection: (sourceNode: EnhancedNode, targetNode: EnhancedNode, existingEdges: EnhancedEdge[]) => { valid: boolean; error?: string };
+  validateConnection: (sourceNode: EnhancedNode, targetNode: EnhancedNode, existingEdges: EnhancedEdge[]) => { 
+    valid: boolean; 
+    error?: string; 
+    isLoop?: boolean; 
+    loopType?: string; 
+  };
   generateConditionalEdgeData: (sourceNode: EnhancedNode, existingEdges: EnhancedEdge[]) => EdgeCondition | null;
 }
 
@@ -20,6 +25,7 @@ export const useEdgeOperations = ({
   validateConnection,
   generateConditionalEdgeData
 }: UseEdgeOperationsProps) => {
+  const { createLoopMetadata, getLoopDisplayLabel } = useLoopManagement();
   
   const addEdge = useCallback((sourceNode: EnhancedNode, targetNode: EnhancedNode) => {
     console.log(`🔗 Attempting to add edge: ${sourceNode.label} -> ${targetNode.label}`);
@@ -41,6 +47,18 @@ export const useEdgeOperations = ({
       targetHandle: 'left',
     };
 
+    // Handle loop edges
+    if (validation.isLoop && validation.loopType) {
+      const loopMetadata = createLoopMetadata(
+        validation.loopType as any,
+        sourceNode.type
+      );
+      newEdge.loop = loopMetadata;
+      newEdge.label = getLoopDisplayLabel(newEdge);
+      console.log(`🌀 Created loop edge of type: ${validation.loopType}`);
+    }
+
+    // Handle conditional edges
     if (sourceNode.type === 'conditional') {
       const condition = generateConditionalEdgeData(sourceNode, edges);
       if (condition) {
@@ -50,14 +68,16 @@ export const useEdgeOperations = ({
           sourceNodeType: 'conditional',
           evaluationMode
         };
-        newEdge.label = condition.functionName;
+        if (!newEdge.loop) {
+          newEdge.label = condition.functionName;
+        }
       }
     }
 
     setEdges(prev => [...prev, newEdge]);
     console.log(`✅ Edge added successfully:`, newEdge);
     return { success: true, edge: newEdge };
-  }, [edges, validateConnection, generateConditionalEdgeData, setEdges]);
+  }, [edges, validateConnection, generateConditionalEdgeData, setEdges, createLoopMetadata, getLoopDisplayLabel]);
 
   const updateEdgeProperties = useCallback((edgeId: string, updates: Partial<EnhancedEdge>) => {
     setEdges(prev => prev.map(edge => 

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -14,6 +13,7 @@ import AdvancedConfigurationForm from './properties/AdvancedConfigurationForm';
 import NodeDeleteButton from './properties/NodeDeleteButton';
 import EdgePropertiesForm from './properties/EdgePropertiesForm';
 import ConditionalEdgePropertiesForm from './properties/ConditionalEdgePropertiesForm';
+import LoopEdgePropertiesForm from './properties/LoopEdgePropertiesForm';
 
 interface EnhancedPropertiesPanelProps {
   selectedNode: EnhancedNode | null;
@@ -56,6 +56,23 @@ const EnhancedPropertiesPanel: React.FC<EnhancedPropertiesPanelProps> = ({
   if (selectedEdge) {
     console.log(`🔗 Rendering edge properties for edge: ${selectedEdge.id}`);
     
+    // Handle loop edges
+    if (selectedEdge.loop) {
+      return (
+        <ScrollArea className="flex-1">
+          <div className="p-4 space-y-6">
+            <LoopEdgePropertiesForm
+              selectedEdge={selectedEdge}
+              nodes={allNodes}
+              onUpdateEdge={onUpdateEdge}
+              onDeleteEdge={onDeleteEdge}
+            />
+          </div>
+        </ScrollArea>
+      );
+    }
+    
+    // Handle conditional edges
     if (selectedEdge.conditional) {
       const allConditionalEdges = allEdges.filter(edge => edge.conditional);
       
@@ -89,20 +106,21 @@ const EnhancedPropertiesPanel: React.FC<EnhancedPropertiesPanelProps> = ({
           </div>
         </ScrollArea>
       );
-    } else {
-      return (
-        <ScrollArea className="flex-1">
-          <div className="p-4 space-y-6">
-            <EdgePropertiesForm
-              selectedEdge={selectedEdge}
-              nodes={allNodes}
-              onUpdateEdge={onUpdateEdge}
-              onDeleteEdge={onDeleteEdge}
-            />
-          </div>
-        </ScrollArea>
-      );
     }
+    
+    // Handle regular edges
+    return (
+      <ScrollArea className="flex-1">
+        <div className="p-4 space-y-6">
+          <EdgePropertiesForm
+            selectedEdge={selectedEdge}
+            nodes={allNodes}
+            onUpdateEdge={onUpdateEdge}
+            onDeleteEdge={onDeleteEdge}
+          />
+        </div>
+      </ScrollArea>
+    );
   }
 
   if (selectedNode && !selectedEdge) {
