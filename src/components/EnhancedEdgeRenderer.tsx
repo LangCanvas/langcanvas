@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { EnhancedEdge } from '../types/edgeTypes';
 import { EnhancedNode } from '../types/nodeTypes';
-import { getOrthogonalConnectionPoints } from '../utils/edgeCalculations';
+import { calculateOrthogonalPath } from '../utils/edgeCalculations';
 
 interface EnhancedEdgeRendererProps {
   edges: EnhancedEdge[];
@@ -32,9 +31,22 @@ const EnhancedEdgeRenderer: React.FC<EnhancedEdgeRendererProps> = ({
     return node ? { x: node.x, y: node.y } : { x: 0, y: 0 };
   };
 
-  const calculateLinePosition = (sourceNode: EnhancedNode, targetNode: EnhancedNode) => {
-    const { start, end } = getOrthogonalConnectionPoints(sourceNode, targetNode);
-    return { startX: start.x, startY: start.y, endX: end.x, endY: end.y };
+  const calculateEdgePath = (sourceNode: EnhancedNode, targetNode: EnhancedNode) => {
+    // Use the enhanced A* pathfinding system
+    const waypoints = calculateOrthogonalPath(sourceNode, targetNode);
+    
+    // Convert waypoints to SVG path string
+    if (waypoints.length < 2) {
+      return '';
+    }
+    
+    let pathString = `M ${waypoints[0].x} ${waypoints[0].y}`;
+    
+    for (let i = 1; i < waypoints.length; i++) {
+      pathString += ` L ${waypoints[i].x} ${waypoints[i].y}`;
+    }
+    
+    return pathString;
   };
 
   const getEdgeStyle = (edgeId: string) => {
@@ -113,7 +125,7 @@ const EnhancedEdgeRenderer: React.FC<EnhancedEdgeRendererProps> = ({
           return null;
         }
 
-        const { startX, startY, endX, endY } = calculateLinePosition(sourceNode, targetNode);
+        const pathString = calculateEdgePath(sourceNode, targetNode);
         const { strokeColor, strokeWidth, strokePattern } = getEdgeStyle(edge.id);
         
         const isPrimarySelected = selectedEdgeId === edge.id;
@@ -128,13 +140,16 @@ const EnhancedEdgeRenderer: React.FC<EnhancedEdgeRendererProps> = ({
         const validationClass = getEdgeValidationClass?.(edge.id) || '';
         const tooltip = getEdgeTooltip?.(edge.id) || '';
 
+        // Calculate label position (midpoint of path)
+        const waypoints = calculateOrthogonalPath(sourceNode, targetNode);
+        const midIndex = Math.floor(waypoints.length / 2);
+        const labelPos = waypoints[midIndex] || { x: 0, y: 0 };
+
         return (
           <g key={edge.id}>
-            <line
-              x1={startX}
-              y1={startY}
-              x2={endX}
-              y2={endY}
+            <path
+              d={pathString}
+              fill="none"
               stroke={strokeColor}
               strokeWidth={strokeWidth}
               strokeDasharray={strokePattern}
@@ -144,11 +159,11 @@ const EnhancedEdgeRenderer: React.FC<EnhancedEdgeRendererProps> = ({
               onDoubleClick={(e) => handleEdgeDoubleClick(e, edge.id)}
             >
               {tooltip && <title>{tooltip}</title>}
-            </line>
+            </path>
             {edge.label && (
               <text
-                x={(startX + endX) / 2}
-                y={(startY + endY) / 2 - 10}
+                x={labelPos.x}
+                y={labelPos.y - 10}
                 fontSize="12"
                 fill="#6b7280"
                 textAnchor="middle"

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { EnhancedNode, NodeType } from '../types/nodeTypes';
 import { EnhancedEdge } from '../types/edgeTypes';
@@ -7,6 +6,7 @@ import { useCanvasMouseEvents } from '../hooks/useCanvasMouseEvents';
 import { useCanvasSelection } from '../hooks/useCanvasSelection';
 import { useCanvasNodeEvents } from '../hooks/useCanvasNodeEvents';
 import { useCanvasState } from '../hooks/useCanvasState';
+import { useAStarPathfinding } from '../hooks/useAStarPathfinding';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import DragDropHandler from './canvas/DragDropHandler';
 import EdgeCreationHandler from './canvas/EdgeCreationHandler';
@@ -65,6 +65,9 @@ const Canvas: React.FC<CanvasProps> = ({
   hasUnsavedChanges = false,
   onSelectionStateChange
 }) => {
+  // Initialize A* pathfinding system
+  const { getPathfindingStats } = useAStarPathfinding(nodes);
+
   const canvasState = useCanvasState({
     nodes,
     edges,
@@ -151,6 +154,13 @@ const Canvas: React.FC<CanvasProps> = ({
               touchAction: 'manipulation',
             }}
           >
+            {/* Debug info for A* system in development */}
+            {process.env.NODE_ENV === 'development' && (
+              <div className="absolute top-2 left-2 bg-black bg-opacity-50 text-white p-2 text-xs rounded z-50">
+                A* Grid: {getPathfindingStats().gridSize} | Nodes: {getPathfindingStats().nodeCount}
+              </div>
+            )}
+
             <KeyboardHandler
               selectedNodeId={selectedNodeId}
               selectedEdgeId={selectedEdgeId}

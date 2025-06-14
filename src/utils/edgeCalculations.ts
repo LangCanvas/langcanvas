@@ -1,5 +1,5 @@
-
 import { EnhancedNode } from '../types/nodeTypes';
+import { calculateEnhancedOrthogonalPath, updateEdgeCalculatorNodes } from './enhancedEdgeCalculations';
 
 export const getNodeDimensions = (nodeType: string) => {
   if (nodeType === 'conditional') {
@@ -86,70 +86,66 @@ export const getOrthogonalConnectionPoints = (sourceNode: EnhancedNode, targetNo
 };
 
 export const calculateOrthogonalPath = (sourceNode: EnhancedNode, targetNode: EnhancedNode): { x: number, y: number }[] => {
-  const { start, end } = getOrthogonalConnectionPoints(sourceNode, targetNode);
-  const sourceCenter = getNodeCenter(sourceNode);
-  const targetCenter = getNodeCenter(targetNode);
-  
-  const horizontalGap = 50; // Minimum horizontal spacing
-  const verticalTolerance = 20; // Tolerance for considering nodes vertically aligned
-  const waypoints: { x: number, y: number }[] = [];
-  
-  // Add starting point
-  waypoints.push(start);
-  
-  // Check if nodes are vertically aligned (within tolerance) and can use straight line
-  if (Math.abs(start.y - end.y) <= verticalTolerance && targetCenter.x > sourceCenter.x) {
-    // Nodes are roughly horizontally aligned and target is to the right - use straight line
-    waypoints.push(end);
-    return waypoints;
-  }
-  
-  // Check if nodes are horizontally close and vertically separated - use simple L-shape
-  if (Math.abs(sourceCenter.x - targetCenter.x) <= horizontalGap * 2) {
-    // Nodes are close horizontally - use simple vertical then horizontal path
-    waypoints.push({ x: start.x, y: end.y });
-    waypoints.push(end);
-    return waypoints;
-  }
-  
-  // Determine routing strategy based on relative positions
-  if (targetCenter.x > sourceCenter.x) {
-    // Target is to the right of source - simple L-shape
-    if (Math.abs(start.y - end.y) > verticalTolerance) {
-      // Not horizontally aligned, create L-shape
-      const midX = start.x + Math.max(horizontalGap, (end.x - start.x) / 2);
-      waypoints.push({ x: midX, y: start.y }); // Move right
-      waypoints.push({ x: midX, y: end.y });   // Move vertically
+  // Use the new A* pathfinding system
+  try {
+    return calculateEnhancedOrthogonalPath(sourceNode, targetNode);
+  } catch (error) {
+    console.warn('A* pathfinding failed, falling back to simple orthogonal routing:', error);
+    
+    // Fallback to original simple orthogonal routing
+    const { start, end } = getOrthogonalConnectionPoints(sourceNode, targetNode);
+    const sourceCenter = getNodeCenter(sourceNode);
+    const targetCenter = getNodeCenter(targetNode);
+    
+    const horizontalGap = 50;
+    const verticalTolerance = 20;
+    const waypoints: { x: number, y: number }[] = [];
+    
+    waypoints.push(start);
+    
+    if (Math.abs(start.y - end.y) <= verticalTolerance && targetCenter.x > sourceCenter.x) {
+      waypoints.push(end);
+      return waypoints;
     }
-  } else {
-    // Target is to the left of source - create S-shape going around
-    const midX = start.x + horizontalGap;
-    const midY1 = start.y;
-    const midY2 = end.y;
     
-    // Go right first, then around
-    waypoints.push({ x: midX, y: midY1 });
+    if (Math.abs(sourceCenter.x - targetCenter.x) <= horizontalGap * 2) {
+      waypoints.push({ x: start.x, y: end.y });
+      waypoints.push(end);
+      return waypoints;
+    }
     
-    // If target is significantly above or below, go around
-    if (Math.abs(midY2 - midY1) > verticalTolerance) {
-      const verticalMid = midY1 + (midY2 - midY1) / 2;
-      waypoints.push({ x: midX, y: verticalMid });
-      
-      // Go left to target column
-      const targetMidX = end.x - horizontalGap;
-      waypoints.push({ x: targetMidX, y: verticalMid });
-      waypoints.push({ x: targetMidX, y: end.y });
+    if (targetCenter.x > sourceCenter.x) {
+      if (Math.abs(start.y - end.y) > verticalTolerance) {
+        const midX = start.x + Math.max(horizontalGap, (end.x - start.x) / 2);
+        waypoints.push({ x: midX, y: start.y });
+        waypoints.push({ x: midX, y: end.y });
+      }
     } else {
-      // Direct path back if vertically close
-      waypoints.push({ x: midX, y: end.y });
+      const midX = start.x + horizontalGap;
+      const midY1 = start.y;
+      const midY2 = end.y;
+      
+      waypoints.push({ x: midX, y: midY1 });
+      
+      if (Math.abs(midY2 - midY1) > verticalTolerance) {
+        const verticalMid = midY1 + (midY2 - midY1) / 2;
+        waypoints.push({ x: midX, y: verticalMid });
+        
+        const targetMidX = end.x - horizontalGap;
+        waypoints.push({ x: targetMidX, y: verticalMid });
+        waypoints.push({ x: targetMidX, y: end.y });
+      } else {
+        waypoints.push({ x: midX, y: end.y });
+      }
     }
+    
+    waypoints.push(end);
+    return waypoints;
   }
-  
-  // Add ending point
-  waypoints.push(end);
-  
-  return waypoints;
 };
+
+// Export the node update function for external use
+export const updatePathfindingNodes = updateEdgeCalculatorNodes;
 
 export const getConnectionPoints = (sourceNode: EnhancedNode, targetNode: EnhancedNode) => {
   // For dual-handle system, always use right->left connections
