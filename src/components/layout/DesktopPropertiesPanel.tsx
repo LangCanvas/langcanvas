@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -183,6 +182,7 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
           <div className="p-4">
             <PathfindingSettingsPanel 
               nodes={allNodes}
+              edges={allEdges}
               className="border-0 shadow-none"
             />
           </div>

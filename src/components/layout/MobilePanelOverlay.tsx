@@ -132,6 +132,7 @@ const MobilePanelOverlay: React.FC<MobilePanelOverlayProps> = ({
             <div className="p-4">
               <PathfindingSettingsPanel 
                 nodes={[]}
+                edges={[]}
                 className="border-0 shadow-none"
               />
             </div>

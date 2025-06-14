@@ -7,7 +7,9 @@ import GridDebugOverlay from './canvas/GridDebugOverlay';
 import { getEnhancedEdgeCalculator } from '../utils/enhancedEdgeCalculations';
 import { usePathfindingSettings } from '../hooks/usePathfindingSettings';
 import { usePathAnimations } from '../hooks/usePathAnimations';
+import { useEdgeBundling } from '../hooks/useEdgeBundling';
 import EdgeAnimationHandler from './canvas/EdgeAnimationHandler';
+import BundledEdgeRenderer from './canvas/BundledEdgeRenderer';
 
 interface EnhancedEdgeRendererProps {
   edges: EnhancedEdge[];
@@ -39,6 +41,7 @@ const EnhancedEdgeRenderer: React.FC<EnhancedEdgeRendererProps> = ({
     edges, 
     settings.animatePathChanges
   );
+  const bundling = useEdgeBundling(edges, nodes);
 
   const handleEdgeClick = (e: React.MouseEvent, edgeId: string) => {
     e.preventDefault();
@@ -73,6 +76,9 @@ const EnhancedEdgeRenderer: React.FC<EnhancedEdgeRendererProps> = ({
     const progress = getAnimationProgress(edgeId);
     return 0.3 + (0.7 * progress); // Fade from 30% to 100%
   };
+
+  // Get unbundled edges to render individually
+  const unbundledEdges = bundling.getUnbundledEdges();
 
   if (edges.length === 0 && !settings.enableDebugGrid) return null;
 
@@ -138,7 +144,19 @@ const EnhancedEdgeRenderer: React.FC<EnhancedEdgeRendererProps> = ({
           />
         )}
         
-        {edges.map(edge => {
+        {/* Render bundled edges */}
+        {bundling.settings.enabled && bundling.bundles.length > 0 && (
+          <BundledEdgeRenderer
+            bundles={bundling.bundles}
+            nodes={nodes}
+            selectedEdgeId={selectedEdgeId}
+            onSelectEdge={onSelectEdge || onSelectSingleEdge}
+            getEdgeValidationClass={getEdgeValidationClass}
+          />
+        )}
+        
+        {/* Render unbundled edges individually */}
+        {unbundledEdges.map(edge => {
           const sourceNode = nodes.find(n => n.id === edge.source);
           const targetNode = nodes.find(n => n.id === edge.target);
           
