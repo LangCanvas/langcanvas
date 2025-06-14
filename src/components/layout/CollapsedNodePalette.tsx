@@ -1,5 +1,6 @@
 import React from 'react';
 import { PanelLeft, PanelLeftClose } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { NodeType } from '../../types/nodeTypes';
 
 interface CollapsedNodePaletteProps {
@@ -129,27 +130,33 @@ const CollapsedNodePalette: React.FC<CollapsedNodePaletteProps> = ({ onToggle, i
   };
 
   return (
-    <div className="flex flex-col items-center py-4 space-y-3">
-      <button
-        onClick={onToggle}
-        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors mb-2"
-        title={isExpanded ? 'Collapse Node Palette' : 'Expand Node Palette'}
-      >
-        {isExpanded ? <PanelLeftClose className="w-4 h-4 text-gray-700" /> : <PanelLeft className="w-4 h-4 text-gray-700" />}
-      </button>
-
-      {nodeTypes.map(({ type, label, icon, color }) => (
+    <div className="flex flex-col h-full">
+      <div className="p-4">
         <button
-          key={type}
-          className={`w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors ${color} cursor-grab active:cursor-grabbing`}
-          draggable
-          onDragStart={(e) => handleDragStart(e, type, label)}
-          onClick={() => handleClick(type)}
-          title={label}
+          onClick={onToggle}
+          className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
+          title={isExpanded ? 'Collapse Node Palette' : 'Expand Node Palette'}
         >
-          <span className="text-sm font-bold select-none">{icon}</span>
+          {isExpanded ? <PanelLeftClose className="w-4 h-4 text-gray-700" /> : <PanelLeft className="w-4 h-4 text-gray-700" />}
         </button>
-      ))}
+      </div>
+
+      <ScrollArea className="flex-1">
+        <div className="flex flex-col items-center py-2 space-y-3 px-2">
+          {nodeTypes.map(({ type, label, icon, color }) => (
+            <button
+              key={type}
+              className={`w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors ${color} cursor-grab active:cursor-grabbing`}
+              draggable
+              onDragStart={(e) => handleDragStart(e, type, label)}
+              onClick={() => handleClick(type)}
+              title={label}
+            >
+              <span className="text-sm font-bold select-none">{icon}</span>
+            </button>
+          ))}
+        </div>
+      </ScrollArea>
     </div>
   );
 };

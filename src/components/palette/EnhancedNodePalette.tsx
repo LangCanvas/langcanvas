@@ -1,6 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { PanelLeftClose } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { NodeType } from '../../types/nodeTypes';
 import { getAllNodes, getNodesByCategory, searchNodes, NodeDefinition } from '../../utils/nodeCategories';
 import { useEnhancedAnalytics } from '../../hooks/useEnhancedAnalytics';
@@ -87,25 +88,27 @@ const EnhancedNodePalette: React.FC<EnhancedNodePaletteProps> = ({
 
   if (compact) {
     return (
-      <div className="p-2 space-y-2">
+      <div className="p-2 space-y-2 h-full flex flex-col">
         <NodePaletteSearch
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           placeholder="Search..."
         />
         
-        <div className="space-y-1">
-          {filteredNodes.slice(0, 5).map((node) => (
-            <EnhancedNodeItem
-              key={node.type}
-              node={node}
-              onDragStart={handleDragStart}
-              onClick={handleClick}
-              showDescription={false}
-              compact={true}
-            />
-          ))}
-        </div>
+        <ScrollArea className="flex-1">
+          <div className="space-y-1 pr-3">
+            {filteredNodes.slice(0, 5).map((node) => (
+              <EnhancedNodeItem
+                key={node.type}
+                node={node}
+                onDragStart={handleDragStart}
+                onClick={handleClick}
+                showDescription={false}
+                compact={true}
+              />
+            ))}
+          </div>
+        </ScrollArea>
         
         {filteredNodes.length > 5 && (
           <div className="text-xs text-gray-500 text-center">
@@ -144,8 +147,8 @@ const EnhancedNodePalette: React.FC<EnhancedNodePaletteProps> = ({
           />
         )}
 
-        <div className="flex-1 overflow-y-auto">
-          <div className="space-y-3">
+        <ScrollArea className="flex-1">
+          <div className="space-y-3 pr-3">
             {filteredNodes.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <p className="text-sm">No nodes found</p>
@@ -171,7 +174,7 @@ const EnhancedNodePalette: React.FC<EnhancedNodePaletteProps> = ({
               ))
             )}
           </div>
-        </div>
+        </ScrollArea>
 
         <div className="mt-4 text-xs text-gray-500">
           <p className="hidden lg:block">Drag nodes to the canvas to create them</p>

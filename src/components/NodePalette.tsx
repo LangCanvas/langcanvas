@@ -1,7 +1,7 @@
-
 import React from 'react';
 import { PanelLeftClose } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { NodeType } from '../types/nodeTypes';
 import { useEnhancedAnalytics } from '../hooks/useEnhancedAnalytics';
 
@@ -169,7 +169,7 @@ const NodePalette: React.FC<NodePaletteProps> = ({ onNodeTypeSelect, onToggle, i
   };
 
   return (
-    <div className="p-4">
+    <div className="p-4 h-full flex flex-col">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-sm font-medium text-gray-700">Node Palette</h2>
         {onToggle && (
@@ -183,25 +183,28 @@ const NodePalette: React.FC<NodePaletteProps> = ({ onNodeTypeSelect, onToggle, i
         )}
       </div>
       
-      <div className="space-y-3">
-        {nodeTypes.map(({ type, label, color }) => (
-          <Button
-            key={type}
-            variant="outline"
-            className={`w-full h-12 ${color} border-2 border-dashed hover:border-solid transition-all duration-200 touch-manipulation`}
-            draggable
-            onDragStart={(e) => handleDragStart(e, type, label)}
-            onClick={(e) => handleClick(e, type)}
-            style={{ 
-              minHeight: '48px',
-              touchAction: 'manipulation'
-            }}
-          >
-            {label}
-          </Button>
-        ))}
-      </div>
-      <div className="mt-6 text-xs text-gray-500">
+      <ScrollArea className="flex-1">
+        <div className="space-y-3 pr-3">
+          {nodeTypes.map(({ type, label, color }) => (
+            <Button
+              key={type}
+              variant="outline"
+              className={`w-full h-12 ${color} border-2 border-dashed hover:border-solid transition-all duration-200 touch-manipulation`}
+              draggable
+              onDragStart={(e) => handleDragStart(e, type, label)}
+              onClick={(e) => handleClick(e, type)}
+              style={{ 
+                minHeight: '48px',
+                touchAction: 'manipulation'
+              }}
+            >
+              {label}
+            </Button>
+          ))}
+        </div>
+      </ScrollArea>
+
+      <div className="mt-4 text-xs text-gray-500">
         <p className="hidden lg:block">Drag nodes to the canvas to create them</p>
         <p className="lg:hidden">Tap a node type, then tap on the canvas to place it</p>
       </div>
