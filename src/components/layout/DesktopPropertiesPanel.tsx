@@ -51,7 +51,7 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
   switchToPropertiesPanel,
   validatePriorityConflicts
 }) => {
-  console.log('🎛️ DesktopPropertiesPanel - Render with debug styling:', {
+  console.log('🎛️ DesktopPropertiesPanel - Clean render:', {
     selectedNode: selectedNode?.id || 'none',
     selectedEdge: selectedEdge?.id || 'none',
     isVisible,
@@ -77,7 +77,7 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
   return (
     <aside 
       data-panel="desktop-properties" 
-      className="h-full w-full bg-purple-300 border-8 border-purple-800 flex flex-col"
+      className="h-full w-full bg-white flex flex-col"
       style={{ 
         minWidth: `${panelWidth}px`,
         width: `${panelWidth}px`,
@@ -86,16 +86,16 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
         zIndex: 10
       }}
     >
-      <div className={`${isCompact ? 'p-2' : 'p-4'} border-b border-purple-600 flex items-center justify-between bg-purple-400`}>
-        <h2 className={`font-bold text-purple-900 ${isCompact ? 'text-sm' : 'text-lg'}`}>
-          🎛️ PROPERTIES PANEL VISIBLE! 
+      <div className={`${isCompact ? 'p-2' : 'p-3'} border-b border-gray-200 flex items-center justify-between`}>
+        <h2 className={`font-semibold text-gray-900 ${isCompact ? 'text-sm' : 'text-sm'}`}>
+          Properties Panel
         </h2>
         {onToggle && !isCompact && (
           <Button
             variant="ghost"
             size="sm"
             onClick={onToggle}
-            className="w-8 h-8 p-0 bg-purple-500 hover:bg-purple-600 text-white"
+            className="w-8 h-8 p-0 hover:bg-gray-100"
             title="Hide Properties Panel"
           >
             <X className="w-4 h-4" />
@@ -103,17 +103,7 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
         )}
       </div>
       
-      <div className="flex-1 bg-purple-200 p-4 overflow-auto">
-        <div className="text-purple-900 text-sm space-y-2 font-bold">
-          <div>✅ RIGHT PANEL IS NOW VISIBLE!</div>
-          <div>Width: {panelWidth}px</div>
-          <div>Layout: {panelLayout}</div>
-          <div>Compact: {isCompact ? 'Yes' : 'No'}</div>
-          <div>Active Tab: {activeTab}</div>
-          <div>Selected Node: {selectedNode?.id || 'None'}</div>
-          <div>Selected Edge: {selectedEdge?.id || 'None'}</div>
-        </div>
-        
+      <div className="flex-1 overflow-auto">
         <DesktopPropertiesPanelTabs
           activeTab={activeTab}
           setActiveTab={setActiveTab}

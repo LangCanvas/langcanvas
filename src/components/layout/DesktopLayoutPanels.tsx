@@ -62,7 +62,7 @@ const DesktopLayoutPanels: React.FC<DesktopLayoutPanelsProps> = ({
   onUpdateEdgeProperties,
   validatePriorityConflicts,
 }) => {
-  console.log('🖥️ DesktopLayoutPanels - Using simple flexbox layout:', {
+  console.log('🖥️ DesktopLayoutPanels - Clean layout with fixed widths:', {
     isLeftPanelVisible,
     isRightPanelVisible,
     leftPanelWidth,
@@ -70,13 +70,11 @@ const DesktopLayoutPanels: React.FC<DesktopLayoutPanelsProps> = ({
   });
 
   return (
-    <div className="flex h-full w-full bg-yellow-100 border-4 border-yellow-500">
-      {/* DEBUG: Yellow container to see main layout */}
-      
+    <div className="flex h-full w-full bg-gray-50">
       {/* Left Panel */}
       {isLeftPanelVisible && (
         <div 
-          className="flex-shrink-0 bg-blue-200 border-4 border-blue-600"
+          className="flex-shrink-0 bg-white border-r border-gray-200"
           style={{ width: `${leftPanelWidth}px` }}
         >
           <DesktopSidebar
@@ -89,14 +87,14 @@ const DesktopLayoutPanels: React.FC<DesktopLayoutPanelsProps> = ({
       )}
 
       {/* Canvas Area */}
-      <div className="flex-1 bg-green-100 border-4 border-green-600 overflow-hidden">
+      <div className="flex-1 bg-gray-100 overflow-hidden">
         {children}
       </div>
 
       {/* Right Panel */}
       {isRightPanelVisible && (
         <div 
-          className="flex-shrink-0 bg-red-200 border-4 border-red-600"
+          className="flex-shrink-0 bg-white border-l border-gray-200"
           style={{ width: `${rightPanelWidth}px` }}
         >
           <DesktopPropertiesPanel
