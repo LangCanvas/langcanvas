@@ -3,7 +3,8 @@ import React from 'react';
 import DesktopSidebar from './DesktopSidebar';
 import DesktopPropertiesPanel from './DesktopPropertiesPanel';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
-import { useAdaptivePanelWidths } from '../../hooks/useAdaptivePanelWidths';
+import { useLeftPanelState } from '../../hooks/useLeftPanelState';
+import { useRightPanelState } from '../../hooks/useRightPanelState';
 import { EnhancedNode } from '../../types/nodeTypes';
 import { EnhancedEdge } from '../../types/edgeTypes';
 import { ValidationResult } from '../../hooks/useValidation';
@@ -61,44 +62,35 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     edges: edges.length
   });
 
-  console.log('🚨 DEBUG - DesktopLayout received props:', {
-    isRightPanelVisible,
-    timestamp: new Date().toISOString()
-  });
-
+  // SEPARATE INDEPENDENT PANEL HOOKS
   const {
     leftPanelWidth,
-    rightPanelWidth,
     leftPanelLayout,
-    rightPanelLayout,
     handleLeftPanelResize,
     getMaxPercentageForLeftPanel,
     getMinPercentageForLeftPanel
-  } = useAdaptivePanelWidths();
+  } = useLeftPanelState();
 
-  console.log('🖥️ DesktopLayout - Panel widths and layouts:', {
-    leftPanelWidth,
+  const {
     rightPanelWidth,
-    leftPanelLayout,
-    rightPanelLayout
-  });
+    rightPanelLayout,
+    handleRightPanelResize,
+  } = useRightPanelState();
 
-  // INDEPENDENT right panel resize handler (not using adaptive panel widths)
-  const handleRightPanelResizeIndependent = React.useCallback((percentage: number) => {
-    console.log('🎛️ DesktopLayout - Right panel resize (independent):', {
-      percentage,
-      timestamp: new Date().toISOString()
-    });
-    // Simple percentage tracking without complex pixel conversions
-    // This just lets the ResizablePanel handle its own constraints
-  }, []);
+  console.log('🖥️ DesktopLayout - Independent panel states:', {
+    leftPanelWidth,
+    leftPanelLayout,
+    rightPanelWidth,
+    rightPanelLayout,
+    areIndependent: true
+  });
 
   // Conservative sizing for reliable panel visibility
   const leftPanelPercentage = isLeftPanelVisible ? 7 : 0; // Fixed 7% for left panel
-  const rightPanelPercentage = isRightPanelVisible ? 20 : 0; // Reduced to 20% for right panel  
+  const rightPanelPercentage = isRightPanelVisible ? 20 : 0; // Fixed 20% for right panel  
   const canvasPercentage = 100 - leftPanelPercentage - rightPanelPercentage;
 
-  console.log('🖥️ DesktopLayout - CONSERVATIVE percentages:', {
+  console.log('🖥️ DesktopLayout - Panel percentages:', {
     leftPanelPercentage,
     rightPanelPercentage,
     canvasPercentage,
@@ -106,28 +98,13 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     rightVisible: isRightPanelVisible
   });
 
-  console.log('🚨 DEBUG - DesktopLayout calculated percentages:', {
-    rightPanelPercentage,
-    isRightPanelVisible,
-    willRenderRightPanel: isRightPanelVisible
-  });
-
   // Calculate the maximum and minimum percentages for the left panel
   const maxLeftPanelPercentage = getMaxPercentageForLeftPanel();
   const minLeftPanelPercentage = getMinPercentageForLeftPanel();
 
-  console.log('🖥️ DesktopLayout - Panel constraints:', {
+  console.log('🖥️ DesktopLayout - Left panel constraints:', {
     maxLeftPanelPercentage,
     minLeftPanelPercentage
-  });
-
-  console.log('🖥️ DesktopLayout - Starting ResizablePanelGroup render');
-
-  // Log rendering decisions before JSX
-  console.log('🚨 DEBUG - DesktopLayout rendering DesktopPropertiesPanel with isVisible:', isRightPanelVisible);
-  console.log('🚨 DEBUG - DesktopLayout conditional for right panel:', {
-    condition: isRightPanelVisible,
-    willRender: isRightPanelVisible ? 'YES' : 'NO'
   });
 
   // Log right panel configuration before render
@@ -174,7 +151,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
               defaultSize={rightPanelPercentage}
               minSize={12}
               maxSize={35}
-              onResize={handleRightPanelResizeIndependent}
+              onResize={handleRightPanelResize}
               className="relative"
             >
               <DesktopPropertiesPanel
