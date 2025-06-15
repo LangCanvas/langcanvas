@@ -24,7 +24,7 @@ const SmallLayoutNodeItem: React.FC<SmallLayoutNodeItemProps> = ({
           <TooltipTrigger asChild>
             <Button
               variant="outline"
-              className={`w-full h-6 ${getEnhancedNodeColors(node.type)} border transition-all duration-200 text-xs p-1 shadow-sm hover:shadow-md active:scale-95 relative`}
+              className={`w-full h-[19px] ${getEnhancedNodeColors(node.type)} border transition-all duration-200 text-xs p-1 shadow-sm hover:shadow-md active:scale-95 relative`}
               draggable
               onDragStart={onDragStart}
               onClick={onClick}
