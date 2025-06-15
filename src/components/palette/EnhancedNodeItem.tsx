@@ -2,7 +2,7 @@
 import React from 'react';
 import { NodeDefinition } from '../../utils/nodeCategories';
 import { NodeType } from '../../types/nodeTypes';
-import { PanelLayout } from '../../hooks/useAdaptivePanelWidths';
+import { PanelLayout } from '../../types/panelTypes';
 import { createDragImage } from './DragImageCreator';
 import SmallLayoutNodeItem from './SmallLayoutNodeItem';
 import MediumLayoutNodeItem from './MediumLayoutNodeItem';

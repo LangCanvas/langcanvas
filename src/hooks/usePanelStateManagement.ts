@@ -1,7 +1,7 @@
-
 import { useState, useEffect } from 'react';
 import { savePanelSettingsToStorage, loadPanelSettingsFromStorage } from '../utils/panelStorage';
-import { useAdaptivePanelWidths } from './useAdaptivePanelWidths';
+import { useLeftPanelState } from './useLeftPanelState';
+import { useRightPanelState } from './useRightPanelState';
 
 export const usePanelStateManagement = () => {
   console.log('🔧 usePanelStateManagement - Hook initialization started');
@@ -11,9 +11,10 @@ export const usePanelStateManagement = () => {
   const [activePanel, setActivePanel] = useState<'palette' | 'properties' | 'settings' | null>(null);
   const [showValidationPanel, setShowValidationPanel] = useState(false);
   
-  // Get actual panel widths from the adaptive panel widths hook
-  const { leftPanelWidth, rightPanelWidth } = useAdaptivePanelWidths();
-  console.log('🔧 usePanelStateManagement - Panel widths from adaptive hook:', { leftPanelWidth, rightPanelWidth });
+  // Get actual panel widths from the independent panel hooks
+  const { leftPanelWidth } = useLeftPanelState();
+  const { rightPanelWidth } = useRightPanelState();
+  console.log('🔧 usePanelStateManagement - Panel widths from independent hooks:', { leftPanelWidth, rightPanelWidth });
   
   // SIMPLIFIED: Properties Panel is ALWAYS visible by default
   // This ensures new users, incognito mode, and corrupted storage all see the panel

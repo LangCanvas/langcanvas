@@ -2,7 +2,7 @@
 import React from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { NodeDefinition } from '../../utils/nodeCategories';
-import { PanelLayout } from '../../hooks/useAdaptivePanelWidths';
+import { PanelLayout } from '../../types/panelTypes';
 import { LayoutConfig } from './PaletteLayoutConfig';
 import EnhancedNodeItem from './EnhancedNodeItem';
 import PaletteEmptyState from './PaletteEmptyState';

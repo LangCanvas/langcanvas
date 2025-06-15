@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { PanelLayout } from '../../hooks/useAdaptivePanelWidths';
+import { PanelLayout } from '../../types/panelTypes';
 import { LayoutConfig } from './PaletteLayoutConfig';
 
 interface PaletteFooterProps {

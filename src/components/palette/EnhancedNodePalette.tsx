@@ -1,8 +1,9 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { NodeType } from '../../types/nodeTypes';
 import { getAllNodes, getNodesByCategory, searchNodes, NodeDefinition } from '../../utils/nodeCategories';
 import { useEnhancedAnalytics } from '../../hooks/useEnhancedAnalytics';
-import { PanelLayout } from '../../hooks/useAdaptivePanelWidths';
+import { PanelLayout } from '../../types/panelTypes';
 import NodePaletteSearch from './NodePaletteSearch';
 import NodeCategorySelector from './NodeCategorySelector';
 import PaletteContent from './PaletteContent';

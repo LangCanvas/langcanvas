@@ -1,5 +1,5 @@
 
-import { PanelLayout } from '../../hooks/useAdaptivePanelWidths';
+import { PanelLayout } from '../../types/panelTypes';
 
 export interface LayoutConfig {
   showSearch: boolean;
