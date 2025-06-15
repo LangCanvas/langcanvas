@@ -76,7 +76,7 @@ const NodePalette: React.FC<NodePaletteProps> = ({ onNodeTypeSelect, onToggle, i
 
   return (
     <div className="p-4 h-full flex flex-col">
-      <PaletteHeader title="Node Palette" onToggle={onToggle} />
+      <PaletteHeader title="Node Palette" />
       
       <NodeTypeList onDragStart={handleDragStart} onClick={handleClick} />
 
