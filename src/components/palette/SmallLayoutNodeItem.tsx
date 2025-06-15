@@ -24,12 +24,12 @@ const SmallLayoutNodeItem: React.FC<SmallLayoutNodeItemProps> = ({
           <TooltipTrigger asChild>
             <Button
               variant="outline"
-              className={`w-[calc(100%-10px)] h-[19px] ${getEnhancedNodeColors(node.type)} border transition-all duration-200 text-xs p-1 shadow-sm hover:shadow-md active:scale-95 relative flex items-center justify-center`}
+              className={`w-[calc(100%-10px)] h-[19px] ${getEnhancedNodeColors(node.type)} border transition-all duration-200 text-xs pl-4 pr-1 py-1 shadow-sm hover:shadow-md active:scale-95 relative flex items-center justify-center`}
               draggable
               onDragStart={onDragStart}
               onClick={onClick}
             >
-              <span className="text-xs absolute left-2">{node.icon}</span>
+              <span className="text-xs absolute left-3">{node.icon}</span>
               <span className="text-xs font-medium text-center flex-1 pl-4">{node.label}</span>
             </Button>
           </TooltipTrigger>
