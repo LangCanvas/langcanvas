@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from 'react';
 import { PanelLayout } from '../types/panelTypes';
 
@@ -21,9 +20,7 @@ export const useLeftPanelState = () => {
   });
 
   const getInitialLeftWidth = useCallback(() => {
-    if (typeof window !== 'undefined') {
-      return Math.max(LEFT_PANEL_BREAKPOINTS.MIN, Math.min(LEFT_PANEL_BREAKPOINTS.MAX, window.innerWidth * 0.15));
-    }
+    // Always use DEFAULT constant to ensure consistent medium layout on load
     return LEFT_PANEL_BREAKPOINTS.DEFAULT;
   }, []);
 
