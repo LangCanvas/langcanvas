@@ -15,7 +15,6 @@ import { nodeCategories, getAllNodes } from '../../utils/nodeCategories';
 
 interface EnhancedNodePaletteProps {
   onNodeTypeSelect?: (type: NodeType) => void;
-  onToggle?: () => void;
   isExpanded?: boolean;
   panelWidth?: number;
   panelLayout?: LeftPanelLayout;
@@ -26,7 +25,6 @@ const MIN_OBJECT_WIDTH = 35; // Changed to 35px as requested
 
 const EnhancedNodePalette: React.FC<EnhancedNodePaletteProps> = ({ 
   onNodeTypeSelect, 
-  onToggle, 
   isExpanded = true,
   panelWidth = 256,
   panelLayout = 'medium'
@@ -134,8 +132,8 @@ const EnhancedNodePalette: React.FC<EnhancedNodePaletteProps> = ({
   const hasNodes = displayNodes.length > 0;
 
   return (
-    <div className="flex flex-col h-full">
-      <PaletteHeader title="Node Palette" onToggle={onToggle} />
+    <div className="p-4 h-full flex flex-col">
+      <PaletteHeader title="Node Palette" />
 
       {layoutConfig.showSearch && (
         <NodePaletteSearch 
