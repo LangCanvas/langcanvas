@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
+import { X, AlertTriangle } from 'lucide-react';
 import DesktopPropertiesPanelTabs from './DesktopPropertiesPanelTabs';
 import { EnhancedNode } from '../../types/nodeTypes';
 import { EnhancedEdge } from '../../types/edgeTypes';
@@ -76,15 +76,69 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
     switchToPropertiesPanel
   });
 
-  // If not visible, don't render anything
+  // IMPROVED: Instead of returning null, show debugging information when not visible
   if (!isVisible) {
-    console.log('🎛️ DesktopPropertiesPanel - Not visible, returning null');
-    console.log('🚨 DEBUG - DesktopPropertiesPanel returning null because isVisible is false');
-    return null;
+    console.log('🎛️ DesktopPropertiesPanel - Not visible, showing debug info instead of null');
+    
+    return (
+      <aside 
+        data-panel="desktop-properties-debug" 
+        className="relative bg-red-50 border-l border-red-200 flex flex-col h-full flex-shrink-0 w-80"
+      >
+        <div className="p-4 border-b border-red-200 flex items-center justify-between">
+          <h2 className="font-medium text-red-800 text-sm flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4" />
+            Panel Hidden (Debug)
+          </h2>
+          {onToggle && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onToggle}
+              className="w-8 h-8 p-0 text-red-600 hover:text-red-800"
+              title="Show Properties Panel"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          )}
+        </div>
+        
+        <div className="p-4 text-sm text-red-700 space-y-2">
+          <p><strong>Panel State:</strong> isVisible = false</p>
+          <p><strong>Timestamp:</strong> {new Date().toISOString()}</p>
+          <p><strong>Panel Width:</strong> {panelWidth}px</p>
+          <p><strong>Panel Layout:</strong> {panelLayout}</p>
+          
+          <div className="mt-4 p-3 bg-red-100 rounded border border-red-200">
+            <p className="font-medium mb-2">Debug Actions:</p>
+            <Button
+              onClick={() => {
+                console.log('🔧 Debug: Attempting to show panel via onToggle');
+                onToggle?.();
+              }}
+              size="sm"
+              className="mr-2 mb-2"
+              variant="outline"
+            >
+              Force Show Panel
+            </Button>
+            <Button
+              onClick={() => {
+                console.log('🔧 Debug: Current window debug state:', (window as any).debugRightPanel?.getCurrentState());
+                alert('Check console for debug information');
+              }}
+              size="sm"
+              variant="outline"
+            >
+              Log Debug Info
+            </Button>
+          </div>
+        </div>
+      </aside>
+    );
   }
 
   console.log('🎛️ DesktopPropertiesPanel - Continuing with render');
-  console.log('🚨 DEBUG - DesktopPropertiesPanel proceeding with render, isVisible is true');
 
   // Always show expanded panel (no collapsed state)
   const isCompact = panelLayout === 'small';
@@ -96,8 +150,6 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
   });
 
   console.log('🎛️ DesktopPropertiesPanel - Rendering aside element');
-  console.log('🚨 DEBUG - DesktopPropertiesPanel about to render aside element');
-  console.log('🚨 DEBUG - DesktopPropertiesPanel aside element rendered');
   
   return (
     <aside 

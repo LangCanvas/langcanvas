@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { savePanelSettingsToStorage, loadPanelSettingsFromStorage } from '../utils/panelStorage';
 import { useLeftPanelState } from './useLeftPanelState';
@@ -16,75 +17,30 @@ export const usePanelStateManagement = () => {
   const { rightPanelWidth } = useRightPanelState();
   console.log('🔧 usePanelStateManagement - Panel widths from independent hooks:', { leftPanelWidth, rightPanelWidth });
   
-  // SIMPLIFIED: Properties Panel is ALWAYS visible by default
-  // This ensures new users, incognito mode, and corrupted storage all see the panel
-  const [isRightPanelVisible, setIsRightPanelVisible] = useState(true);
-  console.log('🔧 usePanelStateManagement - Initial right panel state set to:', true);
+  // SIMPLIFIED: Load initial state from storage synchronously
+  const getInitialRightPanelState = () => {
+    try {
+      const settings = loadPanelSettingsFromStorage();
+      console.log('🔧 usePanelStateManagement - Loaded settings:', settings);
+      // Default to visible unless explicitly set to false
+      return settings.isRightPanelVisible !== false;
+    } catch (error) {
+      console.warn('🔧 usePanelStateManagement - Error loading settings, defaulting to visible:', error);
+      return true; // Default to visible
+    }
+  };
+
+  const [isRightPanelVisible, setIsRightPanelVisible] = useState(getInitialRightPanelState);
+  console.log('🔧 usePanelStateManagement - Initial right panel state:', isRightPanelVisible);
 
   // DEBUG: Monitor right panel visibility changes
   useEffect(() => {
     console.log('🚨 DEBUG - Right panel visibility changed:', {
       isRightPanelVisible,
       timestamp: new Date().toISOString(),
-      stackTrace: new Error().stack
+      stackTrace: new Error().stack?.split('\n').slice(0, 5).join('\n')
     });
   }, [isRightPanelVisible]);
-
-  // DEBUG: Monitor localStorage content
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const stored = localStorage.getItem('langcanvas_panel_settings');
-      console.log('🚨 DEBUG - Current localStorage content:', {
-        rawValue: stored,
-        parsed: stored ? JSON.parse(stored) : null,
-        timestamp: new Date().toISOString()
-      });
-    }, 5000); // Log every 5 seconds
-
-    return () => clearInterval(interval);
-  }, []);
-
-  // Load panel settings and apply them AFTER initialization
-  useEffect(() => {
-    console.log('🔧 usePanelStateManagement - Storage loading effect triggered');
-    console.log('🚨 DEBUG - Before loading settings - current state:', { isRightPanelVisible });
-    
-    try {
-      const settings = loadPanelSettingsFromStorage();
-      console.log('🔍 Properties Panel - Loading stored settings:', settings);
-      console.log('🚨 DEBUG - Settings loaded from storage:', JSON.stringify(settings, null, 2));
-      
-      // Only hide the panel if explicitly stored as false by user preference
-      const shouldHidePanel = settings.isRightPanelVisible === false;
-      
-      console.log('🔍 Properties Panel - Should hide panel:', shouldHidePanel);
-      console.log('🔍 Properties Panel - Current visible state:', isRightPanelVisible);
-      console.log('🚨 DEBUG - Analysis:', {
-        settingsValue: settings.isRightPanelVisible,
-        shouldHidePanel,
-        currentState: isRightPanelVisible,
-        willChange: shouldHidePanel !== !isRightPanelVisible
-      });
-      
-      if (shouldHidePanel && isRightPanelVisible) {
-        console.log('👁️ Properties Panel - Applying user preference: hiding panel');
-        console.log('🚨 DEBUG - CHANGING STATE TO FALSE');
-        setIsRightPanelVisible(false);
-      } else if (!shouldHidePanel && !isRightPanelVisible) {
-        console.log('👁️ Properties Panel - Ensuring panel is visible (default behavior)');
-        console.log('🚨 DEBUG - CHANGING STATE TO TRUE');
-        setIsRightPanelVisible(true);
-      } else {
-        console.log('🚨 DEBUG - NO STATE CHANGE NEEDED');
-      }
-      
-      console.log('✅ Properties Panel - Final visible state after storage loading:', isRightPanelVisible);
-    } catch (error) {
-      console.warn('⚠️ Properties Panel - Failed to load settings, keeping default visible state:', error);
-      console.log('🚨 DEBUG - Error during loading, state remains:', isRightPanelVisible);
-      // Panel remains visible (default state)
-    }
-  }, []);
 
   // Enhanced panel settings saving with error handling
   useEffect(() => {
@@ -94,7 +50,6 @@ export const usePanelStateManagement = () => {
       leftPanelWidth,
       rightPanelWidth
     });
-    console.log('🚨 DEBUG - Saving panel settings with right panel visible:', isRightPanelVisible);
     
     try {
       savePanelSettingsToStorage({
@@ -106,20 +61,10 @@ export const usePanelStateManagement = () => {
         rightPanelWidth // Use actual width from adaptive panel widths
       });
       console.log('💾 Panel settings saved successfully - Right panel visible:', isRightPanelVisible);
-      console.log('🚨 DEBUG - Settings saved to localStorage');
     } catch (error) {
       console.warn('⚠️ Failed to save panel settings:', error);
     }
   }, [isRightPanelVisible, leftPanelWidth, rightPanelWidth]);
-
-  // Debug logging for panel visibility state changes
-  useEffect(() => {
-    console.log('🔍 Properties Panel - Visibility state changed:', {
-      isRightPanelVisible,
-      timestamp: new Date().toISOString(),
-      localStorage: localStorage.getItem('langcanvas_panel_settings')
-    });
-  }, [isRightPanelVisible]);
 
   // Runtime safeguard: Force panel visible if it should be but isn't
   useEffect(() => {
@@ -130,25 +75,15 @@ export const usePanelStateManagement = () => {
         panelExistsInDOM: !!rightPanel,
         panelElement: rightPanel
       });
-      console.log('🚨 DEBUG - DOM Panel inspection:', {
-        panelFound: !!rightPanel,
-        panelDisplayStyle: rightPanel ? window.getComputedStyle(rightPanel).display : 'not found',
-        panelVisibilityStyle: rightPanel ? window.getComputedStyle(rightPanel).visibility : 'not found',
-        panelWidth: rightPanel ? window.getComputedStyle(rightPanel).width : 'not found'
-      });
       
       if (!isRightPanelVisible && rightPanel) {
         console.log('🔧 Properties Panel - Visibility mismatch detected, panel exists but state says hidden');
-        console.log('🚨 DEBUG - MISMATCH: Panel in DOM but state is false');
       } else if (isRightPanelVisible && !rightPanel) {
         console.log('🔧 Properties Panel - Visibility mismatch detected, panel should be visible but not found in DOM');
-        console.log('🚨 DEBUG - MISMATCH: State is true but panel not in DOM');
       } else if (isRightPanelVisible && rightPanel) {
         console.log('✅ Properties Panel - Visibility state and DOM are in sync (visible)');
-        console.log('🚨 DEBUG - SYNC: Both state and DOM show visible');
       } else {
         console.log('✅ Properties Panel - Visibility state and DOM are in sync (hidden by user preference)');
-        console.log('🚨 DEBUG - SYNC: Both state and DOM show hidden');
       }
     };
 
