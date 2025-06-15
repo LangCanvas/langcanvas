@@ -76,7 +76,23 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
     switchToPropertiesPanel
   });
 
-  // IMPROVED: Instead of returning null, show debugging information when not visible
+  // Add DOM dimension checking
+  React.useEffect(() => {
+    const element = document.querySelector('[data-panel="desktop-properties"]');
+    if (element) {
+      const rect = element.getBoundingClientRect();
+      console.log('🔍 VISUAL DEBUG - Panel actual dimensions:', {
+        width: rect.width,
+        height: rect.height,
+        x: rect.x,
+        y: rect.y,
+        isVisible: rect.width > 0 && rect.height > 0,
+        computedStyle: window.getComputedStyle(element),
+        offsetParent: element.offsetParent
+      });
+    }
+  });
+
   if (!isVisible) {
     console.log('🎛️ DesktopPropertiesPanel - Not visible, showing debug info instead of null');
     
@@ -84,6 +100,12 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
       <aside 
         data-panel="desktop-properties-debug" 
         className="relative bg-red-50 border-l border-red-200 flex flex-col h-full flex-shrink-0 w-80"
+        style={{ 
+          backgroundColor: '#ff0000', 
+          border: '5px solid #00ff00',
+          zIndex: 9999,
+          minWidth: '320px'
+        }}
       >
         <div className="p-4 border-b border-red-200 flex items-center justify-between">
           <h2 className="font-medium text-red-800 text-sm flex items-center gap-2">
@@ -155,10 +177,17 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
     <aside 
       data-panel="desktop-properties" 
       className="relative bg-background border-l border-border flex flex-col h-full flex-shrink-0"
+      style={{ 
+        backgroundColor: '#ffff00', 
+        border: '3px solid #ff0000',
+        zIndex: 1000,
+        minWidth: `${panelWidth}px`,
+        width: `${panelWidth}px`
+      }}
     >
       <div className={`${isCompact ? 'p-2' : 'p-4'} border-b border-border flex items-center justify-between`}>
         <h2 className={`font-medium text-foreground ${isCompact ? 'text-xs' : 'text-sm'}`}>
-          {isCompact ? 'Panel' : 'Properties Panel'}
+          🚨 DEBUG: {isCompact ? 'Panel' : 'Properties Panel'} ({panelWidth}px)
         </h2>
         {onToggle && !isCompact && (
           <Button

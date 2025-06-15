@@ -4,6 +4,7 @@ import Toolbar from './Toolbar';
 import DesktopLayout from './DesktopLayout';
 import MobileLayout from './MobileLayout';
 import UnderConstructionBanner from './UnderConstructionBanner';
+import RightPanelDebugger from '../debug/RightPanelDebugger';
 import { EnhancedNode } from '../../types/nodeTypes';
 import { EnhancedEdge } from '../../types/edgeTypes';
 import { ValidationResult } from '../../hooks/useValidation';
@@ -113,6 +114,13 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
         onImport={onImport}
         onExport={onExport}
         onToggleRightPanel={onToggleRightPanel}
+      />
+
+      {/* Add debug panel for right panel investigation */}
+      <RightPanelDebugger
+        isVisible={isRightPanelVisible}
+        panelWidth={320} // TODO: Get actual panel width
+        onToggle={onToggleRightPanel}
       />
 
       <div className="flex flex-1 relative overflow-hidden">
