@@ -6,8 +6,8 @@ import { PanelLayout } from '../types/panelTypes';
 export const LEFT_PANEL_BREAKPOINTS = {
   MIN: 38, // Minimum width changed from 35px to 38px
   SWITCH_THRESHOLD: 40, // Reduced by 20px from 60px to 40px
-  MAX: 110, // Maximum width increased from 70px to 110px
-  DEFAULT: 90 // Default width changed from 70px to 90px
+  MAX: 60, // Maximum width changed from 110px to 60px
+  DEFAULT: 60 // Default width changed from 90px to 60px
 } as const;
 
 export type LeftPanelLayout = PanelLayout;
