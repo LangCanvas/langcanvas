@@ -1,4 +1,3 @@
-
 import React from 'react';
 import DesktopSidebar from './DesktopSidebar';
 import DesktopPropertiesPanel from './DesktopPropertiesPanel';
@@ -72,8 +71,6 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     leftPanelLayout,
     rightPanelLayout,
     handleLeftPanelResize,
-    handleRightPanelResize,
-    getInitialPercentage,
     getMaxPercentageForLeftPanel,
     getMinPercentageForLeftPanel
   } = useAdaptivePanelWidths();
@@ -85,7 +82,17 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     rightPanelLayout
   });
 
-  // More conservative sizing for reliable panel visibility
+  // INDEPENDENT right panel resize handler (not using adaptive panel widths)
+  const handleRightPanelResizeIndependent = React.useCallback((percentage: number) => {
+    console.log('🎛️ DesktopLayout - Right panel resize (independent):', {
+      percentage,
+      timestamp: new Date().toISOString()
+    });
+    // Simple percentage tracking without complex pixel conversions
+    // This just lets the ResizablePanel handle its own constraints
+  }, []);
+
+  // Conservative sizing for reliable panel visibility
   const leftPanelPercentage = isLeftPanelVisible ? 7 : 0; // Fixed 7% for left panel
   const rightPanelPercentage = isRightPanelVisible ? 20 : 0; // Reduced to 20% for right panel  
   const canvasPercentage = 100 - leftPanelPercentage - rightPanelPercentage;
@@ -145,7 +152,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
           </>
         )}
 
-        <ResizablePanel defaultSize={canvasPercentage} minSize={25} className="relative overflow-hidden">
+        <ResizablePanel defaultSize={canvasPercentage} minSize={20} className="relative overflow-hidden">
           {children}
         </ResizablePanel>
 
@@ -154,11 +161,17 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
             <ResizableHandle withHandle />
             <ResizablePanel
               defaultSize={rightPanelPercentage}
-              minSize={15}
+              minSize={12}
               maxSize={35}
-              onResize={handleRightPanelResize}
+              onResize={handleRightPanelResizeIndependent}
               className="relative"
             >
+              {console.log('🎛️ DesktopLayout - Right panel ResizablePanel config:', {
+                defaultSize: rightPanelPercentage,
+                minSize: 12,
+                maxSize: 35,
+                timestamp: new Date().toISOString()
+              })}
               <DesktopPropertiesPanel
                 selectedNode={selectedNode}
                 selectedEdge={selectedEdge}
