@@ -111,7 +111,7 @@ const EnhancedNodePalette: React.FC<EnhancedNodePaletteProps> = ({
     if (selectedCategory) {
       const category = nodeCategories.find(cat => cat.id === selectedCategory);
       if (category) {
-        nodes = nodes.filter(node => category.nodeTypes.includes(node.type));
+        nodes = nodes.filter(node => category.nodes.some(categoryNode => categoryNode.type === node.type));
       }
     }
 
