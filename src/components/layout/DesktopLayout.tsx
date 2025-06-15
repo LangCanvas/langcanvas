@@ -85,12 +85,12 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     rightPanelLayout
   });
 
-  // Fixed sizing for reliable panel visibility
+  // More conservative sizing for reliable panel visibility
   const leftPanelPercentage = isLeftPanelVisible ? 7 : 0; // Fixed 7% for left panel
-  const rightPanelPercentage = isRightPanelVisible ? 25 : 0; // Fixed 25% for right panel  
+  const rightPanelPercentage = isRightPanelVisible ? 20 : 0; // Reduced to 20% for right panel  
   const canvasPercentage = 100 - leftPanelPercentage - rightPanelPercentage;
 
-  console.log('🖥️ DesktopLayout - FIXED percentages:', {
+  console.log('🖥️ DesktopLayout - CONSERVATIVE percentages:', {
     leftPanelPercentage,
     rightPanelPercentage,
     canvasPercentage,
@@ -145,7 +145,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
           </>
         )}
 
-        <ResizablePanel defaultSize={canvasPercentage} minSize={30} className="relative overflow-hidden">
+        <ResizablePanel defaultSize={canvasPercentage} minSize={25} className="relative overflow-hidden">
           {children}
         </ResizablePanel>
 
@@ -154,8 +154,8 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
             <ResizableHandle withHandle />
             <ResizablePanel
               defaultSize={rightPanelPercentage}
-              minSize={20}
-              maxSize={40}
+              minSize={15}
+              maxSize={35}
               onResize={handleRightPanelResize}
               className="relative"
             >
