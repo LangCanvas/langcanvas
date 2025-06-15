@@ -28,8 +28,11 @@ export const useDesktopLayoutLogic = (isLeftPanelVisible: boolean, isRightPanelV
     areIndependent: true
   });
 
-  // Dynamic sizing based on actual panel requirements
-  const leftPanelPercentage = isLeftPanelVisible ? Math.max(5, getMinPercentageForLeftPanel()) : 0;
+  // Get viewport width for percentage calculations
+  const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1400;
+
+  // Calculate percentage based on actual current panel width
+  const leftPanelPercentage = isLeftPanelVisible ? (leftPanelWidth / viewportWidth) * 100 : 0;
   const rightPanelPercentage = isRightPanelVisible ? 20 : 0; // Keep right panel fixed for now
   const canvasPercentage = 100 - leftPanelPercentage - rightPanelPercentage;
 
@@ -39,7 +42,8 @@ export const useDesktopLayoutLogic = (isLeftPanelVisible: boolean, isRightPanelV
     canvasPercentage,
     leftVisible: isLeftPanelVisible,
     rightVisible: isRightPanelVisible,
-    leftPanelActualWidth: leftPanelWidth
+    leftPanelActualWidth: leftPanelWidth,
+    viewportWidth
   });
 
   // Calculate the maximum and minimum percentages for the left panel
