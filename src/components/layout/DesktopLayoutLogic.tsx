@@ -76,5 +76,7 @@ export const useDesktopLayoutLogic = (isLeftPanelVisible: boolean, isRightPanelV
     leftPanelPercentage,
     rightPanelPercentage,
     canvasPercentage,
+    maxLeftPanelPercentage,
+    minLeftPanelPercentage,
   };
 };

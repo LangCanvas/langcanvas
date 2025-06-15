@@ -28,6 +28,8 @@ interface DesktopLayoutPanelsProps {
   leftPanelPercentage: number;
   rightPanelPercentage: number;
   canvasPercentage: number;
+  maxLeftPanelPercentage: number;
+  minLeftPanelPercentage: number;
   onToggleRightPanel: () => void;
   setShowValidationPanel: (show: boolean) => void;
   switchToPropertiesPanel: () => void;
@@ -57,6 +59,8 @@ const DesktopLayoutPanels: React.FC<DesktopLayoutPanelsProps> = ({
   leftPanelPercentage,
   rightPanelPercentage,
   canvasPercentage,
+  maxLeftPanelPercentage,
+  minLeftPanelPercentage,
   onToggleRightPanel,
   setShowValidationPanel,
   switchToPropertiesPanel,
@@ -66,17 +70,14 @@ const DesktopLayoutPanels: React.FC<DesktopLayoutPanelsProps> = ({
   onUpdateEdgeProperties,
   validatePriorityConflicts,
 }) => {
-  // Calculate dynamic constraints for left panel based on viewport
-  const leftPanelMinSize = Math.max(3, leftPanelPercentage * 0.7); // Dynamic minimum
-  const leftPanelMaxSize = Math.min(15, leftPanelPercentage * 2); // Dynamic maximum, more generous
-
-  console.log('🖥️ DesktopLayoutPanels - Render with constraints:', {
+  console.log('🖥️ DesktopLayoutPanels - Render with absolute constraints:', {
     leftPanelPercentage,
-    leftPanelMinSize,
-    leftPanelMaxSize,
+    minLeftPanelPercentage,
+    maxLeftPanelPercentage,
     rightPanelPercentage,
     canvasPercentage,
-    leftPanelLayout
+    leftPanelLayout,
+    maxWidthPx: '100px enforced via percentage'
   });
 
   return (
@@ -86,8 +87,8 @@ const DesktopLayoutPanels: React.FC<DesktopLayoutPanelsProps> = ({
           <>
             <ResizablePanel
               defaultSize={leftPanelPercentage}
-              minSize={leftPanelMinSize}
-              maxSize={leftPanelMaxSize}
+              minSize={minLeftPanelPercentage}
+              maxSize={maxLeftPanelPercentage}
               onResize={handleLeftPanelResize}
               className="relative"
             >
