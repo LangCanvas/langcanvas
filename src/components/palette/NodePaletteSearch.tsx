@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -13,7 +12,7 @@ interface NodePaletteSearchProps {
 const NodePaletteSearch: React.FC<NodePaletteSearchProps> = ({
   searchQuery,
   onSearchChange,
-  placeholder = "Search nodes..."
+  placeholder = "Search nodes"
 }) => {
   const [isFocused, setIsFocused] = useState(false);
 
