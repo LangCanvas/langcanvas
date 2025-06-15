@@ -51,15 +51,12 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
   switchToPropertiesPanel,
   validatePriorityConflicts
 }) => {
-  console.log('🎛️ DesktopPropertiesPanel - Render started with props:', {
+  console.log('🎛️ DesktopPropertiesPanel - Render with debug styling:', {
     selectedNode: selectedNode?.id || 'none',
     selectedEdge: selectedEdge?.id || 'none',
     isVisible,
-    isExpanded,
     panelWidth,
-    panelLayout,
-    validationIssues: validationResult.issues.length,
-    showValidationPanel
+    panelLayout
   });
 
   const { activeTab, setActiveTab } = useDesktopPropertiesPanelState({
@@ -75,42 +72,30 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
     return null;
   }
 
-  console.log('🎛️ DesktopPropertiesPanel - Continuing with render');
-
-  // Always show expanded panel (no collapsed state)
   const isCompact = panelLayout === 'small';
   
-  console.log('🎛️ DesktopPropertiesPanel - Rendering with layout:', {
-    isCompact,
-    panelLayout,
-    activeTab
-  });
-
   return (
     <aside 
       data-panel="desktop-properties" 
-      className="relative bg-red-100 border-l-4 border-red-500 flex flex-col h-full flex-shrink-0"
+      className="h-full w-full bg-purple-300 border-8 border-purple-800 flex flex-col"
       style={{ 
         minWidth: `${panelWidth}px`,
         width: `${panelWidth}px`,
         maxWidth: `${panelWidth}px`,
         position: 'relative',
-        right: 0,
-        zIndex: 10,
-        backgroundColor: '#fee2e2', // Light red background for debugging
-        border: '4px solid #ef4444' // Red border for visibility
+        zIndex: 10
       }}
     >
-      <div className={`${isCompact ? 'p-2' : 'p-4'} border-b border-red-400 flex items-center justify-between bg-red-200`}>
-        <h2 className={`font-medium text-red-800 ${isCompact ? 'text-xs' : 'text-sm'}`}>
-          {isCompact ? 'DEBUG PANEL' : 'DEBUG Properties Panel'}
+      <div className={`${isCompact ? 'p-2' : 'p-4'} border-b border-purple-600 flex items-center justify-between bg-purple-400`}>
+        <h2 className={`font-bold text-purple-900 ${isCompact ? 'text-sm' : 'text-lg'}`}>
+          🎛️ PROPERTIES PANEL VISIBLE! 
         </h2>
         {onToggle && !isCompact && (
           <Button
             variant="ghost"
             size="sm"
             onClick={onToggle}
-            className="w-8 h-8 p-0 bg-red-300 hover:bg-red-400"
+            className="w-8 h-8 p-0 bg-purple-500 hover:bg-purple-600 text-white"
             title="Hide Properties Panel"
           >
             <X className="w-4 h-4" />
@@ -118,13 +103,15 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
         )}
       </div>
       
-      <div className="flex-1 bg-red-50 p-4">
-        <div className="text-red-800 text-sm space-y-2">
-          <div>✅ PANEL IS VISIBLE!</div>
+      <div className="flex-1 bg-purple-200 p-4 overflow-auto">
+        <div className="text-purple-900 text-sm space-y-2 font-bold">
+          <div>✅ RIGHT PANEL IS NOW VISIBLE!</div>
           <div>Width: {panelWidth}px</div>
           <div>Layout: {panelLayout}</div>
           <div>Compact: {isCompact ? 'Yes' : 'No'}</div>
           <div>Active Tab: {activeTab}</div>
+          <div>Selected Node: {selectedNode?.id || 'None'}</div>
+          <div>Selected Edge: {selectedEdge?.id || 'None'}</div>
         </div>
         
         <DesktopPropertiesPanelTabs

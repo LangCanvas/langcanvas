@@ -16,23 +16,47 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
   panelWidth = 256,
   panelLayout = 'medium'
 }) => {
-  // If not visible at all, don't render anything
+  console.log('🎨 DesktopSidebar - Render with debug styling:', {
+    isVisible,
+    isExpanded,
+    panelWidth,
+    panelLayout
+  });
+
   if (!isVisible) {
     return null;
   }
 
-  // Always show expanded panel with enhanced palette (no collapsed state)
   return (
-    <aside className="relative h-full bg-white border-r border-gray-200 flex flex-col">
-      <EnhancedNodePalette 
-        onNodeTypeSelect={(type) => {
-          const event = new CustomEvent('setPendingCreation', { detail: type });
-          window.dispatchEvent(event);
-        }}
-        isExpanded={isExpanded}
-        panelWidth={panelWidth}
-        panelLayout={panelLayout}
-      />
+    <aside 
+      className="h-full w-full bg-cyan-300 border-8 border-cyan-800 flex flex-col"
+      style={{ 
+        minWidth: `${panelWidth}px`,
+        width: `${panelWidth}px`,
+        maxWidth: `${panelWidth}px`
+      }}
+    >
+      <div className="p-4 bg-cyan-400 border-b border-cyan-600">
+        <h2 className="font-bold text-cyan-900 text-lg">
+          🎨 LEFT PANEL VISIBLE!
+        </h2>
+        <div className="text-cyan-900 text-sm space-y-1">
+          <div>Width: {panelWidth}px</div>
+          <div>Layout: {panelLayout}</div>
+        </div>
+      </div>
+      
+      <div className="flex-1 bg-cyan-200 overflow-auto">
+        <EnhancedNodePalette 
+          onNodeTypeSelect={(type) => {
+            const event = new CustomEvent('setPendingCreation', { detail: type });
+            window.dispatchEvent(event);
+          }}
+          isExpanded={isExpanded}
+          panelWidth={panelWidth}
+          panelLayout={panelLayout}
+        />
+      </div>
     </aside>
   );
 };

@@ -2,7 +2,6 @@
 import React from 'react';
 import DesktopSidebar from './DesktopSidebar';
 import DesktopPropertiesPanel from './DesktopPropertiesPanel';
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { EnhancedNode } from '../../types/nodeTypes';
 import { EnhancedEdge } from '../../types/edgeTypes';
 import { ValidationResult } from '../../hooks/useValidation';
@@ -54,13 +53,6 @@ const DesktopLayoutPanels: React.FC<DesktopLayoutPanelsProps> = ({
   leftPanelLayout,
   rightPanelWidth,
   rightPanelLayout,
-  handleLeftPanelResize,
-  handleRightPanelResize,
-  leftPanelPercentage,
-  rightPanelPercentage,
-  canvasPercentage,
-  maxLeftPanelPercentage,
-  minLeftPanelPercentage,
   onToggleRightPanel,
   setShowValidationPanel,
   switchToPropertiesPanel,
@@ -70,100 +62,65 @@ const DesktopLayoutPanels: React.FC<DesktopLayoutPanelsProps> = ({
   onUpdateEdgeProperties,
   validatePriorityConflicts,
 }) => {
-  console.log('🖥️ DesktopLayoutPanels - Render with panel configuration:', {
-    leftPanelPercentage,
-    rightPanelPercentage,
-    canvasPercentage,
+  console.log('🖥️ DesktopLayoutPanels - Using simple flexbox layout:', {
+    isLeftPanelVisible,
     isRightPanelVisible,
+    leftPanelWidth,
     rightPanelWidth
   });
 
-  // Calculate safe percentages with proper constraints
-  const safeRightPercentage = isRightPanelVisible ? Math.min(30, Math.max(15, rightPanelPercentage)) : 0;
-  const safeCanvasPercentage = 100 - leftPanelPercentage - safeRightPercentage;
-
-  console.log('🖥️ DesktopLayoutPanels - Safe percentages:', {
-    original: { left: leftPanelPercentage, right: rightPanelPercentage, canvas: canvasPercentage },
-    safe: { left: leftPanelPercentage, right: safeRightPercentage, canvas: safeCanvasPercentage }
-  });
-
   return (
-    <div className="flex-1 h-full">
-      <ResizablePanelGroup 
-        direction="horizontal" 
-        className="h-full w-full"
-        style={{ width: '100%', maxWidth: '100vw' }}
-      >
-        {isLeftPanelVisible && (
-          <>
-            <ResizablePanel
-              defaultSize={leftPanelPercentage}
-              minSize={minLeftPanelPercentage}
-              maxSize={maxLeftPanelPercentage}
-              onResize={handleLeftPanelResize}
-              className="relative"
-            >
-              <DesktopSidebar
-                isVisible={isLeftPanelVisible}
-                isExpanded={true}
-                panelWidth={leftPanelWidth}
-                panelLayout={leftPanelLayout}
-              />
-            </ResizablePanel>
-            <ResizableHandle withHandle />
-          </>
-        )}
-
-        <ResizablePanel 
-          defaultSize={safeCanvasPercentage} 
-          minSize={20} 
-          className="relative overflow-hidden"
+    <div className="flex h-full w-full bg-yellow-100 border-4 border-yellow-500">
+      {/* DEBUG: Yellow container to see main layout */}
+      
+      {/* Left Panel */}
+      {isLeftPanelVisible && (
+        <div 
+          className="flex-shrink-0 bg-blue-200 border-4 border-blue-600"
+          style={{ width: `${leftPanelWidth}px` }}
         >
-          {children}
-        </ResizablePanel>
+          <DesktopSidebar
+            isVisible={isLeftPanelVisible}
+            isExpanded={true}
+            panelWidth={leftPanelWidth}
+            panelLayout={leftPanelLayout}
+          />
+        </div>
+      )}
 
-        {isRightPanelVisible && (
-          <>
-            <ResizableHandle withHandle />
-            <ResizablePanel
-              defaultSize={safeRightPercentage}
-              minSize={15}
-              maxSize={30}
-              onResize={(size) => {
-                console.log('🔍 Right panel resized to:', size, '%');
-                handleRightPanelResize(size);
-              }}
-              className="relative"
-              style={{ 
-                minWidth: '200px',
-                maxWidth: '400px',
-                position: 'relative'
-              }}
-            >
-              <DesktopPropertiesPanel
-                selectedNode={selectedNode}
-                selectedEdge={selectedEdge}
-                allNodes={nodes}
-                allEdges={edges}
-                validationResult={validationResult}
-                showValidationPanel={showValidationPanel}
-                isVisible={isRightPanelVisible}
-                isExpanded={true}
-                onUpdateNode={onUpdateNodeProperties}
-                onUpdateEdge={onUpdateEdgeProperties}
-                onDeleteNode={onDeleteNode}
-                onDeleteEdge={onDeleteEdge}
-                setShowValidationPanel={setShowValidationPanel}
-                onToggle={onToggleRightPanel}
-                switchToPropertiesPanel={switchToPropertiesPanel}
-                validatePriorityConflicts={validatePriorityConflicts}
-                panelWidth={rightPanelWidth}
-                panelLayout={rightPanelLayout}
-              />
-            </ResizablePanel>
-          </>
-        )}
-      </ResizablePanelGroup>
+      {/* Canvas Area */}
+      <div className="flex-1 bg-green-100 border-4 border-green-600 overflow-hidden">
+        {children}
+      </div>
+
+      {/* Right Panel */}
+      {isRightPanelVisible && (
+        <div 
+          className="flex-shrink-0 bg-red-200 border-4 border-red-600"
+          style={{ width: `${rightPanelWidth}px` }}
+        >
+          <DesktopPropertiesPanel
+            selectedNode={selectedNode}
+            selectedEdge={selectedEdge}
+            allNodes={nodes}
+            allEdges={edges}
+            validationResult={validationResult}
+            showValidationPanel={showValidationPanel}
+            isVisible={isRightPanelVisible}
+            isExpanded={true}
+            onUpdateNode={onUpdateNodeProperties}
+            onUpdateEdge={onUpdateEdgeProperties}
+            onDeleteNode={onDeleteNode}
+            onDeleteEdge={onDeleteEdge}
+            setShowValidationPanel={setShowValidationPanel}
+            onToggle={onToggleRightPanel}
+            switchToPropertiesPanel={switchToPropertiesPanel}
+            validatePriorityConflicts={validatePriorityConflicts}
+            panelWidth={rightPanelWidth}
+            panelLayout={rightPanelLayout}
+          />
+        </div>
+      )}
     </div>
   );
 };
