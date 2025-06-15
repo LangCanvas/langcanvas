@@ -12,6 +12,10 @@
   text-align: center !important;
 }
 
+.node-palette-center-align * {
+  text-align: center !important;
+}
+
 /* Specific override for the root element's center alignment */
 #root .node-palette-left-align {
   text-align: left !important;
@@ -19,4 +23,12 @@
 
 #root .node-palette-left-align * {
   text-align: left !important;
+}
+
+#root .node-palette-center-align {
+  text-align: center !important;
+}
+
+#root .node-palette-center-align * {
+  text-align: center !important;
 }

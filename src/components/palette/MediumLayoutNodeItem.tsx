@@ -18,7 +18,7 @@ const MediumLayoutNodeItem: React.FC<MediumLayoutNodeItemProps> = ({
   showDescription = false
 }) => {
   return (
-    <div className="group relative node-palette-left-align">
+    <div className="group relative node-palette-center-align">
       <div
         role="button"
         tabIndex={0}
@@ -33,17 +33,17 @@ const MediumLayoutNodeItem: React.FC<MediumLayoutNodeItemProps> = ({
           }
         }}
       >
-        <div className="grid grid-cols-[24px_1fr] gap-2 items-center w-full">
-          <span className="text-lg flex justify-center">
+        <div className="flex flex-col items-center gap-2 w-full text-center">
+          <span className="text-lg">
             {node.icon}
           </span>
-          <span className="font-semibold text-sm">
+          <span className="font-semibold text-sm text-center">
             {node.label}
           </span>
         </div>
         
         {showDescription && (
-          <p className="text-xs leading-relaxed opacity-80 group-hover:opacity-100 transition-opacity w-full mt-2">
+          <p className="text-xs leading-relaxed opacity-80 group-hover:opacity-100 transition-opacity w-full mt-2 text-center">
             {node.description}
           </p>
         )}

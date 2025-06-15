@@ -10,7 +10,7 @@ interface PaletteHeaderProps {
 const PaletteHeader: React.FC<PaletteHeaderProps> = ({ title, onToggle }) => {
   return (
     <div className="flex items-center justify-between mb-4">
-      <h2 className="text-sm font-medium text-gray-700">{title}</h2>
+      <h2 className="text-sm font-medium text-gray-700 text-center flex-1">{title}</h2>
       {onToggle && (
         <button
           onClick={onToggle}
