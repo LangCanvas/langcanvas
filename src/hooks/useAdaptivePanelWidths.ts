@@ -1,6 +1,5 @@
 
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { useSmartPanelSizing } from './useSmartPanelSizing';
+import { useState, useCallback } from 'react';
 
 // Updated panel breakpoints with new minimum constraint
 export const PANEL_BREAKPOINTS = {
@@ -14,8 +13,6 @@ export const PANEL_BREAKPOINTS = {
 export type PanelLayout = 'small' | 'medium';
 
 export const useAdaptivePanelWidths = () => {
-  const { measurements, getContentBasedLayout } = useSmartPanelSizing();
-  
   const getInitialLeftWidth = useCallback(() => {
     if (typeof window !== 'undefined') {
       return Math.max(PANEL_BREAKPOINTS.MIN, Math.min(PANEL_BREAKPOINTS.MAX, window.innerWidth * 0.15));
@@ -66,14 +63,16 @@ export const useAdaptivePanelWidths = () => {
     setRightPanelWidth(constrainedWidth);
   }, [convertPercentageToPixels]);
 
+  // Independent layout calculation for left panel
   const getLeftPanelLayout = useCallback((): PanelLayout => {
-    return getContentBasedLayout(leftPanelWidth);
-  }, [leftPanelWidth, getContentBasedLayout]);
+    return leftPanelWidth >= PANEL_BREAKPOINTS.SWITCH_THRESHOLD ? 'medium' : 'small';
+  }, [leftPanelWidth]);
 
+  // Independent layout calculation for right panel
   const getRightPanelLayout = useCallback((): PanelLayout => {
-    // Use the same logic for consistency
-    return getContentBasedLayout(leftPanelWidth);
-  }, [leftPanelWidth, getContentBasedLayout]);
+    // Using same threshold for consistency, but could have its own if needed
+    return rightPanelWidth >= PANEL_BREAKPOINTS.SWITCH_THRESHOLD ? 'medium' : 'small';
+  }, [rightPanelWidth]);
 
   return {
     leftPanelWidth,
@@ -85,6 +84,6 @@ export const useAdaptivePanelWidths = () => {
     getInitialPercentage,
     getMaxPercentageForLeftPanel,
     getMinPercentageForLeftPanel,
-    measurements,
+    measurements: {}, // Empty measurements object for backward compatibility
   };
 };
