@@ -1,17 +1,25 @@
-import { useState, useCallback } from 'react';
+
+import { useState, useCallback, useEffect } from 'react';
 import { PanelLayout } from '../types/panelTypes';
 
-// Left panel specific breakpoints
+// Left panel specific breakpoints - adjusted for better layout switching
 export const LEFT_PANEL_BREAKPOINTS = {
   MIN: 50, // Minimum width for small layout
-  SWITCH_THRESHOLD: 70, // Switch to medium layout threshold
-  MAX: 100, // Maximum for medium layout
+  SWITCH_THRESHOLD: 60, // Lowered from 70px for more reliable switching
+  MAX: 120, // Increased max to allow more resize range
   DEFAULT: 95
 } as const;
 
 export type LeftPanelLayout = PanelLayout;
 
 export const useLeftPanelState = () => {
+  const [viewportWidth, setViewportWidth] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth;
+    }
+    return 1400; // fallback
+  });
+
   const getInitialLeftWidth = useCallback(() => {
     if (typeof window !== 'undefined') {
       return Math.max(LEFT_PANEL_BREAKPOINTS.MIN, Math.min(LEFT_PANEL_BREAKPOINTS.MAX, window.innerWidth * 0.15));
@@ -21,67 +29,104 @@ export const useLeftPanelState = () => {
 
   const [leftPanelWidth, setLeftPanelWidth] = useState<number>(() => getInitialLeftWidth());
 
+  // Add viewport resize listener for real-time updates
+  useEffect(() => {
+    const handleResize = () => {
+      const newWidth = window.innerWidth;
+      setViewportWidth(newWidth);
+      console.log('🎛️ useLeftPanelState - Viewport resized:', { newWidth, oldWidth: viewportWidth });
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [viewportWidth]);
+
   const convertPercentageToPixels = useCallback((percentage: number) => {
-    const referenceWidth = 1400;
-    return Math.round((percentage / 100) * referenceWidth);
-  }, []);
+    // Use actual viewport width instead of fixed 1400px
+    const actualWidth = viewportWidth;
+    const pixelWidth = Math.round((percentage / 100) * actualWidth);
+    console.log('🎛️ useLeftPanelState - Percentage to pixels conversion:', {
+      percentage,
+      viewportWidth: actualWidth,
+      pixelWidth,
+      isActualViewport: true
+    });
+    return pixelWidth;
+  }, [viewportWidth]);
 
-  // Calculate the maximum percentage that represents 100px
+  // Calculate the maximum percentage that represents our MAX breakpoint
   const getMaxPercentageForLeftPanel = useCallback(() => {
-    const referenceWidth = 1400;
-    return (LEFT_PANEL_BREAKPOINTS.MAX / referenceWidth) * 100;
-  }, []);
+    const maxPercentage = (LEFT_PANEL_BREAKPOINTS.MAX / viewportWidth) * 100;
+    console.log('🎛️ useLeftPanelState - Max percentage calculation:', {
+      maxPixels: LEFT_PANEL_BREAKPOINTS.MAX,
+      viewportWidth,
+      maxPercentage
+    });
+    return maxPercentage;
+  }, [viewportWidth]);
 
-  // Calculate the minimum percentage that represents 50px
+  // Calculate the minimum percentage that represents our MIN breakpoint
   const getMinPercentageForLeftPanel = useCallback(() => {
-    const referenceWidth = 1400;
-    return (LEFT_PANEL_BREAKPOINTS.MIN / referenceWidth) * 100;
-  }, []);
+    const minPercentage = (LEFT_PANEL_BREAKPOINTS.MIN / viewportWidth) * 100;
+    console.log('🎛️ useLeftPanelState - Min percentage calculation:', {
+      minPixels: LEFT_PANEL_BREAKPOINTS.MIN,
+      viewportWidth,
+      minPercentage
+    });
+    return minPercentage;
+  }, [viewportWidth]);
 
   const handleLeftPanelResize = useCallback((percentage: number) => {
-    console.log('🎛️ useLeftPanelState - Resize triggered:', { percentage });
+    console.log('🎛️ useLeftPanelState - Resize triggered:', { 
+      percentage, 
+      viewportWidth,
+      currentWidth: leftPanelWidth 
+    });
     
-    // Cap the percentage to ensure it doesn't exceed 100px equivalent
-    const maxPercentage = getMaxPercentageForLeftPanel();
-    const cappedPercentage = Math.min(percentage, maxPercentage);
+    // Convert percentage to actual pixel width using real viewport
+    const pixelWidth = convertPercentageToPixels(percentage);
     
-    const pixelWidth = convertPercentageToPixels(cappedPercentage);
-    // Enforce strict width constraints for left panel
-    const constrainedWidth = Math.max(LEFT_PANEL_BREAKPOINTS.MIN, Math.min(LEFT_PANEL_BREAKPOINTS.MAX, pixelWidth));
+    // Apply breakpoint constraints
+    const constrainedWidth = Math.max(
+      LEFT_PANEL_BREAKPOINTS.MIN, 
+      Math.min(LEFT_PANEL_BREAKPOINTS.MAX, pixelWidth)
+    );
     
-    console.log('🎛️ useLeftPanelState - Width calculation:', {
-      percentage,
-      cappedPercentage,
-      pixelWidth,
+    console.log('🎛️ useLeftPanelState - Width calculation details:', {
+      inputPercentage: percentage,
+      viewportWidth,
+      calculatedPixelWidth: pixelWidth,
       constrainedWidth,
-      oldWidth: leftPanelWidth
+      oldWidth: leftPanelWidth,
+      willTriggerLayoutChange: constrainedWidth < LEFT_PANEL_BREAKPOINTS.SWITCH_THRESHOLD !== leftPanelWidth < LEFT_PANEL_BREAKPOINTS.SWITCH_THRESHOLD
     });
     
     setLeftPanelWidth(constrainedWidth);
-  }, [convertPercentageToPixels, getMaxPercentageForLeftPanel, leftPanelWidth]);
+  }, [convertPercentageToPixels, leftPanelWidth, viewportWidth]);
 
-  // INDEPENDENT layout calculation - no external dependencies
+  // INDEPENDENT layout calculation with enhanced logging
   const getLeftPanelLayout = useCallback((): LeftPanelLayout => {
-    // Direct comparison with our own breakpoint
     const layout = leftPanelWidth >= LEFT_PANEL_BREAKPOINTS.SWITCH_THRESHOLD ? 'medium' : 'small';
-    console.log('🎛️ useLeftPanelState - INDEPENDENT Layout calculation:', {
+    console.log('🎛️ useLeftPanelState - Layout calculation:', {
       leftPanelWidth,
+      switchThreshold: LEFT_PANEL_BREAKPOINTS.SWITCH_THRESHOLD,
       layout,
-      threshold: LEFT_PANEL_BREAKPOINTS.SWITCH_THRESHOLD,
-      isIndependent: true
+      isSmall: layout === 'small',
+      isMedium: layout === 'medium',
+      viewportWidth,
+      breakpointRatio: leftPanelWidth / LEFT_PANEL_BREAKPOINTS.SWITCH_THRESHOLD
     });
     return layout;
-  }, [leftPanelWidth]);
+  }, [leftPanelWidth, viewportWidth]);
 
   const layout = getLeftPanelLayout();
 
-  console.log('🎛️ useLeftPanelState - Current INDEPENDENT state:', {
+  console.log('🎛️ useLeftPanelState - Current state summary:', {
     leftPanelWidth,
     layout,
-    min: LEFT_PANEL_BREAKPOINTS.MIN,
-    max: LEFT_PANEL_BREAKPOINTS.MAX,
-    switchThreshold: LEFT_PANEL_BREAKPOINTS.SWITCH_THRESHOLD,
-    isIndependent: true
+    viewportWidth,
+    breakpoints: LEFT_PANEL_BREAKPOINTS,
+    percentageEquivalent: (leftPanelWidth / viewportWidth) * 100
   });
 
   return {

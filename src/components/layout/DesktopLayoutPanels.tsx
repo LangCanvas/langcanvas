@@ -66,6 +66,19 @@ const DesktopLayoutPanels: React.FC<DesktopLayoutPanelsProps> = ({
   onUpdateEdgeProperties,
   validatePriorityConflicts,
 }) => {
+  // Calculate dynamic constraints for left panel based on viewport
+  const leftPanelMinSize = Math.max(3, leftPanelPercentage * 0.7); // Dynamic minimum
+  const leftPanelMaxSize = Math.min(15, leftPanelPercentage * 2); // Dynamic maximum, more generous
+
+  console.log('🖥️ DesktopLayoutPanels - Render with constraints:', {
+    leftPanelPercentage,
+    leftPanelMinSize,
+    leftPanelMaxSize,
+    rightPanelPercentage,
+    canvasPercentage,
+    leftPanelLayout
+  });
+
   return (
     <div className="flex-1 h-full">
       <ResizablePanelGroup direction="horizontal" className="h-full">
@@ -73,8 +86,8 @@ const DesktopLayoutPanels: React.FC<DesktopLayoutPanelsProps> = ({
           <>
             <ResizablePanel
               defaultSize={leftPanelPercentage}
-              minSize={5}
-              maxSize={10}
+              minSize={leftPanelMinSize}
+              maxSize={leftPanelMaxSize}
               onResize={handleLeftPanelResize}
               className="relative"
             >

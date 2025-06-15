@@ -28,26 +28,28 @@ export const useDesktopLayoutLogic = (isLeftPanelVisible: boolean, isRightPanelV
     areIndependent: true
   });
 
-  // Conservative sizing for reliable panel visibility
-  const leftPanelPercentage = isLeftPanelVisible ? 7 : 0; // Fixed 7% for left panel
-  const rightPanelPercentage = isRightPanelVisible ? 20 : 0; // Fixed 20% for right panel  
+  // Dynamic sizing based on actual panel requirements
+  const leftPanelPercentage = isLeftPanelVisible ? Math.max(5, getMinPercentageForLeftPanel()) : 0;
+  const rightPanelPercentage = isRightPanelVisible ? 20 : 0; // Keep right panel fixed for now
   const canvasPercentage = 100 - leftPanelPercentage - rightPanelPercentage;
 
-  console.log('🖥️ DesktopLayoutLogic - Panel percentages:', {
+  console.log('🖥️ DesktopLayoutLogic - Dynamic panel percentages:', {
     leftPanelPercentage,
     rightPanelPercentage,
     canvasPercentage,
     leftVisible: isLeftPanelVisible,
-    rightVisible: isRightPanelVisible
+    rightVisible: isRightPanelVisible,
+    leftPanelActualWidth: leftPanelWidth
   });
 
   // Calculate the maximum and minimum percentages for the left panel
   const maxLeftPanelPercentage = getMaxPercentageForLeftPanel();
   const minLeftPanelPercentage = getMinPercentageForLeftPanel();
 
-  console.log('🖥️ DesktopLayoutLogic - Left panel constraints:', {
+  console.log('🖥️ DesktopLayoutLogic - Left panel constraints (updated):', {
     maxLeftPanelPercentage,
-    minLeftPanelPercentage
+    minLeftPanelPercentage,
+    allowedRange: `${minLeftPanelPercentage.toFixed(1)}% - ${maxLeftPanelPercentage.toFixed(1)}%`
   });
 
   // Log right panel configuration before render
