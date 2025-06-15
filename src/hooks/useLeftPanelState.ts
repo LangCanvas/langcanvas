@@ -4,7 +4,7 @@ import { PanelLayout } from '../types/panelTypes';
 
 // Left panel specific breakpoints - adjusted for better layout switching
 export const LEFT_PANEL_BREAKPOINTS = {
-  MIN: 50, // Minimum width for small layout
+  MIN: 40, // Minimum width reduced from 50px to 40px
   SWITCH_THRESHOLD: 60, // Lowered from 70px for more reliable switching
   MAX: 70, // Maximum width reduced from 100px to 70px
   DEFAULT: 70 // Keep default at 70px to match new max
