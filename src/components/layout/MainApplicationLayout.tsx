@@ -90,7 +90,7 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
   });
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
+    <div className="flex flex-col h-screen bg-gray-50 w-full max-w-full overflow-hidden">
       <UnderConstructionBanner />
       
       <Toolbar
@@ -107,7 +107,7 @@ const MainApplicationLayout: React.FC<MainApplicationLayoutProps> = ({
         onToggleRightPanel={onToggleRightPanel}
       />
 
-      <div className="flex flex-1 relative overflow-hidden">
+      <div className="flex flex-1 relative overflow-hidden w-full">
         {!isMobile ? (
           <DesktopLayout
             isLeftPanelVisible={isLeftPanelVisible}

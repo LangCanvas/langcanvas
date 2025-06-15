@@ -78,9 +78,22 @@ const DesktopLayoutPanels: React.FC<DesktopLayoutPanelsProps> = ({
     rightPanelWidth
   });
 
+  // Calculate safe percentages with proper constraints
+  const safeRightPercentage = isRightPanelVisible ? Math.min(30, Math.max(15, rightPanelPercentage)) : 0;
+  const safeCanvasPercentage = 100 - leftPanelPercentage - safeRightPercentage;
+
+  console.log('🖥️ DesktopLayoutPanels - Safe percentages:', {
+    original: { left: leftPanelPercentage, right: rightPanelPercentage, canvas: canvasPercentage },
+    safe: { left: leftPanelPercentage, right: safeRightPercentage, canvas: safeCanvasPercentage }
+  });
+
   return (
     <div className="flex-1 h-full">
-      <ResizablePanelGroup direction="horizontal" className="h-full">
+      <ResizablePanelGroup 
+        direction="horizontal" 
+        className="h-full w-full"
+        style={{ width: '100%', maxWidth: '100vw' }}
+      >
         {isLeftPanelVisible && (
           <>
             <ResizablePanel
@@ -101,7 +114,11 @@ const DesktopLayoutPanels: React.FC<DesktopLayoutPanelsProps> = ({
           </>
         )}
 
-        <ResizablePanel defaultSize={canvasPercentage} minSize={20} className="relative overflow-hidden">
+        <ResizablePanel 
+          defaultSize={safeCanvasPercentage} 
+          minSize={20} 
+          className="relative overflow-hidden"
+        >
           {children}
         </ResizablePanel>
 
@@ -109,14 +126,19 @@ const DesktopLayoutPanels: React.FC<DesktopLayoutPanelsProps> = ({
           <>
             <ResizableHandle withHandle />
             <ResizablePanel
-              defaultSize={rightPanelPercentage}
+              defaultSize={safeRightPercentage}
               minSize={15}
-              maxSize={40}
+              maxSize={30}
               onResize={(size) => {
                 console.log('🔍 Right panel resized to:', size, '%');
                 handleRightPanelResize(size);
               }}
               className="relative"
+              style={{ 
+                minWidth: '200px',
+                maxWidth: '400px',
+                position: 'relative'
+              }}
             >
               <DesktopPropertiesPanel
                 selectedNode={selectedNode}

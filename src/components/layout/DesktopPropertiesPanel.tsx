@@ -70,19 +70,6 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
     switchToPropertiesPanel
   });
 
-  // Basic dimension checking without offsetParent
-  React.useEffect(() => {
-    const element = document.querySelector('[data-panel="desktop-properties"]');
-    if (element) {
-      const rect = element.getBoundingClientRect();
-      console.log('🔍 Panel dimensions:', {
-        width: rect.width,
-        height: rect.height,
-        isVisible: rect.width > 0 && rect.height > 0
-      });
-    }
-  });
-
   if (!isVisible) {
     console.log('🎛️ DesktopPropertiesPanel - Not visible, returning null');
     return null;
@@ -102,22 +89,28 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
   return (
     <aside 
       data-panel="desktop-properties" 
-      className="relative bg-background border-l border-border flex flex-col h-full flex-shrink-0"
+      className="relative bg-red-100 border-l-4 border-red-500 flex flex-col h-full flex-shrink-0"
       style={{ 
         minWidth: `${panelWidth}px`,
-        width: `${panelWidth}px`
+        width: `${panelWidth}px`,
+        maxWidth: `${panelWidth}px`,
+        position: 'relative',
+        right: 0,
+        zIndex: 10,
+        backgroundColor: '#fee2e2', // Light red background for debugging
+        border: '4px solid #ef4444' // Red border for visibility
       }}
     >
-      <div className={`${isCompact ? 'p-2' : 'p-4'} border-b border-border flex items-center justify-between`}>
-        <h2 className={`font-medium text-foreground ${isCompact ? 'text-xs' : 'text-sm'}`}>
-          {isCompact ? 'Panel' : 'Properties Panel'}
+      <div className={`${isCompact ? 'p-2' : 'p-4'} border-b border-red-400 flex items-center justify-between bg-red-200`}>
+        <h2 className={`font-medium text-red-800 ${isCompact ? 'text-xs' : 'text-sm'}`}>
+          {isCompact ? 'DEBUG PANEL' : 'DEBUG Properties Panel'}
         </h2>
         {onToggle && !isCompact && (
           <Button
             variant="ghost"
             size="sm"
             onClick={onToggle}
-            className="w-8 h-8 p-0"
+            className="w-8 h-8 p-0 bg-red-300 hover:bg-red-400"
             title="Hide Properties Panel"
           >
             <X className="w-4 h-4" />
@@ -125,21 +118,31 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
         )}
       </div>
       
-      <DesktopPropertiesPanelTabs
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        selectedNode={selectedNode}
-        selectedEdge={selectedEdge}
-        allNodes={allNodes}
-        allEdges={allEdges}
-        validationResult={validationResult}
-        isCompact={isCompact}
-        onUpdateNode={onUpdateNode}
-        onUpdateEdge={onUpdateEdge}
-        onDeleteNode={onDeleteNode}
-        onDeleteEdge={onDeleteEdge}
-        validatePriorityConflicts={validatePriorityConflicts}
-      />
+      <div className="flex-1 bg-red-50 p-4">
+        <div className="text-red-800 text-sm space-y-2">
+          <div>✅ PANEL IS VISIBLE!</div>
+          <div>Width: {panelWidth}px</div>
+          <div>Layout: {panelLayout}</div>
+          <div>Compact: {isCompact ? 'Yes' : 'No'}</div>
+          <div>Active Tab: {activeTab}</div>
+        </div>
+        
+        <DesktopPropertiesPanelTabs
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          selectedNode={selectedNode}
+          selectedEdge={selectedEdge}
+          allNodes={allNodes}
+          allEdges={allEdges}
+          validationResult={validationResult}
+          isCompact={isCompact}
+          onUpdateNode={onUpdateNode}
+          onUpdateEdge={onUpdateEdge}
+          onDeleteNode={onDeleteNode}
+          onDeleteEdge={onDeleteEdge}
+          validatePriorityConflicts={validatePriorityConflicts}
+        />
+      </div>
     </aside>
   );
 };
