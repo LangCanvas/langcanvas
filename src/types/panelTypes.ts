@@ -11,6 +11,7 @@ export interface ResizablePanelState {
 }
 
 export type PanelBreakpoint = 'small' | 'medium';
+export type PanelLayout = 'small' | 'medium'; // Moved from deleted useAdaptivePanelWidths
 
 export interface PanelLayoutConfig {
   showSearch: boolean;

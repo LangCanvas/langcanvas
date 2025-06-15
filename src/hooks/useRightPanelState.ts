@@ -1,5 +1,5 @@
-
 import { useState, useCallback } from 'react';
+import { PanelLayout } from '../types/panelTypes';
 
 // Right panel specific breakpoints
 export const RIGHT_PANEL_BREAKPOINTS = {
@@ -8,7 +8,7 @@ export const RIGHT_PANEL_BREAKPOINTS = {
   DEFAULT: 320
 } as const;
 
-export type RightPanelLayout = 'small' | 'medium';
+export type RightPanelLayout = PanelLayout;
 
 export const useRightPanelState = () => {
   const [rightPanelWidth, setRightPanelWidth] = useState<number>(RIGHT_PANEL_BREAKPOINTS.DEFAULT);

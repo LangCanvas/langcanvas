@@ -1,5 +1,5 @@
-
 import { useState, useCallback } from 'react';
+import { PanelLayout } from '../types/panelTypes';
 
 // Left panel specific breakpoints
 export const LEFT_PANEL_BREAKPOINTS = {
@@ -9,7 +9,7 @@ export const LEFT_PANEL_BREAKPOINTS = {
   DEFAULT: 95
 } as const;
 
-export type LeftPanelLayout = 'small' | 'medium';
+export type LeftPanelLayout = PanelLayout;
 
 export const useLeftPanelState = () => {
   const getInitialLeftWidth = useCallback(() => {
