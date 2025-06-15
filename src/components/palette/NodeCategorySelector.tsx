@@ -13,8 +13,8 @@ const NodeCategorySelector: React.FC<NodeCategorySelectorProps> = ({
   onCategorySelect,
 }) => {
   return (
-    <div className="space-y-2">
-      <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+    <div className="space-y-2 pt-4">
+      <div className="text-xs font-medium text-gray-500 uppercase tracking-wide text-center">
         Categories
       </div>
       
@@ -23,7 +23,7 @@ const NodeCategorySelector: React.FC<NodeCategorySelectorProps> = ({
           variant={selectedCategory === null ? "default" : "ghost"}
           size="sm"
           onClick={() => onCategorySelect(null)}
-          className="justify-start text-xs h-8"
+          className="justify-center text-xs h-8"
           title="Show all node types"
         >
           <span className="mr-2">📋</span>
@@ -36,7 +36,7 @@ const NodeCategorySelector: React.FC<NodeCategorySelectorProps> = ({
             variant={selectedCategory === category.id ? "default" : "ghost"}
             size="sm"
             onClick={() => onCategorySelect(category.id)}
-            className="justify-start text-xs h-8"
+            className="justify-center text-xs h-8"
             title={category.description}
           >
             <span className="mr-2">{category.icon}</span>
