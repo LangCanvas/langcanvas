@@ -1,3 +1,4 @@
+
 import React from 'react';
 import DesktopSidebar from './DesktopSidebar';
 import DesktopPropertiesPanel from './DesktopPropertiesPanel';
@@ -129,6 +130,16 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     willRender: isRightPanelVisible ? 'YES' : 'NO'
   });
 
+  // Log right panel configuration before render
+  if (isRightPanelVisible) {
+    console.log('🎛️ DesktopLayout - Right panel ResizablePanel config:', {
+      defaultSize: rightPanelPercentage,
+      minSize: 12,
+      maxSize: 35,
+      timestamp: new Date().toISOString()
+    });
+  }
+
   return (
     <div className="flex-1 h-full">
       <ResizablePanelGroup direction="horizontal" className="h-full">
@@ -166,12 +177,6 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
               onResize={handleRightPanelResizeIndependent}
               className="relative"
             >
-              {console.log('🎛️ DesktopLayout - Right panel ResizablePanel config:', {
-                defaultSize: rightPanelPercentage,
-                minSize: 12,
-                maxSize: 35,
-                timestamp: new Date().toISOString()
-              })}
               <DesktopPropertiesPanel
                 selectedNode={selectedNode}
                 selectedEdge={selectedEdge}
