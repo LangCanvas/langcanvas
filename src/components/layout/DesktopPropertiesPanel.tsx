@@ -6,7 +6,7 @@ import DesktopPropertiesPanelTabs from './DesktopPropertiesPanelTabs';
 import { EnhancedNode } from '../../types/nodeTypes';
 import { EnhancedEdge } from '../../types/edgeTypes';
 import { ValidationResult } from '../../hooks/useValidation';
-import { PanelLayout } from '../../hooks/useAdaptivePanelWidths';
+import { RightPanelLayout } from '../../hooks/useRightPanelState';
 import { useDesktopPropertiesPanelState } from '../../hooks/useDesktopPropertiesPanelState';
 
 interface DesktopPropertiesPanelProps {
@@ -19,7 +19,7 @@ interface DesktopPropertiesPanelProps {
   isVisible?: boolean;
   isExpanded?: boolean;
   panelWidth?: number;
-  panelLayout?: PanelLayout;
+  panelLayout?: RightPanelLayout;
   
   onUpdateNode: (nodeId: string, updates: Partial<EnhancedNode>) => void;
   onUpdateEdge: (edgeId: string, updates: Partial<EnhancedEdge>) => void;
@@ -41,7 +41,7 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
   isVisible = true,
   isExpanded = true,
   panelWidth = 320,
-  panelLayout = 'standard',
+  panelLayout = 'medium',
   onUpdateNode,
   onUpdateEdge,
   onDeleteNode,
@@ -87,7 +87,7 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
   console.log('🚨 DEBUG - DesktopPropertiesPanel proceeding with render, isVisible is true');
 
   // Always show expanded panel (no collapsed state)
-  const isCompact = panelLayout === 'compact';
+  const isCompact = panelLayout === 'small';
   
   console.log('🎛️ DesktopPropertiesPanel - Rendering with layout:', {
     isCompact,

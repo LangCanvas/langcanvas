@@ -1,6 +1,5 @@
 
 import { useState, useCallback } from 'react';
-import { useSmartPanelSizing } from './useSmartPanelSizing';
 
 // Left panel specific breakpoints
 export const LEFT_PANEL_BREAKPOINTS = {
@@ -13,8 +12,6 @@ export const LEFT_PANEL_BREAKPOINTS = {
 export type LeftPanelLayout = 'small' | 'medium';
 
 export const useLeftPanelState = () => {
-  const { getContentBasedLayout } = useSmartPanelSizing();
-  
   const getInitialLeftWidth = useCallback(() => {
     if (typeof window !== 'undefined') {
       return Math.max(LEFT_PANEL_BREAKPOINTS.MIN, Math.min(LEFT_PANEL_BREAKPOINTS.MAX, window.innerWidth * 0.15));
@@ -63,24 +60,28 @@ export const useLeftPanelState = () => {
     setLeftPanelWidth(constrainedWidth);
   }, [convertPercentageToPixels, getMaxPercentageForLeftPanel, leftPanelWidth]);
 
+  // INDEPENDENT layout calculation - no external dependencies
   const getLeftPanelLayout = useCallback((): LeftPanelLayout => {
-    const layout = getContentBasedLayout(leftPanelWidth);
-    console.log('🎛️ useLeftPanelState - Layout calculation:', {
+    // Direct comparison with our own breakpoint
+    const layout = leftPanelWidth >= LEFT_PANEL_BREAKPOINTS.SWITCH_THRESHOLD ? 'medium' : 'small';
+    console.log('🎛️ useLeftPanelState - INDEPENDENT Layout calculation:', {
       leftPanelWidth,
       layout,
-      threshold: LEFT_PANEL_BREAKPOINTS.SWITCH_THRESHOLD
+      threshold: LEFT_PANEL_BREAKPOINTS.SWITCH_THRESHOLD,
+      isIndependent: true
     });
     return layout;
-  }, [leftPanelWidth, getContentBasedLayout]);
+  }, [leftPanelWidth]);
 
   const layout = getLeftPanelLayout();
 
-  console.log('🎛️ useLeftPanelState - Current state:', {
+  console.log('🎛️ useLeftPanelState - Current INDEPENDENT state:', {
     leftPanelWidth,
     layout,
     min: LEFT_PANEL_BREAKPOINTS.MIN,
     max: LEFT_PANEL_BREAKPOINTS.MAX,
-    switchThreshold: LEFT_PANEL_BREAKPOINTS.SWITCH_THRESHOLD
+    switchThreshold: LEFT_PANEL_BREAKPOINTS.SWITCH_THRESHOLD,
+    isIndependent: true
   });
 
   return {

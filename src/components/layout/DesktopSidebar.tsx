@@ -1,13 +1,13 @@
 
 import React from 'react';
 import EnhancedNodePalette from '../palette/EnhancedNodePalette';
-import { PanelLayout } from '../../hooks/useAdaptivePanelWidths';
+import { LeftPanelLayout } from '../../hooks/useLeftPanelState';
 
 interface DesktopSidebarProps {
   isVisible?: boolean;
   isExpanded?: boolean;
   panelWidth?: number;
-  panelLayout?: PanelLayout;
+  panelLayout?: LeftPanelLayout;
 }
 
 const DesktopSidebar: React.FC<DesktopSidebarProps> = ({ 
