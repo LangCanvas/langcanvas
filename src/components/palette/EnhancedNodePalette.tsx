@@ -1,75 +1,86 @@
-
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { NodeType } from '../../types/nodeTypes';
-import { getAllNodes, getNodesByCategory, searchNodes, NodeDefinition } from '../../utils/nodeCategories';
+import { LeftPanelLayout } from '../../hooks/useLeftPanelState';
 import { useEnhancedAnalytics } from '../../hooks/useEnhancedAnalytics';
-import { PanelLayout } from '../../types/panelTypes';
+import { createDragImage } from './DragImageCreator';
+import PaletteHeader from './PaletteHeader';
 import NodePaletteSearch from './NodePaletteSearch';
 import NodeCategorySelector from './NodeCategorySelector';
 import PaletteContent from './PaletteContent';
 import PaletteFooter from './PaletteFooter';
-import { getLayoutConfig } from './PaletteLayoutConfig';
-import './NodePaletteAlignment.css';
+import PaletteEmptyState from './PaletteEmptyState';
+import { PaletteLayoutConfig } from './PaletteLayoutConfig';
 
 interface EnhancedNodePaletteProps {
   onNodeTypeSelect?: (type: NodeType) => void;
+  onToggle?: () => void;
   isExpanded?: boolean;
   panelWidth?: number;
-  panelLayout?: PanelLayout;
+  panelLayout?: LeftPanelLayout;
 }
+
+// Minimum width for objects within the panel
+const MIN_OBJECT_WIDTH = 35; // Changed to 35px as requested
 
 const EnhancedNodePalette: React.FC<EnhancedNodePaletteProps> = ({ 
   onNodeTypeSelect, 
+  onToggle, 
   isExpanded = true,
-  panelWidth = 140,
+  panelWidth = 256,
   panelLayout = 'medium'
 }) => {
   const analytics = useEnhancedAnalytics();
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [layoutConfig, setLayoutConfig] = useState<PaletteLayoutConfig>({
+    showSearch: true,
+    showCategories: true,
+    showDescriptions: true,
+    compactMode: false,
+    iconSize: 'medium',
+    textSize: 'sm',
+  });
 
-  // Reset to "All Nodes" when switching between medium and small layouts
-  useEffect(() => {
-    setSelectedCategory(null);
-    setSearchQuery('');
-  }, [panelLayout]);
-
-  const filteredNodes = useMemo((): NodeDefinition[] => {
-    if (searchQuery.trim()) {
-      return searchNodes(searchQuery);
-    }
-    
-    if (selectedCategory) {
-      return getNodesByCategory(selectedCategory);
-    }
-    
-    return getAllNodes();
-  }, [searchQuery, selectedCategory]);
+  const handleLayoutConfigChange = (newConfig: Partial<PaletteLayoutConfig>) => {
+    setLayoutConfig(prevConfig => ({ ...prevConfig, ...newConfig }));
+  };
 
   const handleDragStart = (e: React.DragEvent, nodeType: NodeType, label: string) => {
     analytics.trackFeatureUsage('node_palette_drag_start', { 
       nodeType, 
-      method: 'drag_and_drop',
-      category: selectedCategory || 'all',
-      searchQuery: searchQuery || undefined,
-      panelWidth,
-      panelLayout
+      method: 'drag_and_drop' 
     });
+
+    const dragImage = createDragImage(nodeType, label);
+    document.body.appendChild(dragImage);
+    
+    const isConditional = nodeType === 'conditional';
+    const width = isConditional ? 80 : 120;
+    const height = isConditional ? 80 : 60;
+    const offsetX = width / 2;
+    const offsetY = height / 2;
+    
+    e.dataTransfer.setDragImage(dragImage, offsetX, offsetY);
+    e.dataTransfer.setData('text/plain', nodeType);
+    e.dataTransfer.setData('application/offset', JSON.stringify({ x: offsetX, y: offsetY }));
+    e.dataTransfer.effectAllowed = 'copy';
+    
+    setTimeout(() => {
+      if (document.body.contains(dragImage)) {
+        document.body.removeChild(dragImage);
+      }
+    }, 0);
   };
 
   const handleClick = (e: React.MouseEvent, nodeType: NodeType) => {
     e.preventDefault();
     e.stopPropagation();
     
-    console.log(`🎯 Enhanced node palette clicked: ${nodeType}`);
+    console.log(`🎯 Node palette clicked: ${nodeType}`);
     
     analytics.trackFeatureUsage('node_palette_click', { 
       nodeType, 
-      method: 'click_to_select',
-      category: selectedCategory || 'all',
-      searchQuery: searchQuery || undefined,
-      panelWidth,
-      panelLayout
+      method: 'click_to_select' 
     });
     
     if (onNodeTypeSelect) {
@@ -93,62 +104,51 @@ const EnhancedNodePalette: React.FC<EnhancedNodePaletteProps> = ({
     }
   };
 
-  const handleClearSearch = () => {
-    setSearchQuery('');
-    setSelectedCategory(null);
-  };
+  const filteredNodes = useMemo(() => {
+    let nodes = Object.values(NodeType) as NodeType[];
 
-  const layoutConfig = getLayoutConfig(panelLayout);
-  const displayNodes = layoutConfig.maxVisibleNodes 
-    ? filteredNodes.slice(0, layoutConfig.maxVisibleNodes)
-    : filteredNodes;
+    if (selectedCategory) {
+      nodes = nodes.filter(nodeType => nodeType.startsWith(selectedCategory));
+    }
 
-  const paddingClass = panelLayout === 'small' ? 'p-1' : 'p-3';
+    if (searchTerm) {
+      const lowerSearchTerm = searchTerm.toLowerCase();
+      nodes = nodes.filter(nodeType => nodeType.toLowerCase().includes(lowerSearchTerm));
+    }
+
+    return nodes;
+  }, [searchTerm, selectedCategory]);
+
+  const hasNodes = filteredNodes.length > 0;
 
   return (
-    <div className={`${paddingClass} h-full flex flex-col node-palette-left-align`}>
-      <div className="flex items-center justify-center mb-4">
-        <h2 className={`font-medium text-gray-700 ${panelLayout === 'small' ? 'text-xs' : 'text-sm'} node-palette-center-align`}>
-          {panelLayout === 'small' ? 'Nodes' : 'Node Palette'}
-        </h2>
-      </div>
+    <div className="flex flex-col h-full">
+      <PaletteHeader title="Node Palette" onToggle={onToggle} />
 
-      <div className="space-y-4 flex-1 overflow-hidden flex flex-col">
-        {layoutConfig.showSearch && (
-          <NodePaletteSearch
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            placeholder="Search nodes..."
-          />
-        )}
+      {layoutConfig.showSearch && (
+        <NodePaletteSearch searchTerm={searchTerm} onSearchTermChange={setSearchTerm} />
+      )}
 
-        {layoutConfig.showCategories && !searchQuery && (
-          <NodeCategorySelector
-            selectedCategory={selectedCategory}
-            onCategorySelect={setSelectedCategory}
-          />
-        )}
-
-        <PaletteContent
-          displayNodes={displayNodes}
-          filteredNodes={filteredNodes}
-          layoutConfig={layoutConfig}
-          searchQuery={searchQuery}
+      {layoutConfig.showCategories && (
+        <NodeCategorySelector
           selectedCategory={selectedCategory}
-          panelLayout={panelLayout}
+          onCategorySelect={setSelectedCategory}
+        />
+      )}
+
+      {hasNodes ? (
+        <PaletteContent
+          nodes={filteredNodes}
           onDragStart={handleDragStart}
           onClick={handleClick}
-          onClearSearch={handleClearSearch}
-        />
-
-        <PaletteFooter
-          panelLayout={panelLayout}
           layoutConfig={layoutConfig}
-          filteredNodesCount={filteredNodes.length}
-          maxVisibleNodes={layoutConfig.maxVisibleNodes}
-          totalDisplayed={displayNodes.length}
+          minObjectWidth={MIN_OBJECT_WIDTH}
         />
-      </div>
+      ) : (
+        <PaletteEmptyState searchTerm={searchTerm} selectedCategory={selectedCategory} />
+      )}
+
+      <PaletteFooter layoutConfig={layoutConfig} onLayoutConfigChange={handleLayoutConfigChange} />
     </div>
   );
 };
