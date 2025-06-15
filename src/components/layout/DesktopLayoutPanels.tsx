@@ -70,56 +70,16 @@ const DesktopLayoutPanels: React.FC<DesktopLayoutPanelsProps> = ({
   onUpdateEdgeProperties,
   validatePriorityConflicts,
 }) => {
-  console.log('🖥️ DesktopLayoutPanels - Render with absolute constraints:', {
+  console.log('🖥️ DesktopLayoutPanels - Render with panel configuration:', {
     leftPanelPercentage,
-    minLeftPanelPercentage,
-    maxLeftPanelPercentage,
     rightPanelPercentage,
     canvasPercentage,
-    leftPanelLayout,
-    maxWidthPx: '100px enforced via percentage'
+    isRightPanelVisible,
+    rightPanelWidth
   });
 
-  // Add ResizablePanel debugging
-  React.useEffect(() => {
-    const checkPanelDimensions = () => {
-      const container = document.querySelector('[data-panel-group-direction="horizontal"]');
-      const rightPanel = document.querySelector('[data-panel="desktop-properties"]');
-      
-      if (container) {
-        const containerRect = container.getBoundingClientRect();
-        console.log('🔍 CONTAINER DEBUG:', {
-          containerWidth: containerRect.width,
-          containerHeight: containerRect.height,
-          rightPanelExists: !!rightPanel,
-          rightPanelVisible: isRightPanelVisible,
-          calculatedRightPanelWidth: (rightPanelPercentage / 100) * containerRect.width,
-          expectedRightPanelWidth: rightPanelWidth
-        });
-      }
-      
-      if (rightPanel) {
-        const rightRect = rightPanel.getBoundingClientRect();
-        console.log('🔍 RIGHT PANEL DEBUG:', {
-          actualWidth: rightRect.width,
-          actualHeight: rightRect.height,
-          isVisible: rightRect.width > 0,
-          expectedWidth: rightPanelWidth,
-          position: { x: rightRect.x, y: rightRect.y }
-        });
-      }
-    };
-
-    // Check dimensions after render
-    setTimeout(checkPanelDimensions, 100);
-    
-    // Also check on resize
-    window.addEventListener('resize', checkPanelDimensions);
-    return () => window.removeEventListener('resize', checkPanelDimensions);
-  }, [isRightPanelVisible, rightPanelWidth, rightPanelPercentage]);
-
   return (
-    <div className="flex-1 h-full" style={{ backgroundColor: '#e0e0e0', border: '2px solid #blue' }}>
+    <div className="flex-1 h-full">
       <ResizablePanelGroup direction="horizontal" className="h-full">
         {isLeftPanelVisible && (
           <>
@@ -153,15 +113,10 @@ const DesktopLayoutPanels: React.FC<DesktopLayoutPanelsProps> = ({
               minSize={15}
               maxSize={40}
               onResize={(size) => {
-                console.log('🔍 RIGHT PANEL RESIZE EVENT:', {
-                  newPercentage: size,
-                  expectedPixelWidth: (size / 100) * window.innerWidth,
-                  currentRightPanelWidth: rightPanelWidth
-                });
+                console.log('🔍 Right panel resized to:', size, '%');
                 handleRightPanelResize(size);
               }}
               className="relative"
-              style={{ backgroundColor: '#00ff00', border: '2px solid #red' }}
             >
               <DesktopPropertiesPanel
                 selectedNode={selectedNode}

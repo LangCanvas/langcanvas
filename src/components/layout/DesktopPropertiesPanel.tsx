@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { X, AlertTriangle } from 'lucide-react';
+import { X } from 'lucide-react';
 import DesktopPropertiesPanelTabs from './DesktopPropertiesPanelTabs';
 import { EnhancedNode } from '../../types/nodeTypes';
 import { EnhancedEdge } from '../../types/edgeTypes';
@@ -62,12 +62,6 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
     showValidationPanel
   });
 
-  console.log('🚨 DEBUG - DesktopPropertiesPanel received isVisible:', {
-    isVisible,
-    willReturnNull: !isVisible,
-    timestamp: new Date().toISOString()
-  });
-
   const { activeTab, setActiveTab } = useDesktopPropertiesPanelState({
     selectedNode,
     selectedEdge,
@@ -76,88 +70,22 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
     switchToPropertiesPanel
   });
 
-  // Add DOM dimension checking
+  // Basic dimension checking without offsetParent
   React.useEffect(() => {
     const element = document.querySelector('[data-panel="desktop-properties"]');
     if (element) {
       const rect = element.getBoundingClientRect();
-      console.log('🔍 VISUAL DEBUG - Panel actual dimensions:', {
+      console.log('🔍 Panel dimensions:', {
         width: rect.width,
         height: rect.height,
-        x: rect.x,
-        y: rect.y,
-        isVisible: rect.width > 0 && rect.height > 0,
-        computedStyle: window.getComputedStyle(element),
-        offsetParent: element.offsetParent
+        isVisible: rect.width > 0 && rect.height > 0
       });
     }
   });
 
   if (!isVisible) {
-    console.log('🎛️ DesktopPropertiesPanel - Not visible, showing debug info instead of null');
-    
-    return (
-      <aside 
-        data-panel="desktop-properties-debug" 
-        className="relative bg-red-50 border-l border-red-200 flex flex-col h-full flex-shrink-0 w-80"
-        style={{ 
-          backgroundColor: '#ff0000', 
-          border: '5px solid #00ff00',
-          zIndex: 9999,
-          minWidth: '320px'
-        }}
-      >
-        <div className="p-4 border-b border-red-200 flex items-center justify-between">
-          <h2 className="font-medium text-red-800 text-sm flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4" />
-            Panel Hidden (Debug)
-          </h2>
-          {onToggle && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onToggle}
-              className="w-8 h-8 p-0 text-red-600 hover:text-red-800"
-              title="Show Properties Panel"
-            >
-              <X className="w-4 h-4" />
-            </Button>
-          )}
-        </div>
-        
-        <div className="p-4 text-sm text-red-700 space-y-2">
-          <p><strong>Panel State:</strong> isVisible = false</p>
-          <p><strong>Timestamp:</strong> {new Date().toISOString()}</p>
-          <p><strong>Panel Width:</strong> {panelWidth}px</p>
-          <p><strong>Panel Layout:</strong> {panelLayout}</p>
-          
-          <div className="mt-4 p-3 bg-red-100 rounded border border-red-200">
-            <p className="font-medium mb-2">Debug Actions:</p>
-            <Button
-              onClick={() => {
-                console.log('🔧 Debug: Attempting to show panel via onToggle');
-                onToggle?.();
-              }}
-              size="sm"
-              className="mr-2 mb-2"
-              variant="outline"
-            >
-              Force Show Panel
-            </Button>
-            <Button
-              onClick={() => {
-                console.log('🔧 Debug: Current window debug state:', (window as any).debugRightPanel?.getCurrentState());
-                alert('Check console for debug information');
-              }}
-              size="sm"
-              variant="outline"
-            >
-              Log Debug Info
-            </Button>
-          </div>
-        </div>
-      </aside>
-    );
+    console.log('🎛️ DesktopPropertiesPanel - Not visible, returning null');
+    return null;
   }
 
   console.log('🎛️ DesktopPropertiesPanel - Continuing with render');
@@ -171,23 +99,18 @@ const DesktopPropertiesPanel: React.FC<DesktopPropertiesPanelProps> = ({
     activeTab
   });
 
-  console.log('🎛️ DesktopPropertiesPanel - Rendering aside element');
-  
   return (
     <aside 
       data-panel="desktop-properties" 
       className="relative bg-background border-l border-border flex flex-col h-full flex-shrink-0"
       style={{ 
-        backgroundColor: '#ffff00', 
-        border: '3px solid #ff0000',
-        zIndex: 1000,
         minWidth: `${panelWidth}px`,
         width: `${panelWidth}px`
       }}
     >
       <div className={`${isCompact ? 'p-2' : 'p-4'} border-b border-border flex items-center justify-between`}>
         <h2 className={`font-medium text-foreground ${isCompact ? 'text-xs' : 'text-sm'}`}>
-          🚨 DEBUG: {isCompact ? 'Panel' : 'Properties Panel'} ({panelWidth}px)
+          {isCompact ? 'Panel' : 'Properties Panel'}
         </h2>
         {onToggle && !isCompact && (
           <Button
