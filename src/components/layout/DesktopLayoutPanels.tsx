@@ -6,6 +6,8 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/componen
 import { EnhancedNode } from '../../types/nodeTypes';
 import { EnhancedEdge } from '../../types/edgeTypes';
 import { ValidationResult } from '../../hooks/useValidation';
+import { LeftPanelLayout } from '../../hooks/useLeftPanelState';
+import { RightPanelLayout } from '../../hooks/useRightPanelState';
 
 interface DesktopLayoutPanelsProps {
   children: React.ReactNode;
@@ -18,9 +20,9 @@ interface DesktopLayoutPanelsProps {
   validationResult: ValidationResult;
   showValidationPanel: boolean;
   leftPanelWidth: number;
-  leftPanelLayout: string;
+  leftPanelLayout: LeftPanelLayout;
   rightPanelWidth: number;
-  rightPanelLayout: string;
+  rightPanelLayout: RightPanelLayout;
   handleLeftPanelResize: (percentage: number) => void;
   handleRightPanelResize: (percentage: number) => void;
   leftPanelPercentage: number;
